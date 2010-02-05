@@ -2,14 +2,14 @@
     "background_page": "service.html",
     "description": "Shows flags for the website in the",
     "icons": {
-        "128": "img/icons/128.png",
-        "48" : "img/icons/48.png",
-        "32" : "img/icons/32.png",
-        "16" : "img/icons/16.png"
+        "128": "img/icon/128.png",
+        "48" : "img/icon/48.png",
+        "32" : "img/icon/32.png",
+        "16" : "img/icon/16.png"
     },
     "name": "Yet another flags",
     "page_action": {
-        "default_icon": "flags/us.gif",
+        "default_icon": "img/flags/us.gif",
         "popup": "popup.html"
     },
     "permissions": ["tabs"],
