@@ -1,6 +1,6 @@
 {
     "background_page": "service.html",
-    "description": "Shows flags for the website in the",
+    "description": "Shows flags for the website in the location bar.",
     "icons": {
         "128": "img/icon/128.png",
         "48" : "img/icon/48.png",
