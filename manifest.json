@@ -1,0 +1,22 @@
+{
+   "background_page": "service.html",
+   "content_scripts": [ {
+      "js": [ "script.js" ],
+      "matches": [ "http://*/*" ],
+      "run_at": "document_end"
+   } ],
+   "description": "Shows flags for the website in the",
+   "icons": {
+      "128": "128.png",
+      "16": "16.png",
+      "32": "32.png",
+      "48": "48.png"
+   },
+   "name": "Flags",
+   "page_action": {
+      "default_icon": "flags/us.gif",
+      "popup": "popup.html"
+   },
+   "permissions": [ "tabs" ],
+   "version": "0.1"
+}
