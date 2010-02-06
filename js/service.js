@@ -17,6 +17,9 @@ YAF = {
                     if (xhr.status == 200) {
                         localStorage[domain] = xhr.responseText;
                         callback.call(this, localStorage[domain]);
+                    } else {
+                        // do not store anything if request fails 
+                        localStorage[domain] = false;
                     }
                 }
             }
