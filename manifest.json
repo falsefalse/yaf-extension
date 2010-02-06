@@ -19,6 +19,9 @@
         "default_icon": "img/flags/us.gif",
         "popup": "popup.html"
     },
-    "permissions": ["tabs"],
+    "permissions": [
+        "tabs",
+        "http://ipinfodb.com/"
+    ],
     "version": "0.1"
 }
