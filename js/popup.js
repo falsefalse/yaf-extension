@@ -4,10 +4,6 @@
 YAF = {
     service : chrome.extension.getBackgroundPage(),
     services : {
-        'trends' : {
-            url : "http://trends.google.com/websites?q=%d&sa=N",
-            label : 'Google Trends'
-        },
         'whois' : {
             url : "http://whois.domaintools.com/%d",
             label : 'WhoIs'
