@@ -21,7 +21,8 @@ YAF = {
                 }
             }
             xhr.send(null);
-        } else {
+            localStorage[domain] = 'is_requesting';
+        } else if (localStorage[domain] != 'is_requesting') {
             callback.call(this, localStorage[domain]);
         }
     },
