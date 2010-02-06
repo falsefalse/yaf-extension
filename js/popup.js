@@ -1,84 +1,66 @@
 // Render services links for domain/IP and display them in popup
 // smashlong@gmail.com, 2010
 
-var countryList = {
-    "ai" : "Australia",
-    "ch" : "China",
-    "us" : "United States",
-    "jp" : "Japan",
-    "in" : "India",
-    "br" : "Brazil",
-    "de" : "Germany",
-    "uk" : "United Kingdom",
-    "ru" : "Russia",
-    "fr" : "France",
-    "kr" : "Korea South",
-    "ir" : "Iran",
-    "it" : "Italy",
-    "il" : "Israel",
-    "id" : "Indonesia",
-    "es" : "Spain",
-    "mx" : "Mexico",
-    "tr" : "Turkey",
-    "ca" : "Canada",
-    "ph" : "Philippines",
-    "vn" : "Vietnam",
-    "pl" : "Poland",
-    "fi" : "Finland",
-    "nl" : "Netherlands",
-    "se" : "Sweden",
-    "th" : "Thailand"
-}
-
-var backgroundPage = chrome.extension.getBackgroundPage();
-var services = {
-    'trends' : {
-        url : "http://trends.google.com/websites?q=%d&sa=N",
-        label : 'Google Trends'
+YAF = {
+    service : chrome.extension.getBackgroundPage(),
+    services : {
+        'trends' : {
+            url : "http://trends.google.com/websites?q=%d&sa=N",
+            label : 'Google Trends'
+        },
+        'whois' : {
+            url : "http://whois.domaintools.com/%d",
+            label : 'WhoIs'
+        },
+        'geoip' : {
+            url : "http://geotool.servehttp.com/?host=%d&ip=%i",
+            label : 'GeoIP'
+        }
     },
-    'whois' : {
-        url : "http://whois.domaintools.com/%d",
-        label : 'WhoIs'
-    },
-    'geoip' : {
-        url : "http://geotool.servehttp.com/?host=%d&ip=%i",
-        label : 'GeoIP'
+    createElement : function(tag, html, className) {
+        var element = document.createElement(tag);
+        element.innerHTML = html;
+        element.className = className;
+        return element;
     }
 }
 
 window.addEventListener("DOMContentLoaded", function() {
-    var countryName = countryList[backgroundPage.lastCountry.toLowerCase()];
-    if (countryName) {
-        var country = document.getElementById("country");
-        var flag = document.createElement('img');
-        flag.setAttribute('src', 'flags/' + backgroundPage.lastCountry.toLowerCase() + '.gif');
-        country.appendChild(flag);
-        country.appendChild(document.createTextNode(lastCountry));
-    }
-    document.getElementById("domain").innerHTML = backgroundPage.lastDomain;
-    document.getElementById("ip").innerHTML = backgroundPage.lastIP;
-    
-    var ul = document.querySelector('#menu');
-    for (var name in services) {
-        var url = services[name].url
-            .replace(/\%d/, backgroundPage.lastDomain)
-            .replace(/\%i/, backgroundPage.lastIP)
+    chrome.tabs.getSelected(null, function(tab) {
+        var data = YAF.service.YAF.tabs[tab.id];
+        
+        var ul = document.querySelector('#menu');
+        
+        ul.appendChild(YAF.createElement('li', data.geo.CountryName, 'data'));
+        
+        var region = [];
+        data.geo.City && region.push(data.geo.City);
+        data.geo.RegionName && data.geo.RegionName != data.geo.City && region.push(data.geo.RegionName);
+        region.length && ul.appendChild(YAF.createElement('li', region.join(', '), 'data small'));
+        
+        ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data'));
 
-        var link = document.createElement('a');
-        link.className = "service " + name;
-        link.innerHTML = services[name].label;
+        ul.appendChild(YAF.createElement('li', '', 'separator'));
         
-        link.addEventListener('click', (function(url) {
-            return function(event) {
-                chrome.tabs.create({
-                    url      : url,
-                    selected : true
-                });
-            }
-        })(url), false);
-        
-        var li = document.createElement('li');
-        li.appendChild(link);
-        ul.appendChild(li);
-    }
+        for (var name in YAF.services) {
+            var url = YAF.services[name].url
+                        .replace(/\%d/, data.domain)
+                        .replace(/\%i/, data.geo.Ip);
+    
+            var link = YAF.createElement('a', YAF.services[name].label, 'service ' + name);
+            
+            link.addEventListener('click', (function(url) {
+                return function(event) {
+                    chrome.tabs.create({
+                        url      : url,
+                        selected : true
+                    });
+                }
+            })(url), false);
+            
+            var li = document.createElement('li');
+            li.appendChild(link);
+            ul.appendChild(li);
+        }
+    });
 }, false);
