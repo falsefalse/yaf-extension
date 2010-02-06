@@ -4,7 +4,7 @@
 YAF = {
     tabs : {},
     getGeoData : function(url, callback) {
-        var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/); // aware of port in url, accept any protocol and symbols in domain
+        var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/); // aware of port in url, accept http(s)/ftp, any symbols in domain
         if (!match) {
             return;
         }
@@ -53,12 +53,13 @@ YAF = {
                 tabId : tab.id,
                 title : title.join(', ')
             });
-            chrome.pageAction.show(tab.id);
             
             this.tabs[tab.id] = {
                 domain : domain,
                 geo    : geo
             }
+            
+            chrome.pageAction.show(tab.id);
         });
     }
 }
