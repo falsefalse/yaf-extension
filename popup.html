@@ -1,0 +1,80 @@
+<!-- 
+    Popup menu
+    smashlong@gmail.com, 2010
+ -->
+
+<html>
+<head>
+    <script type="text/javascript" src="js/popup.js"></script>
+    <style type="text/css">
+        body {
+            font: normal .95em/1.5 Calibri, Arial, sans-serif;
+            margin: 3px;
+            padding: 0;
+        }
+        ul.menu {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+            ul.menu li {
+                margin: 0;
+                padding: 0 6px;
+            }
+            ul.menu li.data {
+            }
+            ul.menu li.separator {
+                height: 0;
+                border-bottom: 1px solid #e1e1e1;
+                opacity: .5;
+                margin: 5px -3px;
+            }
+        
+            ul.menu li .service {
+                display: block;
+                margin: 3px -6px;
+                background: #FFF url(services/service.png) no-repeat 5px center;
+                padding: 0 6px 0 26px;
+                color: #000;
+                text-decoration: none;
+                white-space: nowrap;
+            
+                border: 1px solid #FFF;
+                -webkit-border-radius: 4px;
+                cursor: pointer;
+            }
+                ul.menu li .service:visited {
+                    color: #000;
+                }
+                ul.menu li .service:hover {
+                    background-color: #d5e4ff;
+                    border: 1px solid #8492ac;
+                    color: #000;
+                
+                    -webkit-transition-property: background-color;
+                    -webkit-transition-duration: 0.3s;
+                    transition-timing-function : linear;
+                }
+            
+        .trends {
+            background-image: url('services/google.ico') !important;
+        }
+        .whois {
+            background-image: url('services/whois.ico') !important;
+        }
+        .geoip {
+            background-image: url('services/globe.png') !important;
+        }
+    </style>
+</head>
+
+<body>
+    <ul class="menu">
+        <li class="data" id="country"></li>
+        <li class="data" id="domain"></li>
+        <li class="data" id="ip"></li>
+        <li class="separator"></li>
+        <!-- services goes here -->
+    </ul>
+</body>
+</html>
