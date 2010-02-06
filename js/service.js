@@ -37,13 +37,18 @@ YAF = {
         this.getGeoData(tab.url, function(geo) {
             geo = JSON.parse(geo).Locations[0];
             
+            var title = [];
+            geo.City && title.push(geo.City);
+            geo.RegionName && title.push(geo.RegionName);
+            title.push(geo.CountryName);
+            
             chrome.pageAction.setIcon({
                 tabId : tab.id,
                 path  : 'img/flags/' + geo.CountryCode.toLowerCase() + '.gif'
             });
             chrome.pageAction.setTitle({
                 tabId : tab.id,
-                title : [geo.CountryName, geo.RegionName, geo.City].join(', ')
+                title : title.join(', ')
             });
             chrome.pageAction.show(tab.id);
         });
