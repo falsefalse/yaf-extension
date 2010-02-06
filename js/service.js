@@ -2,6 +2,7 @@
 // smashlong@gmail.com, 2010
 
 YAF = {
+    tabs : {},
     getGeoData : function(url, callback) {
         var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/); // aware of port in url, accept any protocol and symbols in domain
         if (!match) {
@@ -12,21 +13,23 @@ YAF = {
         if (!localStorage[domain]) {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', 'http://ipinfodb.com/ip_query2.php?ip=' + domain + '&output=json', true);
-            xhr.onreadystatechange = function(event) {
-                if (xhr.readyState == 4) {
-                    if (xhr.status == 200) {
-                        localStorage[domain] = xhr.responseText;
-                        callback.call(this, localStorage[domain]);
-                    } else {
-                        // do not store anything if request fails 
-                        localStorage[domain] = false;
+            xhr.onreadystatechange = (function(self) {
+                return function(event) {
+                    if (xhr.readyState == 4) {
+                        if (xhr.status == 200) {
+                            localStorage[domain] = xhr.responseText;
+                            callback.call(self, domain, localStorage[domain]);
+                        } else {
+                            // do not store anything if request fails 
+                            localStorage[domain] = false;
+                        }
                     }
                 }
-            }
+            })(this)
             xhr.send(null);
             localStorage[domain] = 'is_requesting';
         } else if (localStorage[domain] != 'is_requesting') {
-            callback.call(this, localStorage[domain]);
+            callback.call(this, domain, localStorage[domain]);
         }
     },
     setFlag : function(tab) {
@@ -34,7 +37,7 @@ YAF = {
             return;
         }
         
-        this.getGeoData(tab.url, function(geo) {
+        this.getGeoData(tab.url, function(domain, geo) {
             geo = JSON.parse(geo).Locations[0];
             
             var title = [];
@@ -51,6 +54,11 @@ YAF = {
                 title : title.join(', ')
             });
             chrome.pageAction.show(tab.id);
+            
+            this.tabs[tab.id] = {
+                domain : domain,
+                geo    : geo
+            }
         });
     }
 }
