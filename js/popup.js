@@ -38,7 +38,7 @@ window.addEventListener("DOMContentLoaded", function() {
         data.geo.RegionName && data.geo.RegionName != data.geo.City && region.push(data.geo.RegionName);
         region.length && ul.appendChild(YAF.createElement('li', region.join(', '), 'data small'));
         
-        ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data'));
+        ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data small'));
 
         ul.appendChild(YAF.createElement('li', '', 'separator'));
         
