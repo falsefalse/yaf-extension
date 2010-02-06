@@ -8,6 +8,13 @@
         "16" : "img/icon/16.png"
     },
     "name": "Yet another flags",
+    "content_scripts" : [
+        {
+            "matches" : ["http://*/*"],
+            "js"      : ["js/get_loading_page_url.js"],
+            "run_at"  : "document_start"
+        }
+    ],
     "page_action": {
         "default_icon": "img/flags/us.gif",
         "popup": "popup.html"
