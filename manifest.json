@@ -16,7 +16,7 @@
         }
     ],
     "page_action": {
-        "default_icon": "img/flags/us.gif",
+        "default_icon": "img/icon/16.png",
         "popup": "popup.html"
     },
     "permissions": [
