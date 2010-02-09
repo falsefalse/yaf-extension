@@ -134,3 +134,17 @@ chrome.tabs.onSelectionChanged.addListener(function(tabID, selectionInfo) {
         YAF.setFlag(tab);
     });
 });
+
+// add dates to stored geo data 
+if (!localStorage['_schema']) {
+    for (var domain in localStorage) {
+        var geo = JSON.parse(localStorage[domain]);
+        if (!geo.date) {
+            localStorage[domain] = JSON.stringify({
+                date : (new Date()).getTime(),
+                geo  : geo
+            });
+        }
+    }
+    localStorage['_schema'] = 1;
+}
