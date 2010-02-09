@@ -47,7 +47,7 @@ YAF = {
             
             chrome.pageAction.setIcon({
                 tabId : tab.id,
-                path  : 'img/flags/' + geo.CountryCode.toLowerCase() + '.gif'
+                path  : 'img/flags/' + geo.CountryCode.toLowerCase() + '.png'
             });
             chrome.pageAction.setTitle({
                 tabId : tab.id,
