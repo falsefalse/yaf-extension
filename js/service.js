@@ -96,7 +96,7 @@ YAF = {
             } else {
                 var title = [];
                 geo.City && title.push(geo.City);
-                geo.RegionName && title.push(geo.RegionName);
+                geo.RegionName && geo.RegionName != geo.City && title.push(geo.RegionName);
                 title.push(geo.CountryName);
                 
                 chrome.pageAction.setIcon({
