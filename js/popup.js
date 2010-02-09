@@ -27,6 +27,18 @@ window.addEventListener("DOMContentLoaded", function() {
         
         var ul = document.querySelector('#menu');
         
+        if (data.geo.CountryName === 'Reserved') {
+            ul.appendChild(YAF.createElement('li', 'Local resource', 'data'));
+            ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data small'));
+            return;
+        }
+        
+        if (data.geo.Status === 'IP NOT FOUND') {
+            ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data'));
+            ul.appendChild(YAF.createElement('li', 'Was not found in database', 'data small'));
+            return;
+        }
+        
         ul.appendChild(YAF.createElement('li', data.geo.CountryName, 'data'));
         
         var region = [];

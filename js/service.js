@@ -40,19 +40,39 @@ YAF = {
         this.getGeoData(tab.url, function(domain, geo) {
             geo = JSON.parse(geo).Locations[0];
             
-            var title = [];
-            geo.City && title.push(geo.City);
-            geo.RegionName && title.push(geo.RegionName);
-            title.push(geo.CountryName);
-            
-            chrome.pageAction.setIcon({
-                tabId : tab.id,
-                path  : 'img/flags/' + geo.CountryCode.toLowerCase() + '.png'
-            });
-            chrome.pageAction.setTitle({
-                tabId : tab.id,
-                title : title.join(', ')
-            });
+            if (geo.Status === 'IP NOT FOUND') {
+                chrome.pageAction.setIcon({
+                    tabId : tab.id,
+                    path  : ''
+                });
+                chrome.pageAction.setTitle({
+                    tabId : tab.id,
+                    title : '\'' + geo.Ip + '\' was not found in database'
+                });
+            } else if (geo.CountryName === 'Reserved') {
+                chrome.pageAction.setIcon({
+                    tabId : tab.id,
+                    path  : 'img/local_resource.png'
+                });
+                chrome.pageAction.setTitle({
+                    tabId : tab.id,
+                    title : geo.Ip + ' is local resource'
+                });
+            } else {
+                var title = [];
+                geo.City && title.push(geo.City);
+                geo.RegionName && title.push(geo.RegionName);
+                title.push(geo.CountryName);
+                
+                chrome.pageAction.setIcon({
+                    tabId : tab.id,
+                    path  : 'img/flags/' + geo.CountryCode.toLowerCase() + '.png'
+                });
+                chrome.pageAction.setTitle({
+                    tabId : tab.id,
+                    title : title.join(', ')
+                });
+            }
             
             this.tabs[tab.id] = {
                 domain : domain,
