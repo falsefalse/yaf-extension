@@ -20,6 +20,8 @@ YAF = {
             geo  : 'is_requesting'
         }
         
+        localStorage[domain] = JSON.stringify(data);
+        
         var xhr = new XMLHttpRequest();
         xhr.open('GET', 'http://ipinfodb.com/ip_query2.php?ip=' + domain + '&output=json', true);
         
