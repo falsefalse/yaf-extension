@@ -78,7 +78,7 @@ YAF = {
             if (geo.Status === 'IP NOT FOUND') {
                 chrome.pageAction.setIcon({
                     tabId : tab.id,
-                    path  : ''
+                    path  : 'img/icon/16.png'
                 });
                 chrome.pageAction.setTitle({
                     tabId : tab.id,
