@@ -3,33 +3,68 @@
 
 YAF = {
     tabs : {},
-    getGeoData : function(url, callback) {
+    passedMoreThanFrom : function(msec, date) {
+        return (((new Date()).getTime() - date)) > msec;
+    },
+    getDomain : function(url) {
         var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/); // aware of port in url, accept http(s)/ftp, any symbols in domain
-        if (!match) {
-            return;
+        if (match && match[2]) {
+            return match[2]; // match[1] is the protocol
+        } else {
+            return null;
         }
-        var domain = match[2]; // match[1] is the protocol
+    },
+    xhr : function (domain, callback) {
+        var data = {
+            date : (new Date()).getTime(),
+            geo  : 'is_requesting'
+        }
         
-        if (!localStorage[domain]) {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'http://ipinfodb.com/ip_query2.php?ip=' + domain + '&output=json', true);
-            xhr.onreadystatechange = (function(self) {
-                return function(event) {
-                    if (xhr.readyState == 4) {
-                        if (xhr.status == 200) {
-                            localStorage[domain] = xhr.responseText;
-                            callback.call(self, domain, localStorage[domain]);
-                        } else {
-                            // do not store anything if request fails 
-                            localStorage[domain] = false;
-                        }
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', 'http://ipinfodb.com/ip_query2.php?ip=' + domain + '&output=json', true);
+        
+        xhr.onreadystatechange = (function(self) {
+            return function(event) {
+                if (xhr.readyState == 4) {
+                    if (xhr.status == 200) {
+                        // store geo
+                        data.geo = JSON.parse(xhr.responseText);
+                        // encode
+                        localStorage[domain] = JSON.stringify(data);
+                        // pass encoded to processing
+                        callback.call(self, domain, localStorage[domain]);
+                    } else {
+                        // do not store anything if request fails 
+                        data.geo = false;
+                        localStorage[domain] = JSON.stringify(data);
                     }
                 }
-            })(this)
-            xhr.send(null);
-            localStorage[domain] = 'is_requesting';
-        } else if (localStorage[domain] != 'is_requesting') {
-            callback.call(this, domain, localStorage[domain]);
+            }
+        })(this);
+        
+        xhr.send(null);
+    },
+    getGeoData : function(url, callback) {
+        var domain = this.getDomain(url);
+        if (!domain) {
+            return;
+        }
+        
+        var storedData = localStorage[domain];
+        if (storedData) {
+            var parsedData = JSON.parse(storedData);
+            // if there is an request open more than for 5 sec, or if there is no data loaded for more that 5 sec - try load again
+            // if more than a month passed since last load - reload data
+            if (
+                 ((!parsedData.geo || parsedData.geo == 'is_requesting') && this.passedMoreThanFrom(10000, parsedData.date)) || 
+                 (parsedData.geo != 'is_requesting' && this.passedMoreThanFrom(2592000000, parsedData.date)) // month
+               ) { 
+                this.xhr(domain, callback);
+            } else if (typeof parsedData.geo === 'object') {
+                callback.call(this, domain, localStorage[domain]);
+            }
+        } else {
+            this.xhr(domain, callback);
         }
     },
     setFlag : function(tab) {
@@ -37,8 +72,8 @@ YAF = {
             return;
         }
         
-        this.getGeoData(tab.url, function(domain, geo) {
-            geo = JSON.parse(geo).Locations[0];
+        this.getGeoData(tab.url, function(domain, data) {
+            var geo = JSON.parse(data).geo.Locations[0];
             
             if (geo.Status === 'IP NOT FOUND') {
                 chrome.pageAction.setIcon({
