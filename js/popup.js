@@ -33,7 +33,7 @@ window.addEventListener("DOMContentLoaded", function() {
             return;
         }
         
-        if (data.geo.Status === 'IP NOT FOUND') {
+        if (/not found/.test(data.geo.Status.toLowerCase())) {
             ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data'));
             ul.appendChild(YAF.createElement('li', 'Was not found in database', 'data small'));
             return;

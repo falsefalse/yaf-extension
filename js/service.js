@@ -77,7 +77,7 @@ YAF = {
         this.getGeoData(tab.url, function(domain, data) {
             var geo = JSON.parse(data).geo.Locations[0];
             
-            if (geo.Status === 'IP NOT FOUND') {
+            if (/not found/.test(geo.Status.toLowerCase())) {
                 chrome.pageAction.setIcon({
                     tabId : tab.id,
                     path  : 'img/icon/16.png'
