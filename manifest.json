@@ -17,7 +17,7 @@
     ],
     "page_action": {
         "default_icon": "img/icon/16.png",
-        "popup": "popup.html"
+        "default_popup": "popup.html"
     },
     "permissions": [
         "tabs",
