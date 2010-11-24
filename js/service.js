@@ -2,6 +2,10 @@
 // smashlong@gmail.com, 2010
 
 YAF = {
+    API : {
+        key : '8e0b0ae78b430161344890b492099daeb04e75d7610a0211b684b720789d9de6',
+        URL : 'http://api.ipinfodb.com/v2/ip_query.php',
+    },
     tabs : {},
     passedMoreThanFrom : function(msec, date) {
         return (((new Date()).getTime() - date)) > msec;
@@ -23,8 +27,12 @@ YAF = {
         localStorage[domain] = JSON.stringify(data);
         
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', 'http://ipinfodb.com/ip_query2.php?ip=' + domain + '&output=json', true);
-        
+        var query = [['key', YAF.API.key], ['ip', domain], ['output', 'json'], ['timezone', 'false']];
+
+        xhr.open('GET', YAF.API.URL + '?' + (query.map(function(parameter) {
+            return parameter.join('=');
+        })).join('&'), true);
+    
         xhr.onreadystatechange = (function(self) {
             return function(event) {
                 if (xhr.readyState == 4) {
@@ -75,7 +83,7 @@ YAF = {
         }
         
         this.getGeoData(tab.url, function(domain, data) {
-            var geo = JSON.parse(data).geo.Locations[0];
+            var geo = JSON.parse(data).geo;
             
             if (/not found/.test(geo.Status.toLowerCase())) {
                 chrome.pageAction.setIcon({
@@ -149,4 +157,14 @@ if (!localStorage['_schema']) {
         }
     }
     localStorage['_schema'] = 1;
+}
+
+// ipinfodb API changed, wipes all data
+if (localStorage['_schema'] == 1) {
+    for (var key in localStorage) {
+        if (key !== '_schema') {
+            delete localStorage[key];
+        }
+    }
+    localStorage['_schema'] == 2;
 }
