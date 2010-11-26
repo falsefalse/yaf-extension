@@ -166,5 +166,5 @@ if (localStorage['_schema'] == 1) {
             delete localStorage[key];
         }
     }
-    localStorage['_schema'] == 2;
+    localStorage['_schema'] = 2;
 }
