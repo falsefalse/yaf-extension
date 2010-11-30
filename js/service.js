@@ -41,8 +41,8 @@ YAF = {
                         data.geo = JSON.parse(xhr.responseText);
                         // encode
                         localStorage[domain] = JSON.stringify(data);
-                        // pass encoded to processing
-                        callback.call(self, domain, localStorage[domain]);
+                        // pass data for processing
+                        callback.call(self, domain, data);
                     } else {
                         // do not store anything if request fails 
                         data.geo = false;
@@ -60,18 +60,18 @@ YAF = {
             return;
         }
         
-        var storedData = localStorage[domain];
-        if (storedData) {
-            var parsedData = JSON.parse(storedData);
+        var storedJSON = localStorage[domain];
+        if (storedJSON) {
+            var data = JSON.parse(storedJSON);
             // if there is an request open more than for 5 sec, or if there is no data loaded for more that 5 sec - try load again
             // if more than a month passed since last load - reload data
             if (
-                 ((!parsedData.geo || parsedData.geo == 'is_requesting') && this.passedMoreThanFrom(10000, parsedData.date)) || 
-                 (parsedData.geo != 'is_requesting' && this.passedMoreThanFrom(2592000000, parsedData.date)) // month
+                 ((!data.geo || data.geo == 'is_requesting') && this.passedMoreThanFrom(10000, data.date)) || 
+                 (data.geo != 'is_requesting' && this.passedMoreThanFrom(2592000000, data.date)) // month
                ) { 
                 this.xhr(domain, callback);
-            } else if (typeof parsedData.geo === 'object') {
-                callback.call(this, domain, localStorage[domain]);
+            } else if (typeof data.geo === 'object') {
+                callback.call(this, domain, data);
             }
         } else {
             this.xhr(domain, callback);
@@ -83,7 +83,7 @@ YAF = {
         }
         
         this.getGeoData(tab.url, function(domain, data) {
-            var geo = JSON.parse(data).geo;
+            var geo = data.geo;
             
             if (/not found/.test(geo.Status.toLowerCase())) {
                 chrome.pageAction.setIcon({
