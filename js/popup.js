@@ -7,10 +7,6 @@ YAF = {
         'whois' : {
             url : "http://whois.domaintools.com/%d",
             label : 'WhoIs'
-        },
-        'geoip' : {
-            url : "http://geotool.servehttp.com/?host=%d&ip=%i",
-            label : 'GeoIP'
         }
     },
     createElement : function(tag, html, className) {
