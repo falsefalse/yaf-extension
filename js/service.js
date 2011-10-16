@@ -4,7 +4,7 @@
 YAF = {
     API : {
         key : '8e0b0ae78b430161344890b492099daeb04e75d7610a0211b684b720789d9de6',
-        URL : 'http://api.ipinfodb.com/v2/ip_query.php',
+        URL : 'http://api.ipinfodb.com/v3/ip-city/'
     },
     tabs : {},
     passedMoreThanFrom : function(msec, date) {
@@ -27,7 +27,7 @@ YAF = {
         localStorage[domain] = JSON.stringify(data);
         
         var xhr = new XMLHttpRequest();
-        var query = [['key', YAF.API.key], ['ip', domain], ['output', 'json'], ['timezone', 'false']];
+        var query = [['key', YAF.API.key], ['ip', domain], ['format', 'json'], ['timezone', 'false']];
 
         xhr.open('GET', YAF.API.URL + '?' + (query.map(function(parameter) {
             return parameter.join('=');
