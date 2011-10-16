@@ -1,0 +1,10 @@
+This is another extension which shows country flag for the site in current
+tab. It also shows city, region and country name in the flag icon hint.
+Moreover, there are some additional data and links in the popup, refer to
+screenshot.
+
+Extension loads geo data from http://ipinfodb.com/. All data is cached
+locally, so minimal number of additional requests is made.
+Cached data is invalidated after storing for 30 days.
+
+Extension was tested on WinXP SP3, Win7 (incl. x64), Linux and Mac OS X.

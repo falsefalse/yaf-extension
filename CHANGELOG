@@ -1,0 +1,43 @@
+Version 0.7.2:
+Remove link to GeoIP thing, they lost their domain.
+
+Version 0.7.1:
+Fixes geo data cache storage between browser launches, it was introduced in
+0.7. Flags will be displayed right away after browser launch, without
+re-requesting data.
+
+Version 0.7:
+Update to match ipinfodb.com API. Old API has been disabled on 15 Nov 2010.
+This should fix @Fcgbman33 and @lukasz210 issues.
+
+Version 0.6.1:
+Updates manifest to comply to new syntax.
+Updates font stack in popup to please Mac OS X users.
+Minor polishing for the popup menu styling here and there, now it looks more
+clean and prominent (see updated screenshots).
+
+Version 0.6:
+API change fix: performs less strict check for 'not found' API response. Fixes
+handling of unknown domains (hosts entries that are mapped to local IPs for
+example).
+
+Version 0.5:
+- fixed regression: doesn't request geo data for the domain if extension is
+already waiting for the data for this domain
+
+Version 0.4:
+- doesn't put both region and city to the icon hint if they are equal
+
+Version 0.3:
+- updates cached geo data to the new format on extension first run
+
+Version 0.2:
+- invalidates geo data cache: request geo data again after storing it for 30
+days
+- handles LAN resources: separate icon is used, no service links; refer to
+screenshot
+- handles resources without associated geo data: displays default extension
+icon, no service links; refer to screenshot
+- uses ISO compliant flag icons from http://www.famfamfam.com/lab/icons/flags/
+(this fixes flag icon for Taiwan)
+- grey globe icon is shown instead US flag right after extension was installed
