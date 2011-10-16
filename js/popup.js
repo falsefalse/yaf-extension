@@ -1,6 +1,9 @@
 // Render services links for domain/IP and display them in popup
 // smashlong@gmail.com, 2010
 
+/*jshint curly:false, undef:true*/
+/*global browser:true, chrome:true, YAF:true*/
+
 YAF = {
     service : chrome.extension.getBackgroundPage(),
     services : {
@@ -15,13 +18,13 @@ YAF = {
         element.className = className;
         return element;
     }
-}
+};
 
 window.addEventListener("DOMContentLoaded", function() {
     chrome.tabs.getSelected(null, function(tab) {
         var data = YAF.service.YAF.tabs[tab.id],
             geo  = data.geo;
-        
+
         var ul = document.querySelector('#menu');
 
         if (geo.notFound) {
@@ -35,34 +38,34 @@ window.addEventListener("DOMContentLoaded", function() {
             ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data small'));
             return;
         }
-        
+
         ul.appendChild(YAF.createElement('li', geo.countryName, 'data capitalize'));
-        
+
         var region = [];
-        geo.cityName && region.push(geo.cityName);
-        geo.regionName && geo.regionName != geo.cityName && region.push(geo.regionName);
-        region.length && ul.appendChild(YAF.createElement('li', region.join(', '), 'data small capitalize'));
-        
+        if (geo.cityName) region.push(geo.cityName);
+        if (geo.regionName && geo.regionName != geo.cityName) region.push(geo.regionName);
+        if (region.length) ul.appendChild(YAF.createElement('li', region.join(', '), 'data small capitalize'));
+
         ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data small'));
 
         ul.appendChild(YAF.createElement('li', '', 'separator'));
-        
+
         for (var name in YAF.services) {
             var url = YAF.services[name].url
                         .replace(/\%d/, data.domain)
                         .replace(/\%i/, geo.ipAddress);
-    
+
             var link = YAF.createElement('a', YAF.services[name].label, 'service ' + name);
-            
+
             link.addEventListener('click', (function(url) {
                 return function(event) {
                     chrome.tabs.create({
                         url      : url,
                         selected : true
                     });
-                }
+                };
             })(url), false);
-            
+
             var li = document.createElement('li');
             li.appendChild(link);
             ul.appendChild(li);
