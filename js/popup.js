@@ -19,37 +19,38 @@ YAF = {
 
 window.addEventListener("DOMContentLoaded", function() {
     chrome.tabs.getSelected(null, function(tab) {
-        var data = YAF.service.YAF.tabs[tab.id];
+        var data = YAF.service.YAF.tabs[tab.id],
+            geo  = data.geo;
         
         var ul = document.querySelector('#menu');
-        
-        if (data.geo.CountryName === 'Reserved') {
-            ul.appendChild(YAF.createElement('li', 'Local resource', 'data'));
-            ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data small'));
-            return;
-        }
-        
-        if (/not found/.test(data.geo.Status.toLowerCase())) {
-            ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data'));
+
+        if (geo.notFound) {
+            ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data'));
             ul.appendChild(YAF.createElement('li', 'Was not found in database', 'data small'));
             return;
         }
+
+        if (geo.isLocal) {
+            ul.appendChild(YAF.createElement('li', 'Local resource', 'data'));
+            ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data small'));
+            return;
+        }
         
-        ul.appendChild(YAF.createElement('li', data.geo.CountryName, 'data'));
+        ul.appendChild(YAF.createElement('li', geo.countryName, 'data capitalize'));
         
         var region = [];
-        data.geo.City && region.push(data.geo.City);
-        data.geo.RegionName && data.geo.RegionName != data.geo.City && region.push(data.geo.RegionName);
-        region.length && ul.appendChild(YAF.createElement('li', region.join(', '), 'data small'));
+        geo.cityName && region.push(geo.cityName);
+        geo.regionName && geo.regionName != geo.cityName && region.push(geo.regionName);
+        region.length && ul.appendChild(YAF.createElement('li', region.join(', '), 'data small capitalize'));
         
-        ul.appendChild(YAF.createElement('li', data.geo.Ip, 'data small'));
+        ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data small'));
 
         ul.appendChild(YAF.createElement('li', '', 'separator'));
         
         for (var name in YAF.services) {
             var url = YAF.services[name].url
                         .replace(/\%d/, data.domain)
-                        .replace(/\%i/, data.geo.Ip);
+                        .replace(/\%i/, geo.ipAddress);
     
             var link = YAF.createElement('a', YAF.services[name].label, 'service ' + name);
             

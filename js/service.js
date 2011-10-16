@@ -24,7 +24,7 @@ YAF = {
             geo  : 'is_requesting'
         }
         
-        localStorage[domain] = JSON.stringify(data);
+        YAF.storage.set(domain, JSON.stringify(data));
         
         var xhr = new XMLHttpRequest();
         var query = [['key', YAF.API.key], ['ip', domain], ['format', 'json'], ['timezone', 'false']];
@@ -37,16 +37,16 @@ YAF = {
             return function(event) {
                 if (xhr.readyState == 4) {
                     if (xhr.status == 200) {
-                        // store geo
-                        data.geo = JSON.parse(xhr.responseText);
-                        // encode
-                        localStorage[domain] = JSON.stringify(data);
+                        // normalize received
+                        data.geo = YAF.util.normalizeData(domain, JSON.parse(xhr.responseText));
+                        // save along with timestamp
+                        YAF.storage.set(domain, JSON.stringify(data));
                         // pass data for processing
                         callback.call(self, domain, data);
                     } else {
                         // do not store anything if request fails 
                         data.geo = false;
-                        localStorage[domain] = JSON.stringify(data);
+                        YAF.storage.set(domain, JSON.stringify(data));
                     }
                 }
             }
@@ -60,7 +60,8 @@ YAF = {
             return;
         }
         
-        var storedJSON = localStorage[domain];
+        var storedJSON = YAF.storage.get(domain);
+
         if (storedJSON) {
             var data = JSON.parse(storedJSON);
             // if there is an request open more than for 5 sec, or if there is no data loaded for more that 5 sec - try load again
@@ -85,33 +86,33 @@ YAF = {
         this.getGeoData(tab.url, function(domain, data) {
             var geo = data.geo;
             
-            if (/not found/.test(geo.Status.toLowerCase())) {
+            if (geo.notFound) {
                 chrome.pageAction.setIcon({
                     tabId : tab.id,
                     path  : 'img/icon/16.png'
                 });
                 chrome.pageAction.setTitle({
                     tabId : tab.id,
-                    title : '\'' + geo.Ip + '\' was not found in database'
+                    title : '\'' + geo.ipAddress + '\' was not found in database'
                 });
-            } else if (geo.CountryName === 'Reserved') {
+            } else if (geo.isLocal) {
                 chrome.pageAction.setIcon({
                     tabId : tab.id,
                     path  : 'img/local_resource.png'
                 });
                 chrome.pageAction.setTitle({
                     tabId : tab.id,
-                    title : geo.Ip + ' is local resource'
+                    title : geo.ipAddress + ' is probably local resource'
                 });
             } else {
                 var title = [];
-                geo.City && title.push(geo.City);
-                geo.RegionName && geo.RegionName != geo.City && title.push(geo.RegionName);
-                title.push(geo.CountryName);
+                geo.cityName && title.push(geo.cityName);
+                geo.regionName && geo.regionName != geo.cityName && title.push(geo.regionName);
+                title.push(geo.countryName);
                 
                 chrome.pageAction.setIcon({
                     tabId : tab.id,
-                    path  : 'img/flags/' + geo.CountryCode.toLowerCase() + '.png'
+                    path  : 'img/flags/' + geo.countryCode.toLowerCase() + '.png'
                 });
                 chrome.pageAction.setTitle({
                     tabId : tab.id,
@@ -145,7 +146,63 @@ chrome.tabs.onSelectionChanged.addListener(function(tabID, selectionInfo) {
     });
 });
 
-// add dates to stored geo data 
+YAF.storage = {
+    set: function(key, data) {
+        try {
+            localStorage.setItem(key, data);
+        } catch(e) {
+            // at certain point we'll bump into localStorage 5MB limit
+            if (e.code && e.code === DOMException.prototype.QUOTA_EXCEEDED_ERR) {
+                console.info('Run into 5MB localStorage limit, flushing the cache now');
+                YAF.storage.flush();
+
+                // try writing again
+                localStorage.setItem(key, data);
+            } else {
+                throw e;
+            }
+        }
+    },
+    get: function(key) {
+        return localStorage.getItem(key);
+    },
+    flush: function() {
+        var version = this.get('_schema');
+        localStorage.clear();
+        this.set('_schema', version);
+    }
+}
+
+YAF.util = {
+    normalizeData : function(domain, geo) {
+        if (geo.countryCode !== '-' && domain === geo.ipAddress) {
+            geo.notFound = true;
+        }
+        if (geo.countryCode === '-' && geo.latitude === '0' && geo.longitude === '0') {
+            geo.isLocal = true;
+        }
+        var keysToDelete = []
+        for (var key in geo) {
+            if (key === 'latitude' || key === 'longitude' || key === 'timeZone' || key === 'statusCode') {
+                delete geo[key];
+                continue;
+            }
+            if (geo[key] === '-' || geo[key] === '') {
+                delete geo[key];
+                continue;
+            }
+            // i can't believe this, fucking text-transform: capitalize; won't
+            // change the uppercase letters at all :(
+            if (typeof geo[key] === 'string') {
+                geo[key] = geo[key].toLowerCase();
+            }
+        }
+        return geo;
+    }
+}
+
+// TODO: migrations, one way
+// add dates to stored geo data
 if (!localStorage['_schema']) {
     for (var domain in localStorage) {
         var geo = JSON.parse(localStorage[domain]);
@@ -161,10 +218,6 @@ if (!localStorage['_schema']) {
 
 // ipinfodb API changed, wipes all data
 if (localStorage['_schema'] == 1) {
-    for (var key in localStorage) {
-        if (key !== '_schema') {
-            delete localStorage[key];
-        }
-    }
+    YAF.storage.flush();
     localStorage['_schema'] = 2;
 }
