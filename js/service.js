@@ -137,10 +137,12 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
 });
 // update icon when tab is updated
 chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
+    // TODO: execute only if domain has changed
     YAF.setFlag(tab);
 });
 // update icon when tab is selected
 chrome.tabs.onSelectionChanged.addListener(function(tabID, selectionInfo) {
+    // TODO: execute only if domain has changed
     chrome.tabs.get(tabID, function(tab) {
         YAF.setFlag(tab);
     });
@@ -220,4 +222,10 @@ if (!localStorage['_schema']) {
 if (localStorage['_schema'] == 1) {
     YAF.storage.flush();
     localStorage['_schema'] = 2;
+}
+
+// API changed again, data are normalized from this point
+if (localStorage['_schema'] == 2) {
+    YAF.storage.flush();
+    localStorage['_schema'] = 3;
 }
