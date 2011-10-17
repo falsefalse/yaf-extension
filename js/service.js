@@ -205,6 +205,11 @@ YAF.util = {
             // change the uppercase letters at all :(
             if (typeof geo[key] === 'string') {
                 geo[key] = geo[key].toLowerCase();
+
+                // match API with flag icon, apparently API doesn't respect ISO :(
+                if (key === 'countryCode' && geo[key] === 'uk') {
+                    geo[key] = 'gb';
+                }
             }
         }
         return geo;
