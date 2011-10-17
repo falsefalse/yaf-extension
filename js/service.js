@@ -7,8 +7,8 @@
 String.prototype.capitalize = function() {
     return this.replace(/(^| )(\w)/g, function($0) {
         return $0.toUpperCase();
-    })
-}
+    });
+};
 
 YAF = {
     API : {
