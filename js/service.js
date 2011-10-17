@@ -4,6 +4,12 @@
 /*jshint curly:false, undef:true*/
 /*global browser:true, DOMException:true, chrome:true, YAF:true*/
 
+String.prototype.capitalize = function() {
+    return this.replace(/(^| )(\w)/g, function($0) {
+        return $0.toUpperCase();
+    })
+}
+
 YAF = {
     API : {
         key : '8e0b0ae78b430161344890b492099daeb04e75d7610a0211b684b720789d9de6',
@@ -119,7 +125,7 @@ YAF = {
                 });
                 chrome.pageAction.setTitle({
                     tabId : tab.id,
-                    title : title.join(', ')
+                    title : title.join(', ').capitalize()
                 });
             }
 
