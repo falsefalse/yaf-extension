@@ -205,11 +205,17 @@ YAF.util = {
             // change the uppercase letters at all :(
             if (typeof geo[key] === 'string') {
                 geo[key] = geo[key].toLowerCase();
+            }
+        }
 
-                // match API with flag icon, apparently API doesn't respect ISO :(
-                if (key === 'countryCode' && geo[key] === 'uk') {
-                    geo[key] = 'gb';
-                }
+        this.fixISO(geo);
+        return geo;
+    },
+    fixISO : function(geo) {
+        for (var key in geo) {
+            // match API with flag icon, apparently API doesn't respect ISO :(
+            if (key === 'countryCode' && geo[key] === 'uk') {
+                geo[key] = 'gb';
             }
         }
         return geo;
@@ -241,4 +247,18 @@ if (YAF.storage.get('_schema') == 1) {
 if (YAF.storage.get('_schema') == 2) {
     YAF.storage.flush();
     YAF.storage.set('_schema', 3);
+}
+
+// Change already stored UK country code to match flag icon ISO names
+if (YAF.storage.get('_schema') == 3) {
+    var geo;
+    for (var key in localStorage) {
+        if (key === '_schema') continue;
+        data = JSON.parse(localStorage[key]);
+        if (data.geo.countryCode === 'uk') {
+            YAF.util.fixISO(data.geo);
+            localStorage[key] = JSON.stringify(data);
+        }
+    }
+    YAF.storage.set('_schema', 4);
 }
