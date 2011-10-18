@@ -279,3 +279,18 @@ if (YAF.storage.get('_schema') == 3) {
     }
     YAF.storage.set('_schema', 4);
 }
+
+// Remove notFound, fix isLocal
+if (YAF.storage.get('_schema') == 4) {
+    var data;
+    for (var key in localStorage) {
+        if (key === '_schema') continue;
+        data = JSON.parse(localStorage[key]);
+        delete data.notFound;
+        if ( YAF.util.isLocal(key, data.geo.ipAddress) ) {
+            data.geo.isLocal = true;
+        }
+        localStorage[key] = JSON.stringify(data);
+    }
+    YAF.storage.set('_schema', 5);
+}
