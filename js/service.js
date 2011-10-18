@@ -251,7 +251,7 @@ if (YAF.storage.get('_schema') == 2) {
 
 // Change already stored UK country code to match flag icon ISO names
 if (YAF.storage.get('_schema') == 3) {
-    var geo;
+    var data;
     for (var key in localStorage) {
         if (key === '_schema') continue;
         data = JSON.parse(localStorage[key]);
