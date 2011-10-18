@@ -281,30 +281,17 @@ if (YAF.storage.get('_schema') == 3) {
 }
 
 // Remove notFound, fix isLocal
-if (YAF.storage.get('_schema') == 4) {
+if (YAF.storage.get('_schema') == 4 || YAF.storage.get('_schema') == 5 || YAF.storage.get('_schema') == 6) {
     var data;
     for (var key in localStorage) {
         if (key === '_schema') continue;
         data = JSON.parse(localStorage[key]);
-        // fucking fail ↓ :(
-        delete data.notFound;
+        delete data.geo.notFound;
+        delete data.geo.isLocal;
         if ( YAF.util.isLocal(key, data.geo.ipAddress) ) {
             data.geo.isLocal = true;
         }
         localStorage[key] = JSON.stringify(data);
     }
-    YAF.storage.set('_schema', 5);
-}
-
-// Really fix notFound
-if (YAF.storage.get('_schema') == 5) {
-    var data;
-    for (var key in localStorage) {
-        if (key === '_schema') continue;
-        data = JSON.parse(localStorage[key]);
-        // right there
-        delete data.geo.notFound;
-        localStorage[key] = JSON.stringify(data);
-    }
-    YAF.storage.set('_schema', 6);
+    YAF.storage.set('_schema', 7);
 }
