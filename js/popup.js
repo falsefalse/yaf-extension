@@ -27,15 +27,15 @@ window.addEventListener("DOMContentLoaded", function() {
 
         var ul = document.querySelector('#menu');
 
-        if (geo.notFound) {
-            ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data'));
-            ul.appendChild(YAF.createElement('li', 'Was not found in database', 'data small'));
-            return;
-        }
-
         if (geo.isLocal) {
             ul.appendChild(YAF.createElement('li', 'Local resource', 'data'));
             ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data small'));
+            return;
+        }
+
+        if (!geo.countryCode) {
+            ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data'));
+            ul.appendChild(YAF.createElement('li', 'Was not found in database', 'data small'));
             return;
         }
 

@@ -95,25 +95,7 @@ YAF = {
         this.getGeoData(tab.url, function(domain, data) {
             var geo = data.geo;
 
-            if (geo.notFound) {
-                chrome.pageAction.setIcon({
-                    tabId : tab.id,
-                    path  : 'img/icon/16.png'
-                });
-                chrome.pageAction.setTitle({
-                    tabId : tab.id,
-                    title : '\'' + geo.ipAddress + '\' was not found in database'
-                });
-            } else if (geo.isLocal) {
-                chrome.pageAction.setIcon({
-                    tabId : tab.id,
-                    path  : 'img/local_resource.png'
-                });
-                chrome.pageAction.setTitle({
-                    tabId : tab.id,
-                    title : geo.ipAddress + ' is probably local resource'
-                });
-            } else {
+            if (geo.countryCode) {
                 var title = [];
                 if (geo.cityName) title.push(geo.cityName);
                 if (geo.regionName && geo.regionName != geo.cityName) title.push(geo.regionName);
@@ -126,6 +108,24 @@ YAF = {
                 chrome.pageAction.setTitle({
                     tabId : tab.id,
                     title : title.join(', ').capitalize()
+                });
+            } else if (geo.isLocal) {
+                chrome.pageAction.setIcon({
+                    tabId : tab.id,
+                    path  : 'img/local_resource.png'
+                });
+                chrome.pageAction.setTitle({
+                    tabId : tab.id,
+                    title : geo.ipAddress + ' is a local resource'
+                });
+            } else {
+                chrome.pageAction.setIcon({
+                    tabId : tab.id,
+                    path  : 'img/icon/16.png'
+                });
+                chrome.pageAction.setTitle({
+                    tabId : tab.id,
+                    title : '\'' + geo.ipAddress + '\' was not found in database'
                 });
             }
 
@@ -185,18 +185,32 @@ YAF.storage = {
 };
 
 YAF.util = {
+    isLocal : function(domain, IP) {
+        // handle edge case when trying to resolve domains from local hosts file
+        // first letter of such domain will be a char. otherwise domain equals each
+        // other when domain is IP (like navigate to http://8.8.8.8)
+        if ( /^[^\d]/.test(IP) && domain === IP ) {
+            return true;
+        } else {
+            IP = IP.split('.').map(function(oct) { return parseInt(oct, 10); });
+            // 10.0.0.0 – 10.255.255.255
+            if (IP[0] === 10) { return true; }
+            // 172.16.0.0 – 172.31.255.255
+            if (IP[0] === 172 && IP[1] >= 16 && IP[1] <= 31) { return true; }
+            // 192.168.0.0 – 192.168.255.255
+            if (IP[0] === 192 && IP[1] === 168) { return true; }
+
+            return false;
+        }
+
+    },
     normalizeData : function(domain, geo) {
-        if (geo.countryCode !== '-' && domain === geo.ipAddress) {
-            geo.notFound = true;
-        }
-        if (geo.countryCode === '-' && geo.latitude === '0' && geo.longitude === '0') {
-            geo.isLocal = true;
-        }
         for (var key in geo) {
-            if (key === 'latitude' || key === 'longitude' || key === 'timeZone' || key === 'statusCode') {
+            if (key === 'latitude' || key === 'longitude' || key === 'timeZone' || key === 'statusCode' || key === 'zipCode') {
                 delete geo[key];
                 continue;
             }
+            // this will delete countryCode if nothing was found, we check for it later
             if (geo[key] === '-' || geo[key] === '') {
                 delete geo[key];
                 continue;
@@ -208,15 +222,18 @@ YAF.util = {
             }
         }
 
+        // no need to waste space for 'isLocal':false
+        if ( this.isLocal(domain, geo.ipAddress) ) {
+            geo.isLocal = true;
+        }
+
         this.fixISO(geo);
         return geo;
     },
     fixISO : function(geo) {
-        for (var key in geo) {
-            // match API with flag icon, apparently API doesn't respect ISO :(
-            if (key === 'countryCode' && geo[key] === 'uk') {
-                geo[key] = 'gb';
-            }
+        // match API with flag icon, apparently API doesn't respect ISO :(
+        if (geo.countryCode === 'uk') {
+            geo.countryCode = 'gb';
         }
         return geo;
     }
