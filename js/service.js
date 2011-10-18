@@ -286,6 +286,11 @@ if (YAF.storage.get('_schema') == 4 || YAF.storage.get('_schema') == 5 || YAF.st
     for (var key in localStorage) {
         if (key === '_schema') continue;
         data = JSON.parse(localStorage[key]);
+        // restart anything stuck, delete cached entry
+        if (data.geo === 'is_requesting') {
+            delete localStorage[key];
+            continue;
+        }
         delete data.geo.notFound;
         delete data.geo.isLocal;
         if ( YAF.util.isLocal(key, data.geo.ipAddress) ) {
