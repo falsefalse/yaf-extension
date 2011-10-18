@@ -1,7 +1,7 @@
-Version 0.7.8-0.8.0:
+Version 0.7.8-0.8.1:
 Don't confuse 'not found' with 'local IP' anymore. Improve related logic.
-Actually fix cached notFounds
-Properly migrate old cached data to new proper state
+Fix cached data so that logic could be applied to cached data as well.
+Added GA
 
 Version 0.7.7:
 Fix Great Britan flag for cached domains.
