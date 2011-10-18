@@ -25,6 +25,8 @@ window.addEventListener("DOMContentLoaded", function() {
         var data = YAF.service.YAF.tabs[tab.id],
             geo  = data.geo;
 
+        YAF.service._gaq.push(['_trackPageview']);
+
         var ul = document.querySelector('#menu');
 
         if (geo.isLocal) {
@@ -63,6 +65,7 @@ window.addEventListener("DOMContentLoaded", function() {
                         url      : url,
                         selected : true
                     });
+                    _gaq.push(['_trackEvent', 'link-whois', 'clicked']);
                 };
             })(url), false);
 

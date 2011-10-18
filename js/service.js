@@ -10,6 +10,9 @@ String.prototype.capitalize = function() {
     });
 };
 
+window._gaq = window._gaq || [];
+_gaq.push(['_setAccount', 'UA-18454737-1']);
+
 YAF = {
     API : {
         key : '8e0b0ae78b430161344890b492099daeb04e75d7610a0211b684b720789d9de6',
@@ -62,6 +65,7 @@ YAF = {
         })(this);
 
         xhr.send(null);
+        _gaq.push(['_trackPageview']);
     },
     getGeoData : function(url, callback) {
         var domain = this.getDomain(url);
