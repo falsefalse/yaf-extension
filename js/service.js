@@ -297,7 +297,7 @@ if (YAF.storage.get('_schema') == 4 || YAF.storage.get('_schema') == 5 || YAF.st
         }
         delete data.geo.notFound;
         delete data.geo.isLocal;
-        if ( YAF.util.isLocal(key, data.geo.ipAddress) ) {
+        if ( data.geo.ipAddress && YAF.util.isLocal(key, data.geo.ipAddress) ) {
             data.geo.isLocal = true;
         }
         localStorage[key] = JSON.stringify(data);
