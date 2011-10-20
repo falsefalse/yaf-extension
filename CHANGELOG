@@ -1,7 +1,10 @@
-Version 0.7.8-0.8.3:
+Version 0.7.8-0.8.4:
 Don't confuse 'not found' with 'local IP' anymore. Improve related logic.
 Fix cached data so that logic could be applied to cached data as well.
 Added GA
+Caching period is 2 weeks instead of a month. Not found entries are updated
+daily, along with DNS propagation.
+Fixing regressions after updating to latest API.
 
 Version 0.7.7:
 Fix Great Britain flag for cached domains.
