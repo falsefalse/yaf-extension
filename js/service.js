@@ -2,7 +2,7 @@
 // smashlong@gmail.com, 2010
 
 /*jshint curly:false, undef:true*/
-/*global browser:true, DOMException:true, chrome:true, YAF:true, _gaq:true*/
+/*global browser:true, chrome:true, YAF:true, _gaq:true*/
 
 String.prototype.capitalize = function() {
     return this.replace(/(^| )(\w)/g, function($0) {
@@ -179,7 +179,7 @@ YAF.storage = {
             localStorage.setItem(key, data);
         } catch(e) {
             // at certain point we'll bump into localStorage 5MB limit
-            if (e.code && e.code === DOMException.prototype.QUOTA_EXCEEDED_ERR) {
+            if (e.code && e.code === window.DOMException.prototype.QUOTA_EXCEEDED_ERR) {
                 console.info('Run into 5MB localStorage limit, flushing the cache now');
                 YAF.storage.flush();
 
