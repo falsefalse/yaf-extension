@@ -19,9 +19,6 @@ YAF = {
         URL : 'http://api.ipinfodb.com/v3/ip-city/'
     },
     tabs : {},
-    passedMoreThanFrom : function(msec, date) {
-        return (((new Date()).getTime() - date)) > msec;
-    },
     getDomain : function(url) {
         var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/); // aware of port in url, accept http(s)/ftp, any symbols in domain
         if (match && match[2]) {
@@ -38,12 +35,12 @@ YAF = {
 
         YAF.storage.set(domain, JSON.stringify(data));
 
-        var xhr = new XMLHttpRequest();
-        var query = [['key', YAF.API.key], ['ip', domain], ['format', 'json'], ['timezone', 'false']];
+        var query = [['key', YAF.API.key], ['ip', domain], ['format', 'json']]
+            .map(function(pair) { return pair.join('='); })
+            .join('&');
 
-        xhr.open('GET', YAF.API.URL + '?' + (query.map(function(parameter) {
-            return parameter.join('=');
-        })).join('&'), true);
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', YAF.API.URL + '?' + query, true);
 
         xhr.onreadystatechange = (function(self) {
             return function(event) {
@@ -73,16 +70,22 @@ YAF = {
             return;
         }
 
+        function isRequesting(data) {
+            return !data.geo || data.geo === 'is_requesting';
+        }
+        function passedMoreThan(seconds, date) {
+            return (new Date()).getTime() - date > ( seconds * 1000 );
+        }
+        var week = 60 * 60 * 24 * 7; // seconds
+
         var storedJSON = YAF.storage.get(domain);
 
         if (storedJSON) {
             var data = JSON.parse(storedJSON);
-            // if there is an request open more than for 5 sec, or if there is no data loaded for more that 5 sec - try load again
-            // if more than a month passed since last load - reload data
-            if (
-                 ((!data.geo || data.geo == 'is_requesting') && this.passedMoreThanFrom(10000, data.date)) ||
-                 (data.geo != 'is_requesting' && this.passedMoreThanFrom(2592000000, data.date)) // month
-               ) {
+
+            // request again if there are no data after 10 seconds
+            // or if data has been stored for 2 weeks
+            if ( ( isRequesting(data) && passedMoreThan(10, data.date) ) || passedMoreThan(week, data.date) ) {
                 this.xhr(domain, callback);
             } else if (typeof data.geo === 'object') {
                 callback.call(this, domain, data);
