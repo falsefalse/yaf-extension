@@ -269,12 +269,12 @@ if (YAF.storage.get('_schema') == 2) {
 // Change already stored UK country code to match flag icon ISO names
 if (YAF.storage.get('_schema') == 3) {
     var data;
-    for (var key in localStorage) {
-        if (key === '_schema') continue;
-        data = JSON.parse(localStorage[key]);
+    for (var domain in localStorage) {
+        if (domain === '_schema') continue;
+        data = JSON.parse(localStorage[domain]);
         if (data.geo.countryCode === 'uk') {
             YAF.util.fixISO(data.geo);
-            localStorage[key] = JSON.stringify(data);
+            localStorage[domain] = JSON.stringify(data);
         }
     }
     YAF.storage.set('_schema', 4);
@@ -283,20 +283,20 @@ if (YAF.storage.get('_schema') == 3) {
 // Remove notFound, fix isLocal
 if (YAF.storage.get('_schema') == 4 || YAF.storage.get('_schema') == 5 || YAF.storage.get('_schema') == 6) {
     var data;
-    for (var key in localStorage) {
-        if (key === '_schema') continue;
-        data = JSON.parse(localStorage[key]);
+    for (var domain in localStorage) {
+        if (domain === '_schema') continue;
+        data = JSON.parse(localStorage[domain]);
         // restart anything stuck, delete cached entry
         if (data.geo === 'is_requesting') {
-            delete localStorage[key];
+            delete localStorage[domain];
             continue;
         }
         delete data.geo.notFound;
         delete data.geo.isLocal;
-        if ( YAF.util.isLocal(key, data.geo.ipAddress) ) {
+        if ( YAF.util.isLocal(domain, data.geo.ipAddress) ) {
             data.geo.isLocal = true;
         }
-        localStorage[key] = JSON.stringify(data);
+        localStorage[domain] = JSON.stringify(data);
     }
     YAF.storage.set('_schema', 7);
 }
