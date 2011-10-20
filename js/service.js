@@ -190,25 +190,26 @@ YAF.storage = {
 
 YAF.util = {
     isLocal : function(domain, IP) {
-        // handle edge case when trying to resolve domains from local hosts file
-        // first letter of such domain will be a char. otherwise domain equals each
-        // other when domain is IP (like navigate to http://8.8.8.8)
-        if ( /^[^\d]/.test(IP) && domain === IP ) {
-            return true;
-        } else {
-            IP = IP.split('.').map(function(oct) { return parseInt(oct, 10); });
-            // 10.0.0.0 – 10.255.255.255
-            if (IP[0] === 10) { return true; }
-            // 172.16.0.0 – 172.31.255.255
-            if (IP[0] === 172 && IP[1] >= 16 && IP[1] <= 31) { return true; }
-            // 192.168.0.0 – 192.168.255.255
-            if (IP[0] === 192 && IP[1] === 168) { return true; }
+        if (!IP) { return false; }
 
-            return false;
-        }
+        IP = IP.split('.').map(function(oct) { return parseInt(oct, 10); });
+        // 10.0.0.0 - 10.255.255.255
+        if (IP[0] === 10) { return true; }
+        // 172.16.0.0 - 172.31.255.255
+        if (IP[0] === 172 && IP[1] >= 16 && IP[1] <= 31) { return true; }
+        // 192.168.0.0 - 192.168.255.255
+        if (IP[0] === 192 && IP[1] === 168) { return true; }
 
+        return false;
     },
     normalizeData : function(domain, geo) {
+        // no need to waste space for 'isLocal':false
+        // empty countryCode means that IP wasn't found
+        // this will break domains from hosts :(
+        if ( geo.countyCode !== '' && this.isLocal(domain, geo.ipAddress) ) {
+            geo.isLocal = true;
+        }
+
         for (var key in geo) {
             if (key === 'latitude' || key === 'longitude' || key === 'timeZone' || key === 'statusCode' || key === 'zipCode') {
                 delete geo[key];
@@ -224,11 +225,6 @@ YAF.util = {
             if (typeof geo[key] === 'string') {
                 geo[key] = geo[key].toLowerCase();
             }
-        }
-
-        // no need to waste space for 'isLocal':false
-        if ( this.isLocal(domain, geo.ipAddress) ) {
-            geo.isLocal = true;
         }
 
         this.fixISO(geo);
@@ -297,10 +293,16 @@ if (YAF.storage.get('_schema') == 4 || YAF.storage.get('_schema') == 5 || YAF.st
         }
         delete data.geo.notFound;
         delete data.geo.isLocal;
-        if ( data.geo.ipAddress && YAF.util.isLocal(key, data.geo.ipAddress) ) {
+        if ( YAF.util.isLocal(key, data.geo.ipAddress) ) {
             data.geo.isLocal = true;
         }
         localStorage[key] = JSON.stringify(data);
     }
     YAF.storage.set('_schema', 7);
+}
+
+// flush isLocal, there are false positives for not found domains
+if (YAF.storage.get('_schema') == 7) {
+    YAF.storage.flush();
+    YAF.storage.set('_schema', 8);
 }
