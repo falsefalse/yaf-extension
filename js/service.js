@@ -76,16 +76,25 @@ YAF = {
         function passedMoreThan(seconds, date) {
             return (new Date()).getTime() - date > ( seconds * 1000 );
         }
-        var week = 60 * 60 * 24 * 7; // seconds
+        var day = 60 * 60 * 24, // seconds
+            twoWeeks = day * 14;
 
         var storedJSON = YAF.storage.get(domain);
 
         if (storedJSON) {
-            var data = JSON.parse(storedJSON);
+            var data = JSON.parse(storedJSON),
+                date = data.date;
 
             // request again if there are no data after 10 seconds
+            if ( isRequesting(data) && passedMoreThan(10, date) ) {
+                this.xhr(domain, callback);
             // or if data has been stored for 2 weeks
-            if ( ( isRequesting(data) && passedMoreThan(10, data.date) ) || passedMoreThan(week, data.date) ) {
+            } else if (passedMoreThan(twoWeeks, date)) {
+                this.xhr(domain, callback);
+            // or if we stored 'not found' and not local domain
+            // domains from hosts fall there too, hence the 1-day grace period
+            // i wish ipinfodb had better API, v3 really suck balls
+            } else if (data.geo && !data.geo.countryCode && !data.geo.isLocal && passedMoreThan(day, date)) {
                 this.xhr(domain, callback);
             } else if (typeof data.geo === 'object') {
                 callback.call(this, domain, data);
@@ -308,4 +317,19 @@ if (YAF.storage.get('_schema') == 4 || YAF.storage.get('_schema') == 5 || YAF.st
 if (YAF.storage.get('_schema') == 7) {
     YAF.storage.flush();
     YAF.storage.set('_schema', 8);
+}
+
+// don't store not found entries
+if (YAF.storage.get('_schema') == 8) {
+    var data;
+    for (var key in localStorage) {
+        if (key === '_schema') continue;
+        data = JSON.parse(localStorage[key]);
+
+        if (!data.geo.countryCode && !data.geo.isLocal) {
+            delete localStorage[key];
+            continue;
+        }
+    }
+    YAF.storage.set('_schema', 9);
 }
