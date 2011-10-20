@@ -2,7 +2,7 @@
 // smashlong@gmail.com, 2010
 
 /*jshint curly:false, undef:true*/
-/*global browser:true, DOMException:true, chrome:true, YAF:true*/
+/*global browser:true, DOMException:true, chrome:true, YAF:true, _gaq:true*/
 
 String.prototype.capitalize = function() {
     return this.replace(/(^| )(\w)/g, function($0) {

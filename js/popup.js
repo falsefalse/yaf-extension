@@ -2,7 +2,7 @@
 // smashlong@gmail.com, 2010
 
 /*jshint curly:false, undef:true*/
-/*global browser:true, chrome:true, YAF:true*/
+/*global browser:true, chrome:true, YAF:true, _gaq:true*/
 
 YAF = {
     service : chrome.extension.getBackgroundPage(),
