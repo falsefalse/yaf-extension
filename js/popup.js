@@ -23,21 +23,22 @@ YAF = {
 window.addEventListener("DOMContentLoaded", function() {
     chrome.tabs.getSelected(null, function(tab) {
         var data = YAF.service.YAF.tabs[tab.id],
-            geo  = data.geo;
+            geo  = data.geo,
+            domain = data.domain
 
         YAF.service._gaq.push(['_trackPageview']);
 
         var ul = document.querySelector('#menu');
 
         if (!geo) {
-            ul.appendChild(YAF.createElement('li', geo.ip, 'data'));
+            ul.appendChild(YAF.createElement('li', domain, 'data'));
             ul.appendChild(YAF.createElement('li', 'Was not found in database', 'data small'));
             return;
         }
 
         if (geo.isLocal) {
             ul.appendChild(YAF.createElement('li', 'Local resource', 'data'));
-            ul.appendChild(YAF.createElement('li', geo.ip, 'data small'));
+            ul.appendChild(YAF.createElement('li', domain, 'data small'));
             return;
         }
 

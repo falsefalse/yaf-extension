@@ -113,7 +113,7 @@ YAF = {
                     });
                     chrome.pageAction.setTitle({
                         tabId : tab.id,
-                        title : geo.ipAddress + ' is a local resource'
+                        title : domain + ' is a local resource'
                     });
                 } else {
                     var title = [];
@@ -138,7 +138,7 @@ YAF = {
                 });
                 chrome.pageAction.setTitle({
                     tabId : tab.id,
-                    title : '\'' + geo.ipAddress + '\' was not found in database'
+                    title : '\'' + domain + '\' was not found in database'
                 });
             }
 
