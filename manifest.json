@@ -20,8 +20,9 @@
         "default_popup": "popup.html"
     },
     "permissions": [
-        "tabs",
-        "http://api.ipinfodb.com/"
+        "http://turnkey/*",
+        "http://geo.furman.im:8080/api/*",
+        "tabs"
     ],
     "version": "0.8.4"
 }

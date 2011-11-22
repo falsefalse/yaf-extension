@@ -15,8 +15,8 @@ _gaq.push(['_setAccount', 'UA-18454737-1']);
 
 YAF = {
     API : {
-        key : '8e0b0ae78b430161344890b492099daeb04e75d7610a0211b684b720789d9de6',
-        URL : 'http://api.ipinfodb.com/v3/ip-city/'
+        // URL : 'http://geo.furman.im:8080/'
+        URL : 'http://turnkey:8080/'
     },
     tabs : {},
     getDomain : function(url) {
@@ -35,12 +35,8 @@ YAF = {
 
         YAF.storage.set(domain, JSON.stringify(data));
 
-        var query = [['key', YAF.API.key], ['ip', domain], ['format', 'json']]
-            .map(function(pair) { return pair.join('='); })
-            .join('&');
-
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', YAF.API.URL + '?' + query, true);
+        xhr.open('GET', YAF.API.URL + domain, true);
 
         xhr.onreadystatechange = (function(self) {
             return function(event) {
@@ -91,12 +87,7 @@ YAF = {
             // or if data has been stored for 2 weeks
             } else if (passedMoreThan(twoWeeks, date)) {
                 this.xhr(domain, callback);
-            // or if we stored 'not found' and not local domain
-            // domains from hosts fall there too, hence the 1-day grace period
-            // i wish ipinfodb had better API, v3 really suck balls
-            } else if (data.geo && !data.geo.countryCode && !data.geo.isLocal && passedMoreThan(day, date)) {
-                this.xhr(domain, callback);
-            } else if (typeof data.geo === 'object') {
+            } else {
                 callback.call(this, domain, data);
             }
         } else {
@@ -111,29 +102,32 @@ YAF = {
         this.getGeoData(tab.url, function(domain, data) {
             var geo = data.geo;
 
-            if (geo.countryCode) {
-                var title = [];
-                if (geo.cityName) title.push(geo.cityName);
-                if (geo.regionName && geo.regionName != geo.cityName) title.push(geo.regionName);
-                title.push(geo.countryName);
+            if (geo) {
+                if (geo.isLocal) {
+                    chrome.pageAction.setIcon({
+                        tabId : tab.id,
+                        path  : 'img/local_resource.png'
+                    });
+                    chrome.pageAction.setTitle({
+                        tabId : tab.id,
+                        title : geo.ipAddress + ' is a local resource'
+                    });
+                } else {
+                    var title = [];
+                    if (geo.city) title.push(geo.city);
+                    if (geo.region && geo.region != geo.city) title.push(geo.region);
 
-                chrome.pageAction.setIcon({
-                    tabId : tab.id,
-                    path  : 'img/flags/' + geo.countryCode.toLowerCase() + '.png'
-                });
-                chrome.pageAction.setTitle({
-                    tabId : tab.id,
-                    title : title.join(', ').capitalize()
-                });
-            } else if (geo.isLocal) {
-                chrome.pageAction.setIcon({
-                    tabId : tab.id,
-                    path  : 'img/local_resource.png'
-                });
-                chrome.pageAction.setTitle({
-                    tabId : tab.id,
-                    title : geo.ipAddress + ' is a local resource'
-                });
+                    title.push(geo.country_name);
+
+                    chrome.pageAction.setIcon({
+                        tabId : tab.id,
+                        path  : 'img/flags/' + geo.country_code.toLowerCase() + '.png'
+                    });
+                    chrome.pageAction.setTitle({
+                        tabId : tab.id,
+                        title : title.join(', ').capitalize()
+                    });
+                }
             } else {
                 chrome.pageAction.setIcon({
                     tabId : tab.id,
@@ -203,46 +197,36 @@ YAF.storage = {
 };
 
 YAF.util = {
-    isLocal : function(domain, IP) {
-        if (!IP) { return false; }
+    isLocal : function(ip) {
+        if (!ip) { return false; }
 
-        IP = IP.split('.').map(function(oct) { return parseInt(oct, 10); });
+        ip = ip.split('.').map(function(oct) { return parseInt(oct, 10); });
         // 10.0.0.0 - 10.255.255.255
-        if (IP[0] === 10) { return true; }
+        if (ip[0] === 10) return true;
         // 172.16.0.0 - 172.31.255.255
-        if (IP[0] === 172 && IP[1] >= 16 && IP[1] <= 31) { return true; }
+        if (ip[0] === 172 && ip[1] >= 16 && ip[1] <= 31) return true;
         // 192.168.0.0 - 192.168.255.255
-        if (IP[0] === 192 && IP[1] === 168) { return true; }
+        if (ip[0] === 192 && ip[1] === 168) return true;
 
         return false;
     },
     normalizeData : function(domain, geo) {
-        // no need to waste space for 'isLocal':false
-        // empty countryCode means that IP wasn't found
-        // this will break domains from hosts :(
-        if ( geo.countyCode !== '' && this.isLocal(domain, geo.ipAddress) ) {
-            geo.isLocal = true;
-        }
+        // just some random chance that local ip was returned by some
+        // local VPN DNS or something
+        if ( this.isLocal(geo.ip) ) geo.isLocal = true;
 
-        for (var key in geo) {
-            if (key === 'latitude' || key === 'longitude' || key === 'timeZone' || key === 'statusCode' || key === 'zipCode') {
-                delete geo[key];
-                continue;
-            }
-            // this will delete countryCode if nothing was found, we check for it later
-            if (geo[key] === '-' || geo[key] === '') {
-                delete geo[key];
-                continue;
-            }
-            // i can't believe this, fucking text-transform: capitalize; won't
-            // change the uppercase letters at all :(
-            if (typeof geo[key] === 'string') {
-                geo[key] = geo[key].toLowerCase();
-            }
-        }
+        var normal = {
+            ip          : geo.ip,
+            country_code: geo.country_code,
+            country_name: geo.country_name,
+            city        : geo.city,
+            postal_code : geo.postal_code,
+            region      : geo.region
+        };
+        if ( geo.region && /^\d+$/.test(geo.region) )
+            normal.region = geo.region;
 
-        this.fixISO(geo);
-        return geo;
+        return normal;
     },
     fixISO : function(geo) {
         // match API with flag icon, apparently API doesn't respect ISO :(
@@ -334,4 +318,10 @@ if (YAF.storage.get('_schema') == 8) {
         }
     }
     YAF.storage.set('_schema', 9);
+}
+
+// new backend
+if (YAF.storage.get('_schema') == 9) {
+    YAF.storage.flush();
+    YAF.storage.set('_schema', 10);
 }
