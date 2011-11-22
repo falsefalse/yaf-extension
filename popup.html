@@ -1,134 +1,134 @@
 <!--
-    Popup menu
-    smashlong@gmail.com, 2010
+  Popup menu
+  smashlong@gmail.com, 2010
  -->
 
 <html>
 <head>
-    <script type="text/javascript" src="js/lib/micro-templates.js"></script>
-    <script type="text/javascript" src="js/popup.js"></script>
+  <script type="text/javascript" src="js/lib/micro-templates.js"></script>
+  <script type="text/javascript" src="js/popup.js"></script>
 
-    <script type="text/html" id="not_found">
-        <li class="data">
-            <%= domain %>
-            <a title="Mark <%= domain %> as local resource" class="mark kinda_button" href="#">
-                <img src="img/local_resource.png">
-            </a>
-        </li>
-        <li class="data small">Domain was not found in database</li>
-    </script>
-    <script type="text/html" id="local">
-        <li class="data">Local resource</li>
-        <li class="data small"><%= domain %></li>
-    </script>
-    <script type="text/html" id="regular">
-        <li class="data"><%= geo.country_name %></li>
-        <%
-        var region = [];
-        geo.city && region.push(geo.city);
-        if (geo.region && geo.region != geo.city) region.push(geo.region);
-        if (region.length) { %>
-            <li class="data small"><%= region.join(', ') %></li>
-        <% } %>
-        <li class="data small"><%= geo.ip %></li>
-        <li class="separator"></li>
-        <li>
-            <a class="service whois kinda_button" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
-        </li>
-    </script>
+  <script type="text/html" id="not_found">
+    <li class="data">
+      <%= domain %>
+      <a title="Mark <%= domain %> as local resource" class="mark kinda_button" href="#">
+        <img src="img/local_resource.png">
+      </a>
+    </li>
+    <li class="data small">Domain was not found in database</li>
+  </script>
+  <script type="text/html" id="local">
+    <li class="data">Local resource</li>
+    <li class="data small"><%= domain %></li>
+  </script>
+  <script type="text/html" id="regular">
+    <li class="data"><%= geo.country_name %></li>
+    <%
+    var region = [];
+    geo.city && region.push(geo.city);
+    if (geo.region && geo.region != geo.city) region.push(geo.region);
+    if (region.length) { %>
+      <li class="data small"><%= region.join(', ') %></li>
+    <% } %>
+    <li class="data small"><%= geo.ip %></li>
+    <li class="separator"></li>
+    <li>
+      <a class="service whois kinda_button" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
+    </li>
+  </script>
 
-    <style type="text/css">
-        body {
-            font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
-            margin: 3px;
-            padding: 0;
+  <style type="text/css">
+    body {
+      font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
+      margin: 3px;
+      padding: 0;
+    }
+    .small {
+      font-size: 12px;
+    }
+    .capitalize {
+      text-transform: capitalize;
+    }
+
+    .kinda_button {
+      border: 1px solid #FFF;
+      -webkit-border-radius: 4px;
+      cursor: pointer;
+    }
+      .kinda_button:visited {
+        color: #000;
+      }
+      .kinda_button:hover {
+        background-color: #d5e4ff;
+        border: 1px solid #8492ac;
+        color: #000;
+
+        -webkit-transition-property: background-color;
+        -webkit-transition-duration: 0.3s;
+        transition-timing-function : linear;
+      }
+
+    ul.menu {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+      ul.menu li {
+        position: relative;
+        margin: 0;
+        padding: 0 6px;
+      }
+      ul.menu li.data {
+        white-space: nowrap;
+        font-size: 15px;
+      }
+        ul.menu li.data.small {
+          font-size: 12px;
         }
-        .small {
-            font-size: 12px;
+      ul.menu li.separator {
+        height: 0;
+        border-bottom: 1px solid #e1e1e1;
+        opacity: .5;
+        margin: 5px -3px;
+      }
+
+      ul.menu li .service {
+        display: block;
+        margin: 3px -6px;
+        background-image: url(services/service.png);
+        background-repeat: no-repeat;
+        background-position: 6px center;
+        padding: 0 6px 0 27px;
+        text-decoration: none;
+        white-space: nowrap;
+        font-size: 13px;
+        height: 20px;
+        line-height: 20px;
+      }
+
+      ul.menu li .mark {
+        position: absolute;
+        display: block;
+        top: 0;
+        right: 6px;
+        width: 16px;
+        height: 16px;
+        padding: 2px;
+        line-height: 16px;
+      }
+        ul.menu li a.mark img {
+          border: none;
+          width: 16px;
+          height: 16px;
         }
-        .capitalize {
-            text-transform: capitalize;
-        }
 
-        .kinda_button {
-            border: 1px solid #FFF;
-            -webkit-border-radius: 4px;
-            cursor: pointer;
-        }
-            .kinda_button:visited {
-                color: #000;
-            }
-            .kinda_button:hover {
-                background-color: #d5e4ff;
-                border: 1px solid #8492ac;
-                color: #000;
-
-                -webkit-transition-property: background-color;
-                -webkit-transition-duration: 0.3s;
-                transition-timing-function : linear;
-            }
-
-        ul.menu {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-            ul.menu li {
-                position: relative;
-                margin: 0;
-                padding: 0 6px;
-            }
-            ul.menu li.data {
-                white-space: nowrap;
-                font-size: 15px;
-            }
-                ul.menu li.data.small {
-                    font-size: 12px;
-                }
-            ul.menu li.separator {
-                height: 0;
-                border-bottom: 1px solid #e1e1e1;
-                opacity: .5;
-                margin: 5px -3px;
-            }
-
-            ul.menu li .service {
-                display: block;
-                margin: 3px -6px;
-                background-image: url(services/service.png);
-                background-repeat: no-repeat;
-                background-position: 6px center;
-                padding: 0 6px 0 27px;
-                text-decoration: none;
-                white-space: nowrap;
-                font-size: 13px;
-                height: 20px;
-                line-height: 20px;
-            }
-
-            ul.menu li .mark {
-                position: absolute;
-                display: block;
-                top: 0;
-                right: 6px;
-                width: 16px;
-                height: 16px;
-                padding: 2px;
-                line-height: 16px;
-            }
-                ul.menu li a.mark img {
-                    border: none;
-                    width: 16px;
-                    height: 16px;
-                }
-
-        .whois {
-            background-image: url('img/services/whois.ico') !important;
-        }
-    </style>
+    .whois {
+      background-image: url('img/services/whois.ico') !important;
+    }
+  </style>
 </head>
 
 <body>
-    <ul class="menu" id="menu"></ul>
+  <ul class="menu" id="menu"></ul>
 </body>
 </html>
