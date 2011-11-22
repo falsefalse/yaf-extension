@@ -69,9 +69,6 @@ YAF = {
             return;
         }
 
-        function isRequesting(data) {
-            return !data.geo || data.geo === 'is_requesting';
-        }
         function passedMoreThan(seconds, date) {
             return (new Date()).getTime() - date > ( seconds * 1000 );
         }
@@ -85,10 +82,13 @@ YAF = {
                 date = data.date;
 
             // request again if there are no data after 10 seconds
-            if ( isRequesting(data) && passedMoreThan(10, date) ) {
-                this.xhr(domain, callback);
+            // if passed less then 10 seconds do nothing2
+            if ( data.geo === 'is_requesting') {
+                if ( passedMoreThan(10, date) ) this.xhr(domain, callback);
+                return;
+            }
             // or if data has been stored for 2 weeks
-            } else if (passedMoreThan(twoWeeks, date)) {
+            if (passedMoreThan(twoWeeks, date)) {
                 this.xhr(domain, callback);
             } else {
                 callback.call(this, domain, data);
