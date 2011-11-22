@@ -15,8 +15,8 @@ _gaq.push(['_setAccount', 'UA-18454737-1']);
 
 YAF = {
     API : {
-        // URL : 'http://geo.furman.im:8080/'
-        URL : 'http://turnkey:8080/'
+        URL : 'http://geo.furman.im:8080/'
+        // URL : 'http://turnkey:8080/'
     },
     tabs : {},
     getDomain : function(url) {

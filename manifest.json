@@ -20,9 +20,9 @@
         "default_popup": "popup.html"
     },
     "permissions": [
-        "http://turnkey/*",
-        "http://geo.furman.im:8080/api/*",
+        // "http://turnkey/*",
+        "http://geo.furman.im/*",
         "tabs"
     ],
-    "version": "0.8.4"
+    "version": "0.9.0"
 }
