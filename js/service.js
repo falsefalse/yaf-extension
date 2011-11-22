@@ -36,7 +36,7 @@ YAF = {
             geo  : 'is_requesting'
         };
 
-        YAF.storage.set(domain, JSON.stringify(data));
+        YAF.storage.set(domain, data);
 
         var xhr = new XMLHttpRequest();
         xhr.open('GET', YAF.API.URL + domain, true);
@@ -48,13 +48,13 @@ YAF = {
                         // normalize received
                         data.geo = YAF.util.normalizeData(domain, JSON.parse(xhr.responseText));
                         // save along with timestamp
-                        YAF.storage.set(domain, JSON.stringify(data));
+                        YAF.storage.set(domain, data);
                         // pass data for processing
                         callback.call(self, domain, data);
                     } else {
                         // do not store anything if request fails
                         data.geo = false;
-                        YAF.storage.set(domain, JSON.stringify(data));
+                        YAF.storage.set(domain, data);
                     }
                 }
             };
@@ -75,11 +75,10 @@ YAF = {
         var day = 60 * 60 * 24, // seconds
             twoWeeks = day * 14;
 
-        var storedJSON = YAF.storage.get(domain);
+        var data = YAF.storage.get(domain);
 
-        if (storedJSON) {
-            var data = JSON.parse(storedJSON),
-                date = data.date;
+        if (data) {
+            var date = data.date;
 
             // request again if there are no data after 10 seconds
             // if passed less then 10 seconds do nothing2
@@ -175,7 +174,7 @@ chrome.tabs.onSelectionChanged.addListener(function(tabID, selectionInfo) {
 YAF.storage = {
     set: function(key, data) {
         try {
-            localStorage.setItem(key, data);
+            localStorage.setItem(key, JSON.stringify(data));
         } catch(e) {
             // at certain point we'll bump into localStorage 5MB limit
             if (e.code && e.code === window.DOMException.prototype.QUOTA_EXCEEDED_ERR) {
@@ -190,7 +189,7 @@ YAF.storage = {
         }
     },
     get: function(key) {
-        return localStorage.getItem(key);
+        return JSON.parse(localStorage.getItem(key));
     },
     flush: function() {
         var version = this.get('_schema');
@@ -234,7 +233,7 @@ YAF.util = {
 
 // INFO: Migrations sucks balls
 (function() {
-    var schema = parseInt(YAF.storage.get('_schema'), 10) || 0,
+    var schema = YAF.storage.get('_schema') || 0,
         current = 11;
     // increment ↓↓ number in order to wipe all data
     if (schema < current) {
