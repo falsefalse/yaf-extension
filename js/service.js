@@ -231,10 +231,11 @@ YAF.util = {
 
 // INFO: Migrations sucks balls
 (function() {
-    var schema = YAF.storage.get('_schema');
+    var schema = parseInt(YAF.storage.get('_schema'), 10) || 0,
+        current = 11;
     // increment ↓↓ number in order to wipe all data
-    if (schema < 10) {
+    if (schema < current) {
         YAF.storage.flush();
-        YAF.storage.set('_schema', schema + 1);
+        YAF.storage.set('_schema', current + 1);
     }
 })();
