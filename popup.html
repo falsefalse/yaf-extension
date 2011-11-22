@@ -9,7 +9,7 @@
   <script type="text/javascript" src="js/popup.js"></script>
 
   <script type="text/html" id="not_found">
-    <li class="data">
+    <li class="data data_notfound">
       <%= domain %>
       <a title="Mark <%= domain %> as local resource" class="mark kinda_button" href="#">
         <img src="img/local_resource.png">
@@ -104,6 +104,10 @@
         font-size: 13px;
         height: 20px;
         line-height: 20px;
+      }
+
+      ul.menu li.data_notfound {
+        padding-right: 34px;
       }
 
       ul.menu li .mark {
