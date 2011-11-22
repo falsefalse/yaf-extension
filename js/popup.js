@@ -29,33 +29,33 @@ window.addEventListener("DOMContentLoaded", function() {
 
         var ul = document.querySelector('#menu');
 
-        if (geo.isLocal) {
-            ul.appendChild(YAF.createElement('li', 'Local resource', 'data'));
-            ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data small'));
-            return;
-        }
-
-        if (!geo.countryCode) {
-            ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data'));
+        if (!geo) {
+            ul.appendChild(YAF.createElement('li', geo.ip, 'data'));
             ul.appendChild(YAF.createElement('li', 'Was not found in database', 'data small'));
             return;
         }
 
-        ul.appendChild(YAF.createElement('li', geo.countryName, 'data capitalize'));
+        if (geo.isLocal) {
+            ul.appendChild(YAF.createElement('li', 'Local resource', 'data'));
+            ul.appendChild(YAF.createElement('li', geo.ip, 'data small'));
+            return;
+        }
+
+        ul.appendChild(YAF.createElement('li', geo.country_name, 'data capitalize'));
 
         var region = [];
-        if (geo.cityName) region.push(geo.cityName);
-        if (geo.regionName && geo.regionName != geo.cityName) region.push(geo.regionName);
+        if (geo.city) region.push(geo.city);
+        if (geo.region && geo.region != geo.city) region.push(geo.region);
         if (region.length) ul.appendChild(YAF.createElement('li', region.join(', '), 'data small capitalize'));
 
-        ul.appendChild(YAF.createElement('li', geo.ipAddress, 'data small'));
+        ul.appendChild(YAF.createElement('li', geo.ip, 'data small'));
 
         ul.appendChild(YAF.createElement('li', '', 'separator'));
 
         for (var name in YAF.services) {
             var url = YAF.services[name].url
                         .replace(/\%d/, data.domain)
-                        .replace(/\%i/, geo.ipAddress);
+                        .replace(/\%i/, geo.ip);
 
             var link = YAF.createElement('a', YAF.services[name].label, 'service ' + name);
 
