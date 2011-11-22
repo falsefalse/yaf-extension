@@ -4,12 +4,6 @@
 /*jshint curly:false, undef:true*/
 /*global browser:true, chrome:true, YAF:true, _gaq:true*/
 
-String.prototype.capitalize = function() {
-    return this.replace(/(^| )(\w)/g, function($0) {
-        return $0.toUpperCase();
-    });
-};
-
 window._gaq = window._gaq || [];
 _gaq.push(['_setAccount', 'UA-18454737-1']);
 
@@ -127,7 +121,7 @@ YAF = {
                     });
                     chrome.pageAction.setTitle({
                         tabId : tab.id,
-                        title : title.join(', ').capitalize()
+                        title : title.join(', ')
                     });
                 }
             } else {
