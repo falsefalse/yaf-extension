@@ -1,4 +1,4 @@
-Version 0.9.0
+Version 0.9.0-0.9.1
 Get rid of ipinfodb.com, they suck balls at DNS resolution, and thus can't found
 shit :( Use my own awesome backend in nodejs instead.
 
