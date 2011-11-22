@@ -220,10 +220,9 @@ YAF.util = {
             country_code: geo.country_code,
             country_name: geo.country_name,
             city        : geo.city,
-            postal_code : geo.postal_code,
-            region      : geo.region
+            postal_code : geo.postal_code
         };
-        if ( geo.region && /^\d+$/.test(geo.region) )
+        if ( geo.region && !/^\d+$/.test(geo.region) )
             normal.region = geo.region;
 
         return normal;
