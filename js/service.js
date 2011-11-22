@@ -226,101 +226,15 @@ YAF.util = {
             normal.region = geo.region;
 
         return normal;
-    },
-    fixISO : function(geo) {
-        // match API with flag icon, apparently API doesn't respect ISO :(
-        if (geo.countryCode === 'uk') {
-            geo.countryCode = 'gb';
-        }
-        return geo;
     }
 };
 
-// TODO: migrations, one way
-// add dates to stored geo data
-if (!YAF.storage.get('_schema')) {
-    for (var domain in localStorage) {
-        var geo = JSON.parse(localStorage[domain]);
-        if (!geo.date) {
-            localStorage[domain] = JSON.stringify({
-                date : (new Date()).getTime(),
-                geo  : geo
-            });
-        }
+// INFO: Migrations sucks balls
+(function() {
+    var schema = YAF.storage.get('_schema');
+    // increment ↓↓ number in order to wipe all data
+    if (schema < 10) {
+        YAF.storage.flush();
+        YAF.storage.set('_schema', schema + 1);
     }
-    YAF.storage.set('_schema', 1);
-}
-
-// ipinfodb API changed, wipes all data
-if (YAF.storage.get('_schema') == 1) {
-    YAF.storage.flush();
-    YAF.storage.set('_schema', 2);
-}
-
-// API changed again, data are normalized from this point
-if (YAF.storage.get('_schema') == 2) {
-    YAF.storage.flush();
-    YAF.storage.set('_schema', 3);
-}
-
-// Change already stored UK country code to match flag icon ISO names
-if (YAF.storage.get('_schema') == 3) {
-    var data;
-    for (var domain in localStorage) {
-        if (domain === '_schema') continue;
-        data = JSON.parse(localStorage[domain]);
-        if (data.geo.countryCode === 'uk') {
-            YAF.util.fixISO(data.geo);
-            localStorage[domain] = JSON.stringify(data);
-        }
-    }
-    YAF.storage.set('_schema', 4);
-}
-
-// Remove notFound, fix isLocal
-if (YAF.storage.get('_schema') == 4 || YAF.storage.get('_schema') == 5 || YAF.storage.get('_schema') == 6) {
-    var data;
-    for (var domain in localStorage) {
-        if (domain === '_schema') continue;
-        data = JSON.parse(localStorage[domain]);
-        // restart anything stuck, delete cached entry
-        if (data.geo === 'is_requesting') {
-            delete localStorage[domain];
-            continue;
-        }
-        delete data.geo.notFound;
-        delete data.geo.isLocal;
-        if ( YAF.util.isLocal(domain, data.geo.ipAddress) ) {
-            data.geo.isLocal = true;
-        }
-        localStorage[domain] = JSON.stringify(data);
-    }
-    YAF.storage.set('_schema', 7);
-}
-
-// flush isLocal, there are false positives for not found domains
-if (YAF.storage.get('_schema') == 7) {
-    YAF.storage.flush();
-    YAF.storage.set('_schema', 8);
-}
-
-// don't store not found entries
-if (YAF.storage.get('_schema') == 8) {
-    var data;
-    for (var key in localStorage) {
-        if (key === '_schema') continue;
-        data = JSON.parse(localStorage[key]);
-
-        if (!data.geo.countryCode && !data.geo.isLocal) {
-            delete localStorage[key];
-            continue;
-        }
-    }
-    YAF.storage.set('_schema', 9);
-}
-
-// new backend
-if (YAF.storage.get('_schema') == 9) {
-    YAF.storage.flush();
-    YAF.storage.set('_schema', 10);
-}
+})();
