@@ -17,6 +17,9 @@ YAF = {
     API : {
         URL : 'http://geo.furman.im:8080/'
         // URL : 'http://turnkey:8080/'
+
+        // puth this to manifest, they don't support comments yet
+        // "http://turnkey/*",
     },
     tabs : {},
     getDomain : function(url) {

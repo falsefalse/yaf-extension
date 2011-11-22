@@ -20,7 +20,6 @@
         "default_popup": "popup.html"
     },
     "permissions": [
-        // "http://turnkey/*",
         "http://geo.furman.im/*",
         "tabs"
     ],
