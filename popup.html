@@ -9,7 +9,12 @@
     <script type="text/javascript" src="js/popup.js"></script>
 
     <script type="text/html" id="not_found">
-        <li class="data"><%= domain %></li>
+        <li class="data">
+            <%= domain %>
+            <a title="Mark <%= domain %> as local resource" class="mark kinda_button" href="#">
+                <img src="img/local_resource.png">
+            </a>
+        </li>
         <li class="data small">Domain was not found in database</li>
     </script>
     <script type="text/html" id="local">
@@ -28,7 +33,7 @@
         <li class="data small"><%= geo.ip %></li>
         <li class="separator"></li>
         <li>
-            <a class="service whois" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
+            <a class="service whois kinda_button" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
         </li>
     </script>
 
@@ -44,12 +49,32 @@
         .capitalize {
             text-transform: capitalize;
         }
+
+        .kinda_button {
+            border: 1px solid #FFF;
+            -webkit-border-radius: 4px;
+            cursor: pointer;
+        }
+            .kinda_button:visited {
+                color: #000;
+            }
+            .kinda_button:hover {
+                background-color: #d5e4ff;
+                border: 1px solid #8492ac;
+                color: #000;
+
+                -webkit-transition-property: background-color;
+                -webkit-transition-duration: 0.3s;
+                transition-timing-function : linear;
+            }
+
         ul.menu {
             list-style: none;
             margin: 0;
             padding: 0;
         }
             ul.menu li {
+                position: relative;
                 margin: 0;
                 padding: 0 6px;
             }
@@ -70,30 +95,31 @@
             ul.menu li .service {
                 display: block;
                 margin: 3px -6px;
-                background: #FFF url(services/service.png) no-repeat 6px center;
+                background-image: url(services/service.png);
+                background-repeat: no-repeat;
+                background-position: 6px center;
                 padding: 0 6px 0 27px;
-                color: #000;
                 text-decoration: none;
                 white-space: nowrap;
                 font-size: 13px;
                 height: 20px;
                 line-height: 20px;
-
-                border: 1px solid #FFF;
-                -webkit-border-radius: 4px;
-                cursor: pointer;
             }
-                ul.menu li .service:visited {
-                    color: #000;
-                }
-                ul.menu li .service:hover {
-                    background-color: #d5e4ff;
-                    border: 1px solid #8492ac;
-                    color: #000;
 
-                    -webkit-transition-property: background-color;
-                    -webkit-transition-duration: 0.3s;
-                    transition-timing-function : linear;
+            ul.menu li .mark {
+                position: absolute;
+                display: block;
+                top: 0;
+                right: 6px;
+                width: 16px;
+                height: 16px;
+                padding: 2px;
+                line-height: 16px;
+            }
+                ul.menu li a.mark img {
+                    border: none;
+                    width: 16px;
+                    height: 16px;
                 }
 
         .whois {
