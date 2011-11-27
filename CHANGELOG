@@ -1,4 +1,4 @@
-Version 0.9.6
+Version 0.9.7
 Center 'Mark as local' icon under the flag icon.
 Don't make any requests when displaying local IPs.
 Check for not found data once a day inst. of after 2 weeks.
