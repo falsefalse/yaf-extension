@@ -1,3 +1,9 @@
+Version 0.9.6
+Center 'Mark as local' icon under the flag icon.
+Don't make any requests when displaying local IPs.
+Check for not found data once a day inst. of after 2 weeks.
+Black service links are black again.
+
 Version 0.9.5
 Use Resig's microtemplates.
 Add 'Mark resource as local' button, incredibly useful for people who do a lot
