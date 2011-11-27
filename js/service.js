@@ -83,6 +83,9 @@ YAF = {
             // or if data has been stored for 2 weeks
             if (passedMoreThan(twoWeeks, date)) {
                 this.xhr(domain, callback);
+            // check for not found data once a day
+            } else if (!data.geo && passedMoreThan(day, date)) {
+                this.xhr(domain, callback);
             } else {
                 callback.call(this, domain, data);
             }
