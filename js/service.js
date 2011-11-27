@@ -71,7 +71,7 @@ YAF = {
 
         var data = YAF.storage.get(domain);
 
-        if (data) {
+        if (data && data.date) {
             var date = data.date;
 
             // request again if there are no data after 10 seconds
@@ -89,6 +89,12 @@ YAF = {
             } else {
                 callback.call(this, domain, data);
             }
+        // check if we're on some local IP, like router or printer
+        // It's about time to introduce model, this is a mess :(
+        } else if ( YAF.util.isLocal(domain) ) {
+            callback.call(this, domain, {
+                geo: { isLocal: true }
+            });
         } else {
             this.xhr(domain, callback);
         }
