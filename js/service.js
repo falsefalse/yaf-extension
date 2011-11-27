@@ -69,6 +69,15 @@ YAF = {
         var day = 60 * 60 * 24, // seconds
             twoWeeks = day * 14;
 
+        // check if we're on some local IP, like router or printer
+        // It's about time to introduce model, this is a mess :(
+        if ( YAF.util.isLocal(domain) ) {
+            callback.call(this, domain, {
+                geo: { isLocal: true }
+            });
+            return;
+        }
+
         var data = YAF.storage.get(domain);
 
         if (data && data.date) {
@@ -89,12 +98,6 @@ YAF = {
             } else {
                 callback.call(this, domain, data);
             }
-        // check if we're on some local IP, like router or printer
-        // It's about time to introduce model, this is a mess :(
-        } else if ( YAF.util.isLocal(domain) ) {
-            callback.call(this, domain, {
-                geo: { isLocal: true }
-            });
         } else {
             this.xhr(domain, callback);
         }
