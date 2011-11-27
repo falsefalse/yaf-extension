@@ -76,15 +76,15 @@ YAF = {
 
             // request again if there are no data after 10 seconds
             // if passed less then 10 seconds do nothing2
-            if ( data.geo === 'is_requesting') {
+            if ( data.geo === 'is_requesting' ) {
                 if ( passedMoreThan(10, date) ) this.xhr(domain, callback);
                 return;
             }
             // or if data has been stored for 2 weeks
-            if (passedMoreThan(twoWeeks, date)) {
+            if ( passedMoreThan(twoWeeks, date) ) {
                 this.xhr(domain, callback);
             // check for not found data once a day
-            } else if (!data.geo && passedMoreThan(day, date)) {
+            } else if ( !data.geo && passedMoreThan(day, date) ) {
                 this.xhr(domain, callback);
             } else {
                 callback.call(this, domain, data);
