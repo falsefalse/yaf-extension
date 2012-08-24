@@ -1,12 +1,19 @@
 {
-    "background_page": "service.html",
+    "manifest_version": 2,
+
+    "background": {
+        "page": "service.html"
+    },
+
     "description": "Shows flag for the website in the location bar.",
+
     "icons": {
         "128": "img/icon/128.png",
         "48" : "img/icon/48.png",
         "32" : "img/icon/32.png",
         "16" : "img/icon/16.png"
     },
+
     "name": "Yet another flags",
     "content_scripts" : [
         {
@@ -15,13 +22,16 @@
             "run_at"  : "document_start"
         }
     ],
+
     "page_action": {
         "default_icon": "img/icon/16.png",
         "default_popup": "popup.html"
     },
+
     "permissions": [
         "http://geo.furman.im/*",
         "tabs"
     ],
-    "version": "0.9.7"
+
+    "version": "0.9.8"
 }

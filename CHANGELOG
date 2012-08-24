@@ -1,3 +1,6 @@
+Version 0.9.8
+Updated manifest.json to version 2.
+
 Version 0.9.7
 Center 'Mark as local' icon under the flag icon.
 Don't make any requests when displaying local IPs.
