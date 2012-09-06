@@ -1,0 +1,13 @@
+<li class="data"><%= geo.country_name %></li>
+<%
+var region = [];
+geo.city && region.push(geo.city);
+if (geo.region && geo.region != geo.city) region.push(geo.region);
+if (region.length) { %>
+  <li class="data small"><%= region.join(', ') %></li>
+<% } %>
+<li class="data small"><%= geo.ip %></li>
+<li class="separator"></li>
+<li>
+  <a class="service whois kinda_button" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
+</li>

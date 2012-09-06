@@ -5,38 +5,6 @@
 
 <html>
 <head>
-  <script type="text/javascript" src="js/lib/micro-templates.js"></script>
-  <script type="text/javascript" src="js/popup.js"></script>
-
-  <script type="text/html" id="not_found">
-    <li class="data data_notfound">
-      <%= domain %>
-      <a title="Mark <%= domain %> as local resource" class="mark kinda_button" href="#">
-        <img src="img/local_resource.png">
-      </a>
-    </li>
-    <li class="data small">Domain was not found in database</li>
-  </script>
-  <script type="text/html" id="local">
-    <li class="data">Local resource</li>
-    <li class="data small"><%= domain %></li>
-  </script>
-  <script type="text/html" id="regular">
-    <li class="data"><%= geo.country_name %></li>
-    <%
-    var region = [];
-    geo.city && region.push(geo.city);
-    if (geo.region && geo.region != geo.city) region.push(geo.region);
-    if (region.length) { %>
-      <li class="data small"><%= region.join(', ') %></li>
-    <% } %>
-    <li class="data small"><%= geo.ip %></li>
-    <li class="separator"></li>
-    <li>
-      <a class="service whois kinda_button" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
-    </li>
-  </script>
-
   <style type="text/css">
     body {
       font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
