@@ -1,8 +1,8 @@
-// Background service for YAFlags
-// smashlong@gmail.com, 2010
-
 /*jshint curly:false, undef:true*/
 /*global browser:true, chrome:true, YAF:true, _gaq:true*/
+
+// Background service for YAFlags
+// smashlong@gmail.com, 2012
 
 window._gaq = window._gaq || [];
 _gaq.push(['_setAccount', 'UA-18454737-1']);
