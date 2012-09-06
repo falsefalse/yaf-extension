@@ -33,5 +33,7 @@
         "tabs"
     ],
 
-    "version": "0.9.8"
+    "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'",
+
+    "version": "0.9.9"
 }
