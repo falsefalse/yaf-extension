@@ -6,6 +6,9 @@
 YAF = chrome.extension.getBackgroundPage().YAF;
 
 window.addEventListener('DOMContentLoaded', function() {
+    function get(template) {
+        return TPL[template];
+    }
     chrome.tabs.getSelected(null, function(tab) {
         var data   = YAF.tabs[tab.id],
             geo    = data.geo,
@@ -15,7 +18,7 @@ window.addEventListener('DOMContentLoaded', function() {
         var ul = document.querySelector('#menu');
 
         if (!geo) {
-            ul.innerHTML = window.tmpl('not_found', { domain: domain });
+            ul.innerHTML = get('not_found.ejs')({ domain: domain });
 
             link = ul.querySelector('.mark');
             link.addEventListener('click', function() {
@@ -33,11 +36,11 @@ window.addEventListener('DOMContentLoaded', function() {
         }
 
         if (geo.isLocal) {
-            ul.innerHTML = window.tmpl('local', { domain: domain });
+            ul.innerHTML = get('local.ejs')({ domain: domain });
             return;
         }
 
-        ul.innerHTML = window.tmpl('regular', {
+        ul.innerHTML = get('regular.ejs')({
             domain: domain,
             geo: geo
         });
