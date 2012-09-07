@@ -1,5 +1,4 @@
-/*jshint curly:false, undef:true*/
-/*global browser:true, chrome:true, YAF:true, _gaq:true*/
+/*global chrome, console, YAF:true, _gaq*/
 
 // Background service for YAFlags
 // smashlong@gmail.com, 2012
@@ -37,8 +36,8 @@ YAF = {
 
         xhr.onreadystatechange = (function(self) {
             return function(event) {
-                if (xhr.readyState == 4) {
-                    if (xhr.status == 200) {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
                         // normalize received
                         data.geo = YAF.util.normalizeData(domain, JSON.parse(xhr.responseText));
                         // save along with timestamp
@@ -123,7 +122,7 @@ YAF = {
                 } else {
                     var title = [];
                     if (geo.city) title.push(geo.city);
-                    if (geo.region && geo.region != geo.city) title.push(geo.region);
+                    if (geo.region && geo.region !== geo.city) title.push(geo.region);
 
                     title.push(geo.country_name);
 

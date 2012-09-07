@@ -1,12 +1,11 @@
-// Render services links for domain/IP and display them in popup
-// smashlong@gmail.com, 2010
+/*global chrome, YAF:true */
 
-/*jshint curly:false, undef:true*/
-/*global browser:true, chrome:true, YAF:true, _gaq:true*/
+// Render services links for domain/IP and display them in popup
+// smashlong@gmail.com, 2012
 
 YAF = chrome.extension.getBackgroundPage().YAF;
 
-window.addEventListener("DOMContentLoaded", function() {
+window.addEventListener('DOMContentLoaded', function() {
     chrome.tabs.getSelected(null, function(tab) {
         var data   = YAF.tabs[tab.id],
             geo    = data.geo,

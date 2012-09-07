@@ -1,3 +1,4 @@
+/*global chrome*/
 // Notify YAF that tab has started loading
 // smashlong@gmail.com, 2010
 
