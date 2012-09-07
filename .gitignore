@@ -3,3 +3,4 @@
 _build.zip
 node_modules
 build/
+pkg/
