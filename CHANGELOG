@@ -1,3 +1,9 @@
+Version 0.9.9
+Fixed popup
+Fixed GA
+Started using JSHint and npm
+Added Jakefile, which will handle templates compilation, minification and packaging
+
 Version 0.9.8
 Updated manifest.json to version 2.
 
