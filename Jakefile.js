@@ -1,44 +1,41 @@
 /* BUILD ALL THE THINGS */
 
-/*jshint evil: true, node: true */
-/*global task, desc, namespace, file, complete */
+/*global task, desc, namespace, file */
 
 var fs   = require('fs'),
     path = require('path'),
-    Lazy = require('lazy'),
     jsp  = require('uglify-js').parser,
     pro  = require('uglify-js').uglify,
     _    = require('underscore');
 
-var ENC         = 'utf-8';
-
-var ROOT        = path.join('.', './'),
+var ENC = 'utf-8',
+    ROOT        = path.join('.', './'),
     BUILD_DIR   = path.join(ROOT, './build');
 
 var SRC = {
     service : path.join(ROOT, 'js/service.js'),
     _       : path.join(ROOT, 'lib/underscore.js'),
     tpls    : [
-        './tpl/_compiled.js'
+        '_compiled.js'
     ]
-},
-    BUILD = {
+};
+var BUILD = {
     service : path.join(BUILD_DIR, 'service.min.js'),
     _       : path.join(BUILD_DIR, 'underscore.min.js'),
     tpl     : path.join(BUILD_DIR, 'templates.js')
 };
 
 ;(function fill() {
-    SRC.tpls = SRC.tpls.concat(
-        fs
-            .readdirSync( path.join(ROOT, './tpl') )
-            .filter(function(file) {
-                return /\.ejs$/.test(file);
-            })
-            .map(function(fileName) {
-                return path.join('./tpl', fileName)
-            })
-    );
+    SRC.tpls = SRC.tpls
+        .concat( fs
+                .readdirSync( path.join(ROOT, './tpl') )
+                .filter( function(fileName) {
+                    return (/\.ejs$/).test(fileName);
+                } )
+         )
+        .map(function(fileName) {
+            return path.join(ROOT, './tpl', fileName);
+        })
 })();
 
 // utilities
@@ -47,27 +44,26 @@ function size (filepath) {
     var fsize = fs.statSync(filepath).size;
     return (fsize < 1024) ? fsize + 'B' : ~~(fsize / 1024) + 'KB';
 }
+// minifies passed JS file
+// if no resultpath was passed, overwrites the source file
+function minify (sourcepath, resultpath) {
+    var compressed, ast,
+        source = fs.readFileSync(sourcepath, ENC),
+        sourceSize = size(sourcepath);
+
+    ast = jsp.parse(source);
+    ast = pro.ast_mangle(ast);
+    ast = pro.ast_squeeze(ast);
+    compressed = pro.gen_code(ast);
+
+    fs.writeFileSync(resultpath || sourcepath, compressed);
+    console.log('Minified:', sourcepath, sourceSize, size(resultpath || sourcepath));
+}
 
 // create BUILD_DIR folder if there is none
-if (!fs.existsSync(BUILD_DIR)) fs.mkdirSync(BUILD_DIR, 0755);
+if (!fs.existsSync(BUILD_DIR)) fs.mkdirSync(BUILD_DIR, 755);
 
 namespace('js', function() {
-    // minifies passed JS file
-    // if no resultpath was passed, overwrites the source file
-    function minify (sourcepath, resultpath) {
-        var compressed, ast,
-            source = fs.readFileSync(sourcepath, ENC),
-            sourceSize = size(sourcepath);
-
-        ast = jsp.parse(source);
-        ast = pro.ast_mangle(ast);
-        ast = pro.ast_squeeze(ast);
-        compressed = pro.gen_code(ast);
-
-        fs.writeFileSync(resultpath || sourcepath, compressed);
-        console.log('Minified:', sourcepath, sourceSize, size(resultpath || sourcepath));
-    }
-
     desc('Minify service');
     file(BUILD.service, [SRC.service], function() {
         minify(SRC.service, BUILD.service);
@@ -89,13 +85,12 @@ namespace('js', function() {
     });
 });
 
-namespace('templates', function() {
-    desc('Compile templates');
+namespace('tpl', function() {
+    desc('Compile and minify templates');
     file(BUILD.tpl, SRC.tpls, function() {
         var compiled = {},
-            // this is file we're gonna generate compiled templates into
-            // it's itself and underscore template, yo dawg
-            result = _.template( fs.readFileSync(SRC.tpls[0], ENC) );
+            meta = SRC.tpls.shift(),
+            result = _.template( fs.readFileSync(meta, ENC) );
 
         SRC.tpls.forEach(function(fullpath) {
             var fileName = path.basename(fullpath),
@@ -106,20 +101,22 @@ namespace('templates', function() {
 
         result = result({ compiled: compiled });
         fs.writeFileSync(BUILD.tpl, result, ENC);
-
         console.log('Compiled %s templates %s', SRC.tpls.length, size(BUILD.tpl));
+
+        minify(BUILD.tpl);
     });
 });
 
 desc('Build all');
 task({ 'default': [
      'js:'        + BUILD.service,
-     'js:'        + BUILD._
+     'js:'        + BUILD._,
+     'tpl:'       + BUILD.tpl
 ] }, function() {
     console.log('Build completed');
 });
 
 desc('Clean all');
-task({ 'clean': ['js:clean', 'templates:clean'] }, function() {
+task({ 'clean': ['js:clean'] }, function() {
     console.log('Cleaned');
 });
