@@ -1,6 +1,6 @@
 /* BUILD ALL THE THINGS */
 
-/*global task, desc, namespace, file */
+/*global jake, task, desc, namespace, file */
 
 var fs   = require('fs'),
     path = require('path'),
@@ -127,4 +127,20 @@ task({ 'default': [
 desc('Clean all');
 task({ 'clean': ['js:clean'] }, function() {
     console.log('Cleaned');
+});
+
+// Package the shit
+var manifest = JSON.parse(fs.readFileSync('manifest.json', ENC)),
+    pkgName = manifest.name.replace(/ /g, '-').toLowerCase();
+new jake.PackageTask(pkgName, manifest.version, function () {
+    var fileList = [
+        'manifest.json',
+        'js/get_loading_page_url.js',
+        'build/*',
+        'img/**',
+        'popup.html',
+        'service.html'
+    ];
+    this.packageFiles.include(fileList);
+    this.needZip = true;
 });
