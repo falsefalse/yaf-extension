@@ -14,6 +14,7 @@ var ENC = 'utf-8',
 
 var SRC = {
     service : path.join(ROOT, 'js/service.js'),
+    popup   : path.join(ROOT, 'js/popup.js'),
     _       : path.join(ROOT, 'lib/underscore.js'),
     tpls    : [
         '_compiled.js'
@@ -21,6 +22,7 @@ var SRC = {
 };
 var BUILD = {
     service : path.join(BUILD_DIR, 'service.min.js'),
+    popup   : path.join(BUILD_DIR, 'popup.min.js'),
     _       : path.join(BUILD_DIR, 'underscore.min.js'),
     tpl     : path.join(BUILD_DIR, 'templates.js')
 };
@@ -74,9 +76,14 @@ namespace('js', function() {
         minify(SRC._, BUILD._);
     });
 
+    desc('Minify popup');
+    file(BUILD.popup, [SRC.popup], function() {
+        minify(SRC.popup, BUILD.popup);
+    });
+
     desc('Clean JavaScript');
     task('clean', function() {
-        [ BUILD.service, BUILD._ ].forEach(function(filepath) {
+        [ BUILD.service, BUILD.popup, BUILD._ ].forEach(function(filepath) {
             if ( fs.existsSync(filepath) ) {
                 fs.unlinkSync(filepath);
                 console.log('Removed:', filepath);
@@ -110,6 +117,7 @@ namespace('tpl', function() {
 desc('Build all');
 task({ 'default': [
      'js:'        + BUILD.service,
+     'js:'        + BUILD.popup,
      'js:'        + BUILD._,
      'tpl:'       + BUILD.tpl
 ] }, function() {
