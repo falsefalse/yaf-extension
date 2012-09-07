@@ -37,7 +37,7 @@ var BUILD = {
          )
         .map(function(fileName) {
             return path.join(ROOT, './tpl', fileName);
-        })
+        });
 })();
 
 // utilities
