@@ -42,7 +42,7 @@ YAF = {
         xhr.open('GET', YAF.API.URL + domain, true);
 
         xhr.onreadystatechange = (function(self) {
-            return function(event) {
+            return function() {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
                         // normalize received
@@ -176,7 +176,7 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
     YAF.setFlag(tab);
 });
 // update icon when tab is selected
-chrome.tabs.onSelectionChanged.addListener(function(tabID, selectionInfo) {
+chrome.tabs.onSelectionChanged.addListener(function(tabID/*, selectionInfo*/) {
     // TODO: execute only if domain has changed
     chrome.tabs.get(tabID, function(tab) {
         YAF.setFlag(tab);

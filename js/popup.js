@@ -7,7 +7,7 @@ YAF = chrome.extension.getBackgroundPage().YAF;
 
 window.addEventListener('DOMContentLoaded', function() {
     function get(template) {
-        return TPL[template];
+        return window.TPL[template];
     }
     chrome.tabs.getSelected(null, function(tab) {
         var data   = YAF.tabs[tab.id],
