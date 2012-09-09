@@ -90,6 +90,15 @@ namespace('js', function() {
             }
         });
     });
+
+    desc('Minify JavaScript');
+    task({ 'default': [
+         'js:' + BUILD.service,
+         'js:' + BUILD._,
+         'js:' + BUILD.popup
+    ] }, function() {
+        console.log('Finished building JavaScript');
+    });
 });
 
 namespace('tpl', function() {
@@ -116,10 +125,8 @@ namespace('tpl', function() {
 
 desc('Build all');
 task({ 'default': [
-     'js:'        + BUILD.service,
-     'js:'        + BUILD.popup,
-     'js:'        + BUILD._,
-     'tpl:'       + BUILD.tpl
+     'js:default',
+     'tpl:' + BUILD.tpl
 ] }, function() {
     console.log('Build completed');
 });
