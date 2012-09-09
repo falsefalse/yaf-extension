@@ -121,6 +121,16 @@ namespace('tpl', function() {
 
         minify(BUILD.tpl);
     });
+
+    desc('Clean templates');
+    task('clean', function() {
+        [ BUILD.tpl ].forEach(function(filepath) {
+            if ( fs.existsSync(filepath) ) {
+                fs.unlinkSync(filepath);
+                console.log('Removed:', filepath);
+            }
+        });
+    });
 });
 
 desc('Build all');
@@ -132,7 +142,7 @@ task({ 'default': [
 });
 
 desc('Clean all');
-task({ 'clean': ['js:clean'] }, function() {
+task({ 'clean': ['js:clean', 'tpl:clean'] }, function() {
     console.log('Cleaned');
 });
 
