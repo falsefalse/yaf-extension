@@ -1,0 +1,23 @@
+{
+    "folders":
+    [
+        {
+            "name": "YAF",
+            "path": "~/workspace/yet_another_flags/extension",
+            "folder_exclude_patterns": [
+                "node_modules"
+            ],
+            "file_exclude_patterns": [
+                "build/*",
+                "*.sublime-workspace"
+            ]
+        }
+    ],
+    "settings": {
+        "trim_trailing_white_space_on_save": true,
+        "translate_tabs_to_spaces": true,
+        "word_wrap": true,
+        "word_wrap_width": "auto",
+        "rulers": [ 80 ]
+    }
+}
