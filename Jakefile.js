@@ -24,7 +24,7 @@ var BUILD = {
     service : path.join(BUILD_DIR, 'service.min.js'),
     popup   : path.join(BUILD_DIR, 'popup.min.js'),
     _       : path.join(BUILD_DIR, 'underscore.min.js'),
-    tpl     : path.join(BUILD_DIR, 'templates.js')
+    tpl     : path.join(BUILD_DIR, 'templates.min.js')
 };
 
 ;(function fill() {
