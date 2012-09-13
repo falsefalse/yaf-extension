@@ -9,6 +9,8 @@
             ],
             "file_exclude_patterns": [
                 "build/*",
+                "pkg/*",
+
                 "*.sublime-workspace"
             ]
         }
