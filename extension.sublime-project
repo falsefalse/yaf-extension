@@ -3,7 +3,7 @@
     [
         {
             "name": "YAF",
-            "path": "~/workspace/yet_another_flags/extension",
+            "path": ".",
             "folder_exclude_patterns": [
                 "node_modules"
             ],
@@ -20,6 +20,50 @@
         "translate_tabs_to_spaces": true,
         "word_wrap": true,
         "word_wrap_width": "auto",
-        "rulers": [ 80 ]
-    }
+        "rulers": [ 80 ],
+
+        "build_switcher_systems": [
+            "jake",
+            "jake clean",
+            "jake package",
+            "jshint"
+        ]
+    },
+    "build_systems": [
+        {
+            "name": "jake",
+            "cmd": ["jake"],
+            "windows": {
+                "cmd": ["jake.cmd"]
+            },
+            "working_dir": "$project_path"
+        },
+        {
+            "name": "jake clean",
+            "cmd": ["jake", "clean"],
+            "windows": {
+                "cmd": ["jake.cmd", "clean"]
+            },
+            "working_dir": "$project_path"
+        },
+        {
+            "name": "jake package",
+            "cmd": ["jake", "package"],
+            "windows": {
+                "cmd": ["jake.cmd", "package"]
+            },
+            "working_dir": "$project_path"
+        },
+        {
+            "name": "jshint",
+            "cmd": ["jshint", "."],
+            "windows": {
+                "cmd": ["jshint.cmd", "."]
+            },
+            "file_regex": "^(.+): line (\\d+), col (\\d+), (.+)$",
+
+            "working_dir": "$project_path"
+        }
+    ]
+
 }
