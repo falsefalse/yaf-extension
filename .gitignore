@@ -1,6 +1,5 @@
 *.sublime-workspace
 .DS_Store
-_build.zip
 node_modules
 build/
 pkg/

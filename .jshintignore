@@ -1,5 +1,4 @@
 node_modules
 build
-lib
 tpl/_compiled.js
 pkg/
