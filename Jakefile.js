@@ -15,7 +15,8 @@ var ENC = 'utf-8',
 var SRC = {
     service : path.join(ROOT, 'js/service.js'),
     popup   : path.join(ROOT, 'js/popup.js'),
-    _       : path.join(ROOT, 'lib/underscore.js'),
+    // don't need to minify it twice, reuse one from npm
+    _       : path.join(ROOT, 'node_modules/underscore/underscore-min.js'),
     tpls    : [
         '_compiled.js'
     ]
@@ -71,9 +72,10 @@ namespace('js', function() {
         minify(SRC.service, BUILD.service);
     });
 
-    desc('Minify _');
+    desc('Copy _');
     file(BUILD._, [SRC._], function() {
-        minify(SRC._, BUILD._);
+        jake.cpR(SRC._, BUILD._);
+        console.log('Copied minified _.js, size %s', size(BUILD._));
     });
 
     desc('Minify popup');
@@ -91,7 +93,7 @@ namespace('js', function() {
         });
     });
 
-    desc('Minify JavaScript');
+    desc('Build JavaScript');
     task({ 'default': [
          'js:' + BUILD.service,
          'js:' + BUILD._,
