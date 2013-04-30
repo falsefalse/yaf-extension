@@ -9,13 +9,15 @@ var fs   = require('fs'),
     _    = require('underscore');
 
 var ENC = 'utf-8',
-    ROOT        = path.join('.', './'),
+    ROOT        = './',
     BUILD_DIR   = path.join(ROOT, './build');
 
 var SRC = {
     service : path.join(ROOT, 'js/service.js'),
     popup   : path.join(ROOT, 'js/popup.js'),
-    _       : path.join(ROOT, require.resolve('underscore')),
+    // resolve absolute path to _ into relative to the project dir path
+    // otherwise, file() tasks are broken with uninformative errors
+    _       : path.relative(path.resolve(ROOT), require.resolve('underscore')),
     tpls    : [
         '_compiled.js'
     ]
