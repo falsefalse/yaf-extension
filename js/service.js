@@ -212,7 +212,8 @@ YAF.storage = {
 
 YAF.util = {
     isLocal : function(ip) {
-        if (!ip) { return false; }
+        if (!ip) return false;
+        if (ip === 'localhost') return true;
 
         ip = ip.split('.').map(function(oct) { return parseInt(oct, 10); });
         // 10.0.0.0 - 10.255.255.255
