@@ -109,7 +109,8 @@ YAF = {
         }
     },
     setFlag : function(tab) {
-        if (!tab.url) {
+        // TODO: figure out who exactly sends empty tab here
+        if (!tab || !tab.url) {
             return;
         }
 
