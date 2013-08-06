@@ -154,11 +154,7 @@ YAF = {
                 });
             }
 
-            this.tabs[tab.id] = {
-                domain : domain,
-                geo    : geo
-            };
-
+            chrome.pageAction.show(tab.id);
             // this is some magic that fixes flags that didn't appear after
             // first extension install and load
             setTimeout(function() { chrome.pageAction.show(tab.id); }, 125);

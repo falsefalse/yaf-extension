@@ -10,39 +10,38 @@ window.addEventListener('DOMContentLoaded', function() {
         return window.TPL[template];
     }
     chrome.tabs.getSelected(null, function(tab) {
-        var data   = YAF.tabs[tab.id],
-            geo    = data.geo,
-            domain = data.domain,
-            link;
+        YAF.getGeoData(tab.url, function(domain, data) {
+            var geo = data.geo, link;
 
-        var ul = document.querySelector('#menu');
+            var ul = document.querySelector('#menu');
 
-        if (!geo) {
-            ul.innerHTML = get('not_found.ejs')({ domain: domain });
+            if (!geo) {
+                ul.innerHTML = get('not_found.ejs')({ domain: domain });
 
-            link = ul.querySelector('.mark');
-            link.addEventListener('click', function() {
-                var data = YAF.storage.get(domain);
+                link = ul.querySelector('.mark');
+                link.addEventListener('click', function() {
+                    var data = YAF.storage.get(domain);
 
-                data.geo = data.geo || {};
-                data.geo.isLocal = true;
+                    data.geo = data.geo || {};
+                    data.geo.isLocal = true;
 
-                YAF.storage.set(domain, data);
-                YAF.setFlag(tab);
+                    YAF.storage.set(domain, data);
+                    YAF.setFlag(tab);
 
-                window.location.reload(true);
-            }, false);
-            return;
-        }
+                    window.location.reload(true);
+                }, false);
+                return;
+            }
 
-        if (geo.isLocal) {
-            ul.innerHTML = get('local.ejs')({ domain: domain });
-            return;
-        }
+            if (geo.isLocal) {
+                ul.innerHTML = get('local.ejs')({ domain: domain });
+                return;
+            }
 
-        ul.innerHTML = get('regular.ejs')({
-            domain: domain,
-            geo: geo
+            ul.innerHTML = get('regular.ejs')({
+                domain: domain,
+                geo: geo
+            });
         });
     });
 }, false);

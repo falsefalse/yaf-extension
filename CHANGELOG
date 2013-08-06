@@ -1,3 +1,7 @@
+Version 0.9.9.7
+Attemp to fix disappearing pageAction icon on Mac OS X.
+Keeping code simpler could help.
+
 Version 0.9.9.6
 Fixes crash when ext. gets empty `tab` from Chrome
 Treat 'localhost' as local domain always, duh
