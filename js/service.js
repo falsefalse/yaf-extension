@@ -33,7 +33,7 @@ YAF = {
     xhr : function (domain, callback) {
         var data = {
             date : (new Date()).getTime(),
-            geo  : 'is_requesting'
+            geo  : null
         };
 
         YAF.storage.set(domain, data);
@@ -46,16 +46,15 @@ YAF = {
                 if (xhr.readyState === 4) {
                     if (xhr.status === 200) {
                         // normalize received
-                        data.geo = YAF.util.normalizeData(domain, JSON.parse(xhr.responseText));
-                        // save along with timestamp
-                        YAF.storage.set(domain, data);
-                        // pass data for processing
-                        callback.call(self, domain, data);
+                        var resp = JSON.parse(xhr.responseText);
+                        data.geo = YAF.util.normalizeData(domain, resp);
                     } else {
-                        // do not store anything if request fails
                         data.geo = false;
-                        YAF.storage.set(domain, data);
                     }
+                    // save along with timestamp
+                    YAF.storage.set(domain, data);
+                    // pass data for processing
+                    callback.call(self, domain, data);
                 }
             };
         })(this);
@@ -89,13 +88,7 @@ YAF = {
         if (data && data.date) {
             var date = data.date;
 
-            // request again if there are no data after 10 seconds
-            // if passed less then 10 seconds do nothing2
-            if ( data.geo === 'is_requesting' ) {
-                if ( passedMoreThan(10, date) ) this.xhr(domain, callback);
-                return;
-            }
-            // or if data has been stored for 2 weeks
+            // if data has been stored for 2 weeks
             if ( passedMoreThan(twoWeeks, date) ) {
                 this.xhr(domain, callback);
             // check for not found data once a day
