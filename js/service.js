@@ -202,6 +202,8 @@ YAF.util = {
         if (ip === 'localhost') return true;
 
         ip = ip.split('.').map(function(oct) { return parseInt(oct, 10); });
+        // 127.0.0.1 - 127.255.255.255
+        if (ip[0] === 127) return true;
         // 10.0.0.0 - 10.255.255.255
         if (ip[0] === 10) return true;
         // 172.16.0.0 - 172.31.255.255
