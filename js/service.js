@@ -109,7 +109,6 @@ YAF = {
         }
     },
     setFlag : function(tab) {
-        // TODO: figure out who exactly sends empty tab here
         if (!tab || !tab.url) {
             return;
         }
@@ -173,11 +172,9 @@ chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
     YAF.setFlag(tab);
 });
 // update icon when tab is selected
-chrome.tabs.onSelectionChanged.addListener(function(tabID/*, selectionInfo*/) {
+chrome.tabs.onActivated.addListener(function(activeInfo) {
     // TODO: execute only if domain has changed
-    chrome.tabs.get(tabID, function(tab) {
-        YAF.setFlag(tab);
-    });
+    chrome.tabs.get( activeInfo.tabId, YAF.setFlag.bind(YAF) );
 });
 
 YAF.storage = {
