@@ -1,3 +1,8 @@
+Version 0.9.9.8
+Rest permissions, no more content script is needed
+Update tab API calls, fixes flag disappering
+Simplified XHR code
+
 Version 0.9.9.7
 Attemp to fix disappearing pageAction icon on Mac OS X.
 Keeping code simpler could help.

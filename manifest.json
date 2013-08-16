@@ -28,5 +28,5 @@
 
     "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'",
 
-    "version": "0.9.9.7"
+    "version": "0.9.9.8"
 }
