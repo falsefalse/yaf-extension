@@ -157,7 +157,6 @@ var manifest = JSON.parse(fs.readFileSync('manifest.json', ENC)),
 new jake.PackageTask(pkgName, manifest.version, function () {
     var fileList = [
         'manifest.json',
-        'js/get_loading_page_url.js',
         'build/*',
         'img/**',
         'popup.html',

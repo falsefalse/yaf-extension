@@ -161,11 +161,6 @@ YAF = {
     }
 };
 
-// get message from content script and update icon
-chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-    YAF.setFlag(sender.tab);
-    sendResponse({});
-});
 // update icon when tab is updated
 chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
     // TODO: execute only if domain has changed
