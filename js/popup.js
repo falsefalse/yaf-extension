@@ -16,7 +16,10 @@ window.addEventListener('DOMContentLoaded', function() {
             var ul = document.querySelector('#menu');
 
             if (!geo) {
-                ul.innerHTML = get('not_found.ejs')({ domain: domain });
+                ul.innerHTML = get('not_found.ejs')({
+                    domain: domain,
+                    error: data.error
+                });
 
                 link = ul.querySelector('.mark');
                 link.addEventListener('click', function() {

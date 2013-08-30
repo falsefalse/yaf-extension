@@ -44,12 +44,13 @@ YAF = {
         xhr.onreadystatechange = (function(self) {
             return function() {
                 if (xhr.readyState === 4) {
+                    var resp = xhr.responseText;
                     if (xhr.status === 200) {
                         // normalize received
-                        var resp = JSON.parse(xhr.responseText);
-                        data.geo = YAF.util.normalizeData(domain, resp);
+                        data.geo = YAF.util.normalizeData( domain, JSON.parse(resp) );
                     } else {
                         data.geo = false;
+                        data.error = resp.trim();
                     }
                     // save along with timestamp
                     YAF.storage.set(domain, data);
@@ -142,7 +143,7 @@ YAF = {
                 });
                 chrome.pageAction.setTitle({
                     tabId : tab.id,
-                    title : '\'' + domain + '\' was not found in database'
+                    title : data.error || '\'' + domain + '\' was not found in database'
                 });
             }
 
