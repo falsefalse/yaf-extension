@@ -229,7 +229,7 @@ YAF.util = {
 // INFO: Migrations sucks balls
 (function() {
     var schema = YAF.storage.get('_schema') || 0,
-        current = 14;
+        current = 15;
     //  increment ↑↑ number in order to wipe all data
     if (schema < current) {
         YAF.storage.flush();
