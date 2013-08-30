@@ -1,3 +1,7 @@
+Version 0.9.9.9
+Better error reporting when domain or IP wasn't found in DB
+Updated GeoLite to the latest
+
 Version 0.9.9.8
 Rest permissions, no more content script is needed
 Update tab API calls, fixes flag disappering
