@@ -3,9 +3,13 @@
 // Render services links for domain/IP and display them in popup
 // smashlong@gmail.com, 2012
 
-YAF = chrome.extension.getBackgroundPage().YAF;
+var service = chrome.extension.getBackgroundPage(),
+    YAF  = service.YAF,
+    _gaq = service._gaq;
 
 window.addEventListener('DOMContentLoaded', function() {
+    _gaq.push(['_trackEvent', 'popup', 'shown']);
+
     function get(template) {
         return window.TPL[template];
     }
