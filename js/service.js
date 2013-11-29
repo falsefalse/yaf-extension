@@ -21,15 +21,6 @@ YAF = {
         // puth this to manifest, they don't support comments yet
         // "http://turnkey/*",
     },
-    tabs : {},
-    getDomain : function(url) {
-        var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/); // aware of port in url, accept http(s)/ftp, any symbols in domain
-        if (match && match[2]) {
-            return match[2]; // match[1] is the protocol
-        } else {
-            return null;
-        }
-    },
     xhr : function (domain, callback) {
         var data = {
             date : (new Date()).getTime(),
@@ -64,7 +55,17 @@ YAF = {
         _gaq.push(['_trackPageview']);
     },
     getGeoData : function(url, callback) {
-        var domain = this.getDomain(url);
+        function getDomain(url) {
+            // aware of port in url, accept http(s)/ftp, any symbols in domain
+            var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/);
+            if (match && match[2]) {
+                return match[2]; // match[1] is the protocol
+            } else {
+                return null;
+            }
+        }
+
+        var domain = getDomain(url);
         if (!domain) {
             return;
         }
