@@ -13,14 +13,54 @@ _gaq.push(['_trackPageview']);
   var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
 })();
 
-YAF = {
-    API : {
-        URL : 'http://geo.furman.im:8080/'
-        // URL : 'http://turnkey:8080/'
+// helpers
+function isLocal (ip) {
+    if (!ip) return false;
+    if (ip === 'localhost') return true;
 
-        // puth this to manifest, they don't support comments yet
-        // "http://turnkey/*",
-    },
+    ip = ip.split('.').map(function(oct) { return parseInt(oct, 10); });
+    // 127.0.0.1 - 127.255.255.255
+    if (ip[0] === 127) return true;
+    // 10.0.0.0 - 10.255.255.255
+    if (ip[0] === 10) return true;
+    // 172.16.0.0 - 172.31.255.255
+    if (ip[0] === 172 && ip[1] >= 16 && ip[1] <= 31) return true;
+    // 192.168.0.0 - 192.168.255.255
+    if (ip[0] === 192 && ip[1] === 168) return true;
+
+    return false;
+}
+function normalizeData (domain, geo) {
+    var normal = {
+        ip          : geo.ip,
+        country_code: geo.country_code,
+        country_name: geo.country_name,
+        city        : geo.city,
+        postal_code : geo.postal_code
+    };
+    // don't want number-only regions
+    if ( geo.region && !/^\d+$/.test(geo.region) )
+        normal.region = geo.region;
+    // on the offchance that local IP was returned by VPN DNS or other local DNS
+    if ( isLocal(geo.ip) )
+        normal.isLocal = true;
+
+    return normal;
+}
+function getDomain (url) {
+    // aware of port in url, accept http(s)/ftp, any symbols in domain
+    var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/);
+    if (match && match[2]) {
+        // match[1] is the protocol
+        return match[2];
+    }
+}
+function passedMoreThan (seconds, date) {
+    return (new Date()).getTime() - date > ( seconds * 1000 );
+}
+
+var API_URL = 'http://geo.furman.im:8080/';
+YAF = {
     xhr : function (domain, callback) {
         var data = {
             date : (new Date()).getTime(),
@@ -30,81 +70,64 @@ YAF = {
         YAF.storage.set(domain, data);
 
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', YAF.API.URL + domain, true);
+        xhr.open('GET', API_URL + domain, true);
 
-        xhr.onreadystatechange = (function(self) {
-            return function() {
-                if (xhr.readyState === 4) {
-                    var resp = xhr.responseText;
-                    if (xhr.status === 200) {
-                        // normalize received
-                        data.geo = YAF.util.normalizeData( domain, JSON.parse(resp) );
-                    } else {
-                        data.geo = false;
-                        data.error = resp.trim();
-                    }
-                    // save along with timestamp
-                    YAF.storage.set(domain, data);
-                    // pass data for processing
-                    callback.call(self, domain, data);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                var resp = xhr.responseText;
+                if (xhr.status === 200) {
+                    // normalize received
+                    data.geo = normalizeData( domain, JSON.parse(resp) );
+                } else {
+                    data.geo = false;
+                    data.error = resp.trim();
                 }
-            };
-        })(this);
+                // save along with timestamp
+                YAF.storage.set(domain, data);
+                // pass data for processing
+                callback(domain, data);
+            }
+        };
 
         xhr.send(null);
         _gaq.push(['_trackPageview']);
     },
     getGeoData : function(url, callback) {
-        function getDomain(url) {
-            // aware of port in url, accept http(s)/ftp, any symbols in domain
-            var match = url.match(/^(https?|ftp)\:\/\/(.+?)[\/\:]/);
-            if (match && match[2]) {
-                return match[2]; // match[1] is the protocol
-            } else {
-                return null;
-            }
-        }
-
-        var domain = getDomain(url);
-        if (!domain) {
-            return;
-        }
-
-        function passedMoreThan(seconds, date) {
-            return (new Date()).getTime() - date > ( seconds * 1000 );
-        }
+        // constants
         var day = 60 * 60 * 24, // seconds
             twoWeeks = day * 14;
 
-        // check if we're on some local IP, like router or printer
-        // It's about time to introduce model, this is a mess :(
-        if ( YAF.util.isLocal(domain) ) {
-            callback.call(this, domain, {
-                geo: { isLocal: true }
-            });
+        // do we have domain name?
+        var domain = getDomain(url);
+        if (!domain) return;
+
+        // do we already have data for this domain?
+        var data = YAF.storage.get(domain);
+        // short-circuit for the local domains (boths IPs and user-marked)
+        if ( isLocal(domain) || (data && data.geo && data.geo.isLocal) ) {
+            callback(domain, { geo: { isLocal: true } });
             return;
         }
 
-        var data = YAF.storage.get(domain);
-
         if (data && data.date) {
-            var date = data.date;
-
-            // if data has been stored for 2 weeks
-            if ( passedMoreThan(twoWeeks, date) ) {
+            // if data has been stored for 2 weeks - refetch it
+            if ( passedMoreThan(twoWeeks, data.date) ) {
                 this.xhr(domain, callback);
-            // check for not found data once a day
-            } else if ( !data.geo && passedMoreThan(day, date) ) {
+            // refetch 404s once a day
+            } else if ( !data.geo && passedMoreThan(day, data.date) ) {
                 this.xhr(domain, callback);
             } else {
-                callback.call(this, domain, data);
+                callback(domain, data);
             }
         } else {
             this.xhr(domain, callback);
         }
     },
+
+
     setFlag : function(tab) {
         if (!tab || !tab.url) {
+            console.error('Called `setFlag` w/o tab or tab.url', arguments);
             return;
         }
 
@@ -188,42 +211,6 @@ YAF.storage = {
         var version = this.get('_schema');
         localStorage.clear();
         this.set('_schema', version);
-    }
-};
-
-YAF.util = {
-    isLocal : function(ip) {
-        if (!ip) return false;
-        if (ip === 'localhost') return true;
-
-        ip = ip.split('.').map(function(oct) { return parseInt(oct, 10); });
-        // 127.0.0.1 - 127.255.255.255
-        if (ip[0] === 127) return true;
-        // 10.0.0.0 - 10.255.255.255
-        if (ip[0] === 10) return true;
-        // 172.16.0.0 - 172.31.255.255
-        if (ip[0] === 172 && ip[1] >= 16 && ip[1] <= 31) return true;
-        // 192.168.0.0 - 192.168.255.255
-        if (ip[0] === 192 && ip[1] === 168) return true;
-
-        return false;
-    },
-    normalizeData : function(domain, geo) {
-        // just some random chance that local ip was returned by some
-        // local VPN DNS or something
-        if ( this.isLocal(geo.ip) ) geo.isLocal = true;
-
-        var normal = {
-            ip          : geo.ip,
-            country_code: geo.country_code,
-            country_name: geo.country_name,
-            city        : geo.city,
-            postal_code : geo.postal_code
-        };
-        if ( geo.region && !/^\d+$/.test(geo.region) )
-            normal.region = geo.region;
-
-        return normal;
     }
 };
 
