@@ -1,3 +1,8 @@
+Version 0.9.10.0
+Add GA event for popup display
+Simplify service.js code
+Fixes couple minor bugs in local IPs/domains handling
+
 Version 0.9.9.9
 Better error reporting when domain or IP wasn't found in DB
 Updated GeoLite to the latest
