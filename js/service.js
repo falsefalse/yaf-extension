@@ -91,7 +91,7 @@ YAF = {
         xhr.send(null);
         _gaq.push(['_trackPageview']);
     },
-    getGeoData : function(url, callback) {
+    getGeoData : function(url, callback, reload) {
         // constants
         var day = 60 * 60 * 24, // seconds
             twoWeeks = day * 14;
@@ -108,7 +108,7 @@ YAF = {
             return;
         }
 
-        if (data && data.date) {
+        if (data && data.date && !reload) {
             // if data has been stored for 2 weeks - refetch it
             if ( passedMoreThan(twoWeeks, data.date) ) {
                 this.xhr(domain, callback);
@@ -124,7 +124,7 @@ YAF = {
     },
 
 
-    setFlag : function(tab) {
+    setFlag : function(tab, reload, callback) {
         if (!tab || !tab.url) {
             console.error('Called `setFlag` w/o tab or tab.url', arguments);
             return;
@@ -171,7 +171,9 @@ YAF = {
             }
 
             chrome.pageAction.show(tab.id);
-        });
+
+            callback && callback(domain, data);
+        }, reload);
     }
 };
 
