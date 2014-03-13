@@ -1,4 +1,4 @@
-<li class="data"><%= geo.country_name %></li>
+<li class="header"><%= geo.country_name %></li>
 <%
 var region = [];
 geo.city && region.push(geo.city);
@@ -6,7 +6,7 @@ if (geo.region && geo.region != geo.city) region.push(geo.region);
 if (region.length) { %>
   <li class="data small"><%= region.join(', ') %></li>
 <% } %>
-<li class="data small"><%= geo.ip %></li>
+<li><%= geo.ip %></li>
 <li class="separator"></li>
 <li class="service">
   <a class="whois" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>

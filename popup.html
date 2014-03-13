@@ -55,7 +55,7 @@
       background-image: url(img/local_resource.png);
     }
 
-    ul.result .data:first-child {
+    ul.result li.header {
       padding-right: 78px;
     }
 
@@ -65,13 +65,11 @@
       ul.result li {
         padding: 0 6px;
         white-space: nowrap;
+        font-size: 13px;
       }
-      ul.result li.data {
-        font-size: 15px;
+      ul.result li.header {
+        font-size: 16px;
       }
-        ul.result li.data.small {
-          font-size: 12px;
-        }
       ul.result li.separator {
         height: 1px;
         background-color: #e1e1e1;
@@ -83,12 +81,12 @@
       }
         ul.result li.service a {
           display: block;
+          font-size: inherit;
           padding: 4px 6px;
-          background: 6px center no-repeat;
-          padding-left: 28px;
           height: 16px;
           line-height: 16px;
-          font-size: 13px;
+          background: 6px center no-repeat;
+          padding-left: 28px;
           border-radius: 4px;
           border: 1px solid #fff;
           -webkit-transition: border-color .3s, background-color .3s;
