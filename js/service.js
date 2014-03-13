@@ -1,7 +1,6 @@
 /*global chrome, console, YAF:true, _gaq*/
 
 // Background service for YAFlags
-// smashlong@gmail.com, 2012
 
 window._gaq = window._gaq || [];
 _gaq.push(['_setAccount', 'UA-18454737-1']);

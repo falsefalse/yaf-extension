@@ -1,7 +1,6 @@
 /*global chrome, YAF:true */
 
 // Render services links for domain/IP and display them in popup
-// smashlong@gmail.com, 2012
 
 var service = chrome.extension.getBackgroundPage(),
     YAF  = service.YAF,
