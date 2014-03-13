@@ -1,3 +1,9 @@
+Version 0.9.11.0
+Refactor popup innards
+Add 'Reload' button, allows to refresh geo data immediately
+Added ability to switch 'Marked as local' status for domain
+Styled toolbar buttons so they look more like buttons
+
 Version 0.9.10.0
 Add GA event for popup display
 Simplify service.js code
