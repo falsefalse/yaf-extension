@@ -8,9 +8,6 @@ if (region.length) { %>
 <% } %>
 <li class="data small"><%= geo.ip %></li>
 <li class="separator"></li>
-<li>
-  <a class="service whois kinda_button" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
-</li>
-<li>
-  <a class="service whois kinda_button" target="_blank" href="http://ipx.pm/<%= domain %>">Details</a>
+<li class="service">
+  <a class="whois" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
 </li>
