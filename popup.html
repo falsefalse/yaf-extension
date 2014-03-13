@@ -10,100 +10,105 @@
   <script type="text/javascript" src="build/popup.min.js"></script>
 
   <style type="text/css">
-    body {
-      font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
-      margin: 3px;
-      padding: 0;
-    }
-    .small {
-      font-size: 12px;
-    }
-
-    .kinda_button {
-      border: 1px solid #FFF;
-      -webkit-border-radius: 4px;
-      cursor: pointer;
-      color: #000;
+    * {
+      margin: 0; padding: 0;
       outline: none;
     }
-      .kinda_button:visited {
-        color: #000;
-      }
-      .kinda_button:hover {
-        background-color: #d5e4ff;
-        border: 1px solid #8492ac;
-        color: #000;
-
-        -webkit-transition-property: background-color;
-        -webkit-transition-duration: 0.3s;
-        transition-timing-function : linear;
-      }
-
-    ul.menu {
-      list-style: none;
-      margin: 0;
-      padding: 0;
+    a, a:visited, a:hover {
+      color: #000;
+      text-decoration: none;
     }
-      ul.menu li {
-        position: relative;
-        margin: 0;
-        padding: 0 6px;
+
+    body {
+      position: relative;
+      font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
+      margin: 4px 4px 3px 4px;
+    }
+
+    .button {
+      cursor: pointer;
+      border-radius: 4px;
+      border: 1px solid rgba(132, 146, 172, .33);
+      -webkit-transition: background-color .3s, border-color .3s;
+    }
+      .button:hover {
+        border-color: rgba(132, 146, 172, 1);
       }
-      ul.menu li.data {
+
+    ul.toolbar {
+      list-style: none;
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+      ul.toolbar li {
+        display: inline-block;
+        width: 22px;
+        height: 22px;
+        margin-left: 2px;
+        background: center no-repeat;
+      }
+      ul.toolbar li.toolbar-marked {
+        background-color: #d5e4ff;
+      }
+        ul.toolbar li.toolbar-marked:hover {}
+    ul.toolbar li.toolbar-reload {
+      background-image: url(img/refresh.png);
+      opacity: .77;
+    }
+    ul.toolbar li.toolbar-marklocal {
+      background-image: url(img/local_resource.png);
+    }
+
+    ul.result .data:first-child {
+      padding-right: 78px;
+    }
+
+    ul.result {
+      list-style: none;
+    }
+      ul.result li {
+        padding: 0 6px;
         white-space: nowrap;
+      }
+      ul.result li.data {
         font-size: 15px;
       }
-        ul.menu li.data.small {
+        ul.result li.data.small {
           font-size: 12px;
         }
-      ul.menu li.separator {
-        height: 0;
-        border-bottom: 1px solid #e1e1e1;
+      ul.result li.separator {
+        height: 1px;
+        background-color: #e1e1e1;
+        margin: 4px 0;
         opacity: .5;
-        margin: 5px -3px;
       }
-
-      ul.menu li .service {
-        display: block;
-        margin: 3px -6px;
-        background-image: url(services/service.png);
-        background-repeat: no-repeat;
-        background-position: 6px center;
-        padding: 0 6px 0 27px;
-        text-decoration: none;
-        white-space: nowrap;
-        font-size: 13px;
-        height: 20px;
-        line-height: 20px;
+      ul.result li.service {
+        padding: 0;
       }
-
-      ul.menu li.data_notfound {
-        padding-right: 30px;
-      }
-
-      ul.menu li .mark {
-        position: absolute;
-        display: block;
-        top: 0;
-        right: 2px;
-        width: 16px;
-        height: 16px;
-        padding: 2px;
-        line-height: 16px;
-      }
-        ul.menu li a.mark img {
-          border: none;
-          width: 16px;
+        ul.result li.service a {
+          display: block;
+          padding: 4px 6px;
+          background: 6px center no-repeat;
+          padding-left: 28px;
           height: 16px;
+          line-height: 16px;
+          font-size: 13px;
+          border-radius: 4px;
+          border: 1px solid #fff;
+          -webkit-transition: border-color .3s, background-color .3s;
+        }
+        ul.result li.service a:hover {
+          border-color: #8492ac;
+          background-color: #d5e4ff;
         }
 
-    .whois {
-      background-image: url('img/services/whois.ico') !important;
-    }
+        ul.result li.service a.whois { background-image: url(img/popup/domaintools.ico); }
   </style>
 </head>
 
 <body>
-  <ul class="menu" id="menu"></ul>
+  <ul class="toolbar"></ul>
+  <ul class="result"></ul>
 </body>
 </html>
