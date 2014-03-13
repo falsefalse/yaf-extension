@@ -3,6 +3,7 @@
 // Render services links for domain/IP and display them in popup
 
 var service = chrome.extension.getBackgroundPage(),
+    isLocal = service.isLocal,
     YAF  = service.YAF,
     _gaq = service._gaq;
 
@@ -12,42 +13,57 @@ window.addEventListener('DOMContentLoaded', function() {
     function get(template) {
         return window.TPL[template];
     }
+    var toolbar = document.querySelector('.toolbar');
+    var result = document.querySelector('.result');
+
     chrome.tabs.getSelected(null, function(tab) {
         YAF.getGeoData(tab.url, function(domain, data) {
-            var geo = data.geo, link;
+            var geo = data.geo;
 
-            var ul = document.querySelector('#menu');
+            toolbar.innerHTML = get('toolbar.ejs')({
+                geo: data.geo,
+                trueLocal: isLocal(domain)
+            });
+            var mark = toolbar.querySelector('.toolbar-marklocal'),
+                reload = toolbar.querySelector('.toolbar-reload');
+
+            mark && mark.addEventListener('click', function(event) {
+                if (data.geo && data.geo.isLocal) {
+                    delete data.geo.isLocal;
+                    _gaq.push(['_trackEvent', 'popup', 'unmark']);
+                } else {
+                    data.geo = data.geo || {};
+                    data.geo.isLocal = true;
+                    _gaq.push(['_trackEvent', 'popup', 'mark']);
+                }
+
+                YAF.storage.set(domain, data);
+                YAF.setFlag(tab);
+
+                window.location.reload(true);
+            });
+            reload && reload.addEventListener('click', function(event) {
+                YAF.setFlag(tab, true, function() {
+                    window.location.reload(true);
+                });
+                _gaq.push(['_trackEvent', 'popup', 'reload']);
+            });
 
             if (!geo) {
-                ul.innerHTML = get('not_found.ejs')({
+                result.innerHTML = get('not_found.ejs')({
                     domain: domain,
                     error: data.error
                 });
-
-                link = ul.querySelector('.mark');
-                link.addEventListener('click', function() {
-                    var data = YAF.storage.get(domain);
-
-                    data.geo = data.geo || {};
-                    data.geo.isLocal = true;
-
-                    YAF.storage.set(domain, data);
-                    YAF.setFlag(tab);
-
-                    window.location.reload(true);
-                }, false);
-                return;
             }
-
-            if (geo.isLocal) {
-                ul.innerHTML = get('local.ejs')({ domain: domain });
-                return;
+            else if (geo.isLocal) {
+                result.innerHTML = get('local.ejs')({ domain: domain });
             }
-
-            ul.innerHTML = get('regular.ejs')({
-                domain: domain,
-                geo: geo
-            });
+            else {
+                result.innerHTML = get('regular.ejs')({
+                    domain: domain,
+                    geo: geo
+                });
+            }
         });
     });
 }, false);

@@ -1,0 +1,9 @@
+<% if (geo && geo.isLocal && !trueLocal) { %>
+  <li class="button toolbar-marklocal toolbar-marked" title="Unmark domain as local"></li>
+<% } else if (!geo) { %>
+  <li class="button toolbar-marklocal" title="Mark domain as local"></li>
+<% } %>
+
+<% if (!geo || geo && !geo.isLocal) { %>
+  <li class="button toolbar-reload" title="Reload geodata"></li>
+<% } %>
