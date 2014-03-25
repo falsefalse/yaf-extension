@@ -28,19 +28,21 @@ function isLocal (ip) {
 
     return false;
 }
-function normalizeData (domain, geo) {
+function normalizeData (raw) {
     var normal = {
-        ip          : geo.ip,
-        country_code: geo.country_code,
-        country_name: geo.country_name,
-        city        : geo.city,
-        postal_code : geo.postal_code
+        ip          : raw.ip,
+        country_code: raw.country_code,
+        country_name: raw.country_name,
+        city        : raw.city,
+        postal_code : raw.postal_code
     };
     // don't want number-only regions
-    if ( geo.region && !/^\d+$/.test(geo.region) )
-        normal.region = geo.region;
+    // and regions that are the same as the city
+    if ( raw.region && !/^\d+$/.test(raw.region) && raw.region !== raw.city )
+        normal.region = raw.region;
+
     // on the offchance that local IP was returned by VPN DNS or other local DNS
-    if ( isLocal(geo.ip) )
+    if ( isLocal(raw.ip) )
         normal.isLocal = true;
 
     return normal;
