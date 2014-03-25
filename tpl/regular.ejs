@@ -2,7 +2,7 @@
 <%
 var region = [];
 geo.city && region.push(geo.city);
-if (geo.region && geo.region != geo.city) region.push(geo.region);
+geo.region && region.push(geo.region);
 if (region.length) { %>
   <li class="data small"><%= region.join(', ') %></li>
 <% } %>

@@ -1,4 +1,4 @@
-/*global chrome, console, YAF:true, _gaq*/
+/*global chrome, console, Promise, YAF:true, _gaq*/
 
 // Background service for YAFlags
 
@@ -58,123 +58,113 @@ function getDomain (url) {
 function passedMoreThan (seconds, date) {
     return (new Date()).getTime() - date > ( seconds * 1000 );
 }
+function updatePageAction(tab, domain, data) {
+    var geo = data.geo;
+
+    if (geo) {
+        if (geo.isLocal) {
+            chrome.pageAction.setIcon({
+                tabId : tab.id,
+                path  : 'img/local_resource.png'
+            });
+            chrome.pageAction.setTitle({
+                tabId : tab.id,
+                title : domain + ' is a local resource'
+            });
+        } else {
+            var title = [geo.country_name];
+            if (geo.city) title.splice(0, 0, geo.city);
+            if (geo.region) title.splice(1, 0, geo.region);
+
+            chrome.pageAction.setIcon({
+                tabId : tab.id,
+                path  : 'img/flags/' + geo.country_code.toLowerCase() + '.png'
+            });
+            chrome.pageAction.setTitle({
+                tabId : tab.id,
+                title : title.join(', ')
+            });
+        }
+    } else {
+        chrome.pageAction.setIcon({
+            tabId : tab.id,
+            path  : 'img/icon/16.png'
+        });
+        chrome.pageAction.setTitle({
+            tabId : tab.id,
+            title : data.error || '\'' + domain + '\' was not found in database'
+        });
+    }
+
+    chrome.pageAction.show(tab.id);
+}
 
 var API_URL = 'http://geo.furman.im:8080/';
 YAF = {
-    xhr : function (domain, callback) {
+    request: function(domain) {
         var data = {
             date : (new Date()).getTime(),
             geo  : null
         };
-
         YAF.storage.set(domain, data);
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', API_URL + domain, true);
+        return new Promise(function(resolve, reject) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', API_URL + domain, true);
+            xhr.onload = function() {
+                _gaq.push(['_trackPageview']);
 
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                var resp = xhr.responseText;
                 if (xhr.status === 200) {
-                    // normalize received
-                    data.geo = normalizeData( domain, JSON.parse(resp) );
+                    data.geo = normalizeData( JSON.parse(xhr.responseText) );
                 } else {
                     data.geo = false;
-                    data.error = resp.trim();
+                    data.error = xhr.responseText.trim();
                 }
-                // save along with timestamp
-                YAF.storage.set(domain, data);
-                // pass data for processing
-                callback(domain, data);
-            }
-        };
 
-        xhr.send(null);
-        _gaq.push(['_trackPageview']);
+                YAF.storage.set(domain, data);
+                resolve( [domain, data] );
+            };
+            xhr.onerror = function() {
+                reject( new Error('Network Error') );
+            };
+            xhr.send(null);
+        });
     },
-    getGeoData : function(url, callback, reload) {
+    getGeoData : function(domain, reload) {
         // constants
         var day = 60 * 60 * 24, // seconds
             twoWeeks = day * 14;
 
-        // do we have domain name?
-        var domain = getDomain(url);
-        if (!domain) return;
-
         // do we already have data for this domain?
         var data = YAF.storage.get(domain);
+
         // short-circuit for the local domains (boths IPs and user-marked)
         if ( isLocal(domain) || (data && data.geo && data.geo.isLocal) ) {
-            callback(domain, { geo: { isLocal: true } });
-            return;
+            return Promise.resolve( [domain, { geo: { isLocal: true } }] );
         }
 
         if (data && data.date && !reload) {
             // if data has been stored for 2 weeks - refetch it
             if ( passedMoreThan(twoWeeks, data.date) ) {
-                this.xhr(domain, callback);
+                return this.request(domain);
             // refetch 404s once a day
             } else if ( !data.geo && passedMoreThan(day, data.date) ) {
-                this.xhr(domain, callback);
+                return this.request(domain);
             } else {
-                callback(domain, data);
+                return Promise.resolve([domain, data]);
             }
         } else {
-            this.xhr(domain, callback);
+            return this.request(domain);
         }
     },
 
 
-    setFlag : function(tab, reload, callback) {
-        if (!tab || !tab.url) {
-            console.error('Called `setFlag` w/o tab or tab.url', arguments);
-            return;
-        }
-
-        this.getGeoData(tab.url, function(domain, data) {
-            var geo = data.geo;
-
-            if (geo) {
-                if (geo.isLocal) {
-                    chrome.pageAction.setIcon({
-                        tabId : tab.id,
-                        path  : 'img/local_resource.png'
-                    });
-                    chrome.pageAction.setTitle({
-                        tabId : tab.id,
-                        title : domain + ' is a local resource'
-                    });
-                } else {
-                    var title = [];
-                    if (geo.city) title.push(geo.city);
-                    if (geo.region && geo.region !== geo.city) title.push(geo.region);
-
-                    title.push(geo.country_name);
-
-                    chrome.pageAction.setIcon({
-                        tabId : tab.id,
-                        path  : 'img/flags/' + geo.country_code.toLowerCase() + '.png'
-                    });
-                    chrome.pageAction.setTitle({
-                        tabId : tab.id,
-                        title : title.join(', ')
-                    });
-                }
-            } else {
-                chrome.pageAction.setIcon({
-                    tabId : tab.id,
-                    path  : 'img/icon/16.png'
-                });
-                chrome.pageAction.setTitle({
-                    tabId : tab.id,
-                    title : data.error || '\'' + domain + '\' was not found in database'
-                });
-            }
-
-            chrome.pageAction.show(tab.id);
-
-            callback && callback(domain, data);
-        }, reload);
+    setFlag : function(tab, reload) {
+        return this.getGeoData(domain, reload)
+            .then(function(args) {
+                args.unshift(tab);
+                updatePageAction.apply(YAF, args);
+            });
     }
 };
 
