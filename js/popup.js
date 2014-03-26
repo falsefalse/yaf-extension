@@ -16,6 +16,18 @@ window.addEventListener('DOMContentLoaded', function() {
     var toolbar = document.querySelector('.toolbar');
     var result = document.querySelector('.result');
 
+    chrome.tabs.query({
+        active: true,
+        currentWindow: true
+    }, function(tabs) {
+        var tab = tabs[0];
+        YAF.getGeoData( service.getDomain(tab.url) )
+            .then(function(args) {
+                args.unshift(tab);
+                renderPopup.apply(this, args);
+            });
+    });
+
     function renderPopup (tab, domain, data) {
         var geo = data.geo;
 
@@ -65,11 +77,4 @@ window.addEventListener('DOMContentLoaded', function() {
             });
         }
     }
-    chrome.tabs.getSelected(null, function(tab) {
-        YAF.getGeoData( service.getDomain(tab.url) )
-            .then(function(args) {
-                args.unshift(tab);
-                renderPopup.apply(this, args);
-            });
-    });
 }, false);
