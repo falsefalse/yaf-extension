@@ -54,6 +54,7 @@ function getDomain (url) {
         // match[1] is the protocol
         return match[2];
     }
+    return false;
 }
 function passedMoreThan (seconds, date) {
     return (new Date()).getTime() - date > ( seconds * 1000 );
@@ -159,12 +160,11 @@ YAF = {
     },
 
 
+    // need `tab` since it could need to modify it later
     setFlag : function(tab, reload) {
-        var url;
-        if (!tab || !tab.url || !tab.favIconUrl) {
-            return console.info('Can not get tab URL', arguments);
-        }
-        return this.getGeoData( getDomain(tab.url || tab.favIconUrl), reload )
+        var domain = getDomain(tab.url);
+        if (!domain) { return; }
+        return this.getGeoData( domain, reload )
             .then(function(args) {
                 args.unshift(tab);
                 updatePageAction.apply(YAF, args);
@@ -172,15 +172,29 @@ YAF = {
     }
 };
 
+function _getURL(tab) {
+    if (!tab || !tab.url) {
+        return false;
+    } else {
+        return tab.url;
+    }
+}
+
 // update icon when tab is updated
-chrome.tabs.onUpdated.addListener(function(tabID, info, tab) {
+chrome.tabs.onUpdated.addListener(function(tabId, info, tab) {
     // TODO: execute only if domain has changed
-    YAF.setFlag(tab);
+    if ( _getURL(tab) ) {
+        YAF.setFlag( tab );
+    }
 });
 // update icon when tab is selected
 chrome.tabs.onActivated.addListener(function(activeInfo) {
     // TODO: execute only if domain has changed
-    chrome.tabs.get( activeInfo.tabId, YAF.setFlag.bind(YAF) );
+    chrome.tabs.get( activeInfo.tabId, function(tab) {
+        if (_getURL(tab)) {
+            YAF.setFlag( tab );
+        }
+    } );
 });
 
 YAF.storage = {
