@@ -4,7 +4,7 @@
     "name": "Yet another flags",
     "description": "Shows flag for the website in the location bar.",
 
-    "version": "0.9.11.0",
+    "version": "0.10.0.0",
 
     "permissions": [
         "tabs",

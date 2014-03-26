@@ -1,3 +1,7 @@
+Version 0.10.0.0
+Change permanent background page to event page which is loaded only when needed.
+Remove underscore.js dependency, use its templates only instead.
+
 Version 0.9.11.0
 Refactor popup innards
 Add 'Reload' button, allows to refresh geo data immediately
