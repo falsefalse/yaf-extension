@@ -160,7 +160,11 @@ YAF = {
 
 
     setFlag : function(tab, reload) {
-        return this.getGeoData(domain, reload)
+        var url;
+        if (!tab || !tab.url || !tab.favIconUrl) {
+            return console.info('Can not get tab URL', arguments);
+        }
+        return this.getGeoData( getDomain(tab.url || tab.favIconUrl), reload )
             .then(function(args) {
                 args.unshift(tab);
                 updatePageAction.apply(YAF, args);
