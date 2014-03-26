@@ -5,27 +5,28 @@
 var fs   = require('fs'),
     path = require('path'),
     jsp  = require('uglify-js').parser,
-    pro  = require('uglify-js').uglify,
-    _    = require('underscore');
+    pro  = require('uglify-js').uglify;
 
 var ENC = 'utf-8',
     ROOT        = './',
     BUILD_DIR   = path.join(ROOT, './build');
 
+var _TEMPLATES = './js/lib/underscore.templates.js';
 var SRC = {
     service : path.join(ROOT, 'js/service.js'),
     popup   : path.join(ROOT, 'js/popup.js'),
-    // resolve absolute path to _ into relative to the project dir path
-    // otherwise, file() tasks are broken with uninformative errors
-    _       : path.relative(path.resolve(ROOT), require.resolve('underscore')),
+    _       : path.join(ROOT, _TEMPLATES),
     tpls    : [
         '_compiled.js'
     ]
 };
+// just templates, nothing else
+var _ = require( _TEMPLATES );
+
 var BUILD = {
     service : path.join(BUILD_DIR, 'service.min.js'),
     popup   : path.join(BUILD_DIR, 'popup.min.js'),
-    _       : path.join(BUILD_DIR, 'underscore.min.js'),
+    _       : path.join(BUILD_DIR, 'underscore.templates.min.js'),
     tpl     : path.join(BUILD_DIR, 'templates.min.js')
 };
 

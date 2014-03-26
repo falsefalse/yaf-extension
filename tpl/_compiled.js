@@ -1,5 +1,5 @@
 TPL = {
-<% _.forEach(compiled, function(source, id) { %>
-    '<%= id %>': <%= source %>,
-<% }); %>
+<% for (var key in compiled) { %>
+    '<%= key %>': <%= compiled[key] %>,
+<% }; %>
 };
