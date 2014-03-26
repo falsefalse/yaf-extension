@@ -160,8 +160,7 @@ new jake.PackageTask(pkgName, manifest.version, function () {
         'manifest.json',
         'build/*',
         'img/**',
-        'popup.html',
-        'service.html'
+        'popup.html'
     ];
     this.packageFiles.include(fileList);
     this.needZip = true;
