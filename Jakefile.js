@@ -95,6 +95,7 @@ namespace('js', function() {
                 console.log('Removed:', filepath);
             }
         });
+        // TODO: clean whole ./build dir
     });
 
     desc('Build JavaScript');
@@ -108,6 +109,7 @@ namespace('js', function() {
 });
 
 namespace('tpl', function() {
+    // TODO: merge with underscore.templates alltogether
     desc('Compile and minify templates');
     file(BUILD.tpl, SRC.tpls, function() {
         var compiled = {},

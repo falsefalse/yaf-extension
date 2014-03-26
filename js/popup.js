@@ -49,11 +49,13 @@ window.addEventListener('DOMContentLoaded', function() {
             }
 
             YAF.storage.set(domain, data);
+            // TODO: consider getting active tab when clicked, could be decoupled from here
             YAF.setFlag(tab).then(function() {
                 window.location.reload(true);
             });
         });
         reload && reload.addEventListener('click', function(event) {
+            // TODO: consider getting active tab when clicked, could be decoupled from here
             YAF.setFlag(tab, true)
                 .then(function(args) {
                     window.location.reload(true);
