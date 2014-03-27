@@ -2,6 +2,7 @@
     "manifest_version": 2,
 
     "name": "Yet another flags",
+    "short_name": "YAFlags",
     "description": "Shows flag for the website in the location bar.",
 
     "version": "1.0.0",
