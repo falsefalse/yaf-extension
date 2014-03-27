@@ -1,7 +1,7 @@
 {
   "name": "yaf-extension",
   "repository": "git@bitbucket.org:false/yet-another-flags-extension.git",
-  "version": "0.10.0",
+  "version": "1.0.0",
   "dependencies": {
     "uglify-js": "~2.4.13"
   }

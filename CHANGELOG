@@ -1,6 +1,10 @@
-Version 0.10.0.0
+Version 1.0.0
 Change permanent background page to event page which is loaded only when needed.
+Accomodate popup to not always present background page.
 Remove underscore.js dependency, use its templates only instead.
+Use underscore.templates.js only when building, 1 script less to load.
+It is time for a major version bump, as well as switch to 3 parts inst. of 4
+Chrome woudn't autoupdate from 0.9.11.0 to 0.10.0.0 anyway :)
 
 Version 0.9.11.0
 Refactor popup innards
