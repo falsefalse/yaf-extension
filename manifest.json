@@ -13,7 +13,7 @@
     ],
 
     "background": {
-        "scripts": ["js/service.js"],
+        "scripts": ["build/service.min.js"],
         "persistent": false
     },
 
