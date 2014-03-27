@@ -4,8 +4,7 @@
 
 var fs   = require('fs'),
     path = require('path'),
-    jsp  = require('uglify-js').parser,
-    pro  = require('uglify-js').uglify;
+    uglify  = require('uglify-js');
 
 var template = require( './js/lib/underscore.templates.js' ).template;
 
@@ -49,16 +48,12 @@ function size (filepath) {
 // minifies passed JS file
 // if no resultpath was passed, overwrites the source file
 function minify (sourcepath, resultpath) {
-    var compressed, ast,
-        source = fs.readFileSync(sourcepath, ENC),
+    var compressed,
         sourceSize = size(sourcepath);
 
-    ast = jsp.parse(source);
-    ast = pro.ast_mangle(ast);
-    ast = pro.ast_squeeze(ast);
-    compressed = pro.gen_code(ast);
+    compressed = uglify.minify(sourcepath);
 
-    fs.writeFileSync(resultpath || sourcepath, compressed);
+    fs.writeFileSync(resultpath || sourcepath, compressed.code);
     console.log('Minified:', sourcepath, sourceSize, size(resultpath || sourcepath));
 }
 
