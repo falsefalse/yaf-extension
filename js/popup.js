@@ -1,35 +1,35 @@
-/*global chrome, YAF:true */
+/*global chrome */
 
 // Render services links for domain/IP and display them in popup
-
-var service = chrome.extension.getBackgroundPage(),
-    YAF  = service.YAF,
-    _gaq = service._gaq;
 
 function get(template) {
     return window.TPL[template];
 }
 
 window.addEventListener('DOMContentLoaded', function() {
-    _gaq.push(['_trackEvent', 'popup', 'shown']);
-
     var toolbar = document.querySelector('.toolbar');
     var result = document.querySelector('.result');
 
-    chrome.tabs.query({
-        active: true,
-        currentWindow: true
-    }, function(tabs) {
-        var tab = tabs[0];
-        YAF.getGeoData( service.getDomain(tab.url) )
-            .then(function(args) {
-                args.unshift(tab);
-                renderPopup.apply(this, args);
-            });
+    chrome.runtime.getBackgroundPage(function(service) {
+        service._gaq.push(['_trackEvent', 'popup', 'shown']);
+
+        chrome.tabs.query({
+            active: true,
+            currentWindow: true
+        }, function(tabs) {
+            var tab = tabs[0];
+
+            service.YAF.getGeoData( service.getDomain(tab.url) )
+                .then(function(args) {
+                    args.unshift(tab);
+                    renderPopup.apply(service, args);
+                });
+        });
     });
 
     function renderPopup (tab, domain, data) {
-        var geo = data.geo;
+        var service = this,
+            geo = data.geo;
 
         toolbar.innerHTML = get('toolbar.ejs')({
             geo: data.geo,
@@ -41,26 +41,24 @@ window.addEventListener('DOMContentLoaded', function() {
         mark && mark.addEventListener('click', function(event) {
             if (data.geo && data.geo.isLocal) {
                 delete data.geo.isLocal;
-                _gaq.push(['_trackEvent', 'popup', 'unmark']);
+                service._gaq.push(['_trackEvent', 'popup', 'unmark']);
             } else {
                 data.geo = data.geo || {};
                 data.geo.isLocal = true;
-                _gaq.push(['_trackEvent', 'popup', 'mark']);
+                service._gaq.push(['_trackEvent', 'popup', 'mark']);
             }
 
-            YAF.storage.set(domain, data);
-            // TODO: consider getting active tab when clicked, could be decoupled from here
-            YAF.setFlag(tab).then(function() {
+            service.YAF.storage.set(domain, data);
+            service.YAF.setFlag(tab).then(function() {
                 window.location.reload(true);
             });
         });
         reload && reload.addEventListener('click', function(event) {
-            // TODO: consider getting active tab when clicked, could be decoupled from here
-            YAF.setFlag(tab, true)
-                .then(function(args) {
+            service.YAF.setFlag(tab, true)
+                .then(function() {
                     window.location.reload(true);
                 });
-            _gaq.push(['_trackEvent', 'popup', 'reload']);
+            service._gaq.push(['_trackEvent', 'popup', 'reload']);
         });
 
         if (!geo) {
