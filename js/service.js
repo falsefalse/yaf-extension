@@ -1,4 +1,4 @@
-/*global chrome, console, Promise, YAF:true, _gaq*/
+/*global chrome, Promise, YAF:true, _gaq*/
 
 // Background service for YAFlags
 

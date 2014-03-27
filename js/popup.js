@@ -38,7 +38,7 @@ window.addEventListener('DOMContentLoaded', function() {
         var mark = toolbar.querySelector('.toolbar-marklocal'),
             reload = toolbar.querySelector('.toolbar-reload');
 
-        mark && mark.addEventListener('click', function(event) {
+        mark && mark.addEventListener('click', function() {
             if (data.geo && data.geo.isLocal) {
                 delete data.geo.isLocal;
                 service._gaq.push(['_trackEvent', 'popup', 'unmark']);
@@ -53,7 +53,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 window.location.reload(true);
             });
         });
-        reload && reload.addEventListener('click', function(event) {
+        reload && reload.addEventListener('click', function() {
             service.YAF.setFlag(tab, true)
                 .then(function() {
                     window.location.reload(true);

@@ -2,3 +2,4 @@ node_modules
 build
 tpl/_compiled.js
 pkg/
+js/lib/
