@@ -65,9 +65,6 @@ function minify (sourcepath, resultpath) {
     console.log('Minified:', sourcepath, sourceSize, size(resultpath || sourcepath));
 }
 
-// create BUILD_DIR folder if there is none
-if (!fs.existsSync(BUILD_DIR)) fs.mkdirSync(BUILD_DIR, 755);
-
 namespace('js', function() {
     desc('Minify service');
     file(BUILD.service, [SRC.service], function() {
@@ -140,6 +137,9 @@ namespace('tpl', function() {
         });
     });
 });
+
+// ensure BUILD_DIR directory is there
+jake.mkdirP( BUILD_DIR );
 
 desc('Build all');
 task({ 'default': [
