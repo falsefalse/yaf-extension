@@ -151,6 +151,13 @@ task({ 'default': [
 
 desc('Clean all');
 task({ 'clean': ['js:clean', 'tpl:clean'] }, function() {
+    var remains = jake.readdirR(BUILD_DIR);
+    // directory itself is always the 1st item
+    remains.shift();
+    if (remains.length) {
+        console.log( 'Orphanes in %s:\n %s', BUILD_DIR, remains.join('\n ') );
+    }
+    jake.rmRf( BUILD_DIR );
     console.log('Cleaned');
 });
 
