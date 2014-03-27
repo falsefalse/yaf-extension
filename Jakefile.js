@@ -7,26 +7,23 @@ var fs   = require('fs'),
     jsp  = require('uglify-js').parser,
     pro  = require('uglify-js').uglify;
 
+var template = require( './js/lib/underscore.templates.js' ).template;
+
 var ENC = 'utf-8',
     ROOT        = './',
     BUILD_DIR   = path.join(ROOT, './build');
 
-var _TEMPLATES = './js/lib/underscore.templates.js';
 var SRC = {
     service : path.join(ROOT, 'js/service.js'),
     popup   : path.join(ROOT, 'js/popup.js'),
-    _       : path.join(ROOT, _TEMPLATES),
     tpls    : [
         '_compiled.js'
     ]
 };
-// just templates, nothing else
-var _ = require( _TEMPLATES );
 
 var BUILD = {
     service : path.join(BUILD_DIR, 'service.min.js'),
     popup   : path.join(BUILD_DIR, 'popup.min.js'),
-    _       : path.join(BUILD_DIR, 'underscore.templates.min.js'),
     tpl     : path.join(BUILD_DIR, 'templates.min.js')
 };
 
@@ -71,14 +68,6 @@ namespace('js', function() {
         minify(SRC.service, BUILD.service);
     });
 
-    desc('Copy _');
-    file(BUILD._, [SRC._], function() {
-        // copy unminfied to underscore.min.js
-        jake.cpR(SRC._, BUILD._);
-        // minify it
-        minify(BUILD._);
-    });
-
     desc('Minify popup');
     file(BUILD.popup, [SRC.popup], function() {
         minify(SRC.popup, BUILD.popup);
@@ -86,19 +75,17 @@ namespace('js', function() {
 
     desc('Clean JavaScript');
     task('clean', function() {
-        [ BUILD.service, BUILD.popup, BUILD._ ].forEach(function(filepath) {
+        [ BUILD.service, BUILD.popup ].forEach(function(filepath) {
             if ( fs.existsSync(filepath) ) {
                 fs.unlinkSync(filepath);
                 console.log('Removed:', filepath);
             }
         });
-        // TODO: clean whole ./build dir
     });
 
     desc('Build JavaScript');
     task({ 'default': [
          'js:' + BUILD.service,
-         'js:' + BUILD._,
          'js:' + BUILD.popup
     ] }, function() {
         console.log('Finished building JavaScript');
@@ -106,18 +93,17 @@ namespace('js', function() {
 });
 
 namespace('tpl', function() {
-    // TODO: merge with underscore.templates alltogether
     desc('Compile and minify templates');
     file(BUILD.tpl, SRC.tpls, function() {
         var compiled = {},
             meta = SRC.tpls.shift(),
-            result = _.template( fs.readFileSync(meta, ENC) );
+            result = template( fs.readFileSync(meta, ENC) );
 
         SRC.tpls.forEach(function(fullpath) {
             var fileName = path.basename(fullpath),
                 content = fs.readFileSync(fullpath, ENC);
 
-            compiled[fileName] = _.template(content).source;
+            compiled[fileName] = template(content).source;
         });
 
         result = result({ compiled: compiled });
