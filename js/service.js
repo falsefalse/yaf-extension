@@ -181,11 +181,11 @@ function _getURL(tab) {
 }
 
 // update icon when tab is updated
-chrome.tabs.onUpdated.addListener(function(tabId, info, tab) {
-    // TODO: execute only if domain has changed
-    if ( _getURL(tab) ) {
-        YAF.setFlag( tab );
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    if (changeInfo.status !== 'complete') {
+        return;
     }
+    YAF.setFlag( tab );
 });
 // update icon when tab is selected
 chrome.tabs.onActivated.addListener(function(activeInfo) {
