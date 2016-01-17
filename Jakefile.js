@@ -142,7 +142,7 @@ task({ 'clean': ['js:clean', 'tpl:clean'] }, function() {
     console.log('Cleaned');
 });
 
-// Package the shit
+// Package it up for Webstore
 var manifest = JSON.parse(fs.readFileSync('manifest.json', ENC)),
     pkgName = manifest.name.replace(/ /g, '-').toLowerCase();
 new jake.PackageTask(pkgName, manifest.version, function () {
@@ -154,4 +154,9 @@ new jake.PackageTask(pkgName, manifest.version, function () {
     ];
     this.packageFiles.include(fileList);
     this.needZip = true;
+});
+
+desc('Build & package');
+task({ '_pkg': ['default', 'package'] }, function() {
+    console.log('Package completed');
 });

@@ -23,13 +23,21 @@
         "rulers": [ 80 ],
 
         "build_switcher_systems": [
-            "jake",
+            "_jake",
             "jake clean",
             "jake package",
             "jshint"
         ]
     },
     "build_systems": [
+        {
+            "name": "_jake",
+            "cmd": ["jake", "_pkg"],
+            "windows": {
+                "cmd": ["jake.cmd"]
+            },
+            "working_dir": "$project_path"
+        },
         {
             "name": "jake",
             "cmd": ["jake"],
