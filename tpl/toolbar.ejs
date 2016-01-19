@@ -1,9 +1,9 @@
-<% if (geo && geo.isLocal && !trueLocal) { %>
+<% if (geo && geo.isLocal && geo.ip) { %>
+  <li class="button is-disabled toolbar-marklocal toolbar-marked"></li>
+<% } else if (geo && geo.isLocal && !trueLocal) { %>
   <li class="button toolbar-marklocal toolbar-marked" title="Unmark domain as local"></li>
 <% } else if (!geo) { %>
   <li class="button toolbar-marklocal" title="Mark domain as local"></li>
 <% } %>
 
-<% if (!geo || geo && !geo.isLocal) { %>
-  <li class="button toolbar-reload" title="Reload geodata"></li>
-<% } %>
+<li class="button toolbar-reload" title="Reload geodata"></li>

@@ -110,7 +110,7 @@ YAF = {
         YAF.storage.set(domain, data);
 
         return new Promise(function(resolve, reject) {
-            var xhr = new XMLHttpRequest();
+            var xhr = new XMLHttpRequest(), resp;
             xhr.open('GET', API_URL + domain, true);
             xhr.onload = function() {
                 _gaq.push(['_trackPageview']);
@@ -118,8 +118,18 @@ YAF = {
                 if (xhr.status === 200) {
                     data.geo = normalizeData( JSON.parse(xhr.responseText) );
                 } else {
-                    data.geo = false;
-                    data.error = xhr.responseText.trim();
+                    try {
+                        resp = JSON.parse(xhr.responseText);
+                    } catch(e) {
+                        resp = xhr.responseText
+                    }
+                    data.error = resp.error || resp;
+                    if (resp.ip) {
+                        data.geo = {
+                            ip: resp.ip,
+                            isLocal: isLocal(resp.ip)
+                        }
+                    }
                 }
 
                 YAF.storage.set(domain, data);
@@ -137,14 +147,14 @@ YAF = {
             twoWeeks = day * 14;
 
         // do we already have data for this domain?
-        var data = YAF.storage.get(domain);
+        var data = YAF.storage.get(domain) || {};
 
         // short-circuit for the local domains (boths IPs and user-marked)
-        if ( isLocal(domain) || (data && data.geo && data.geo.isLocal) ) {
-            return Promise.resolve( [domain, { geo: { isLocal: true } }] );
+        if ( isLocal(domain) || (data.geo && data.geo.isLocal) ) {
+            return Promise.resolve( [domain, { geo: data.geo || { isLocal: true } }] );
         }
 
-        if (data && data.date && !reload) {
+        if (data.date && !reload) {
             // if data has been stored for 2 weeks - refetch it
             if ( passedMoreThan(twoWeeks, data.date) ) {
                 return this.request(domain);

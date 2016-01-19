@@ -28,8 +28,7 @@ window.addEventListener('DOMContentLoaded', function() {
     });
 
     function renderPopup (tab, domain, data) {
-        var service = this,
-            geo = data.geo;
+        var service = this;
 
         toolbar.innerHTML = get('toolbar.ejs')({
             geo: data.geo,
@@ -61,19 +60,22 @@ window.addEventListener('DOMContentLoaded', function() {
             service._gaq.push(['_trackEvent', 'popup', 'reload']);
         });
 
-        if (!geo) {
+        if (data.error) {
             result.innerHTML = get('not_found.ejs')({
                 domain: domain,
                 error: data.error
             });
         }
-        else if (geo.isLocal) {
-            result.innerHTML = get('local.ejs')({ domain: domain });
+        else if (data.geo.isLocal) {
+            result.innerHTML = get('local.ejs')({
+                domain: domain,
+                geo: data.geo
+            });
         }
         else {
             result.innerHTML = get('regular.ejs')({
                 domain: domain,
-                geo: geo
+                geo: data.geo
             });
         }
     }
