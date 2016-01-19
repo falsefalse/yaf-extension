@@ -1,11 +1,18 @@
-### Yet Another Flags source code ###
+### Yet Another Flags ###
 
-This is the source code for Google Chrome [extenstion](https://chrome.google.com/webstore/detail/dmchcmgddbhmbkakammmklpoonoiiomk).
+The source code for Google Chrome [extenstion](https://chrome.google.com/webstore/detail/dmchcmgddbhmbkakammmklpoonoiiomk).
 
-Extension takes data from free [MaxMind City DB](http://www.maxmind.com/app/geolitecity)
-files. Data is then served by
-nodejs application that uses [bogart](https://github.com/nrstott/bogart)
-and excellent [geoip](https://github.com/kuno).
+Extension show data from free [MaxMind City DB](http://www.maxmind.com/app/geolitecity)
+files. Take a look at [server code](https://github.com/falsefalse/geoip-server) as well.
 
-Take a look at [server code](https://github.com/falsefalse/geoip-server) as well.
+#### Install ####
+
+Make sure you have [jake](https://github.com/mde/jake) installed globally.
+
+    $ git clone git@bitbucket.org:false/yet-another-flags-extension.git
+    $ cd yet-another-flags-extension
+    $ npm install .
+    $ jake && jake package
+
+And you have it compiled in `./pkg`.
 
