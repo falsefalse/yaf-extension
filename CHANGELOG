@@ -1,3 +1,7 @@
+Version 1.0.2
+Prevent Chrome from scaling flag icon, render to canvas and then to page/browserAction.
+Pad default icons to 19 and 38px
+
 Version 1.0.1
 Includes correct minified service in the manifest
 
