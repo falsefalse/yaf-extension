@@ -25,7 +25,11 @@
     },
 
     "page_action": {
-        "default_icon": "img/icon/16.png",
+        "default_icon": {
+            "19": "img/icon/16_padded_to_19.png",
+            "38": "img/icon/32_padded_to_38.png"
+        },
+        "default_title": "Yet Another Flags",
         "default_popup": "popup.html"
     },
 
