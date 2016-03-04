@@ -59,15 +59,33 @@ function getDomain (url) {
 function passedMoreThan (seconds, date) {
     return (new Date()).getTime() - date > ( seconds * 1000 );
 }
+
+var c = document.createElement('canvas').getContext('2d');
+c.width = c.height = 19;
+
+function center(whole, part) { return Math.round((whole - part) / 2); }
+
+function setIcon(tabId, path) {
+    var img = new Image();
+    img.onload = function() {
+        c.clearRect(0, 0, c.width, c.height);
+        console.log(img.width, img.height);
+        c.drawImage(img, center(c.width, img.width), center(c.height, img.height), img.width, img.height);
+
+        chrome.pageAction.setIcon({
+            tabId : tabId,
+            imageData : c.getImageData(0, 0, 19, 19)
+        });
+    };
+    img.src = path;
+}
+
 function updatePageAction(tab, domain, data) {
     var geo = data.geo;
 
     if (geo) {
         if (geo.isLocal) {
-            chrome.pageAction.setIcon({
-                tabId : tab.id,
-                path  : 'img/local_resource.png'
-            });
+            setIcon(tab.id, 'img/local_resource.png');
             chrome.pageAction.setTitle({
                 tabId : tab.id,
                 title : domain + ' is a local resource'
@@ -77,20 +95,14 @@ function updatePageAction(tab, domain, data) {
             if (geo.city) title.splice(0, 0, geo.city);
             if (geo.region) title.splice(1, 0, geo.region);
 
-            chrome.pageAction.setIcon({
-                tabId : tab.id,
-                path  : 'img/flags/' + geo.country_code.toLowerCase() + '.png'
-            });
+            setIcon(tab.id, 'img/flags/' + geo.country_code.toLowerCase() + '.png');
             chrome.pageAction.setTitle({
                 tabId : tab.id,
                 title : title.join(', ')
             });
         }
     } else {
-        chrome.pageAction.setIcon({
-            tabId : tab.id,
-            path  : 'img/icon/16.png'
-        });
+        setIcon(tab.id, 'img/icon/16.png');
         chrome.pageAction.setTitle({
             tabId : tab.id,
             title : data.error || '\'' + domain + '\' was not found in database'
@@ -121,16 +133,17 @@ YAF = {
                     try {
                         resp = JSON.parse(xhr.responseText);
                     } catch(e) {
-                        resp = xhr.responseText
+                        resp = xhr.responseText;
                     }
                     data.error = resp.error || resp;
                     if (resp.ip) {
                         data.geo = {
                             ip: resp.ip,
                             isLocal: isLocal(resp.ip)
-                        }
+                        };
                     }
                 }
+                // TODO: handle dead server, `reject` should do something
 
                 YAF.storage.set(domain, data);
                 resolve( [domain, data] );
