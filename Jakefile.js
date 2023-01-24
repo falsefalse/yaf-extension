@@ -1,6 +1,12 @@
 /* BUILD ALL THE THINGS */
 
 /*global jake, task, desc, namespace, file */
+var {
+    task, desc, namespace,
+    directory,
+    rmRf,
+    packageTask
+} = require('jake');
 
 var fs   = require('fs'),
     path = require('path'),
@@ -57,6 +63,8 @@ function minify (sourcepath, resultpath) {
     console.log('Minified:', sourcepath, sourceSize, size(resultpath || sourcepath));
 }
 
+directory( BUILD_DIR );
+
 namespace('js', function() {
     desc('Minify service');
     file(BUILD.service, [SRC.service], function() {
@@ -79,17 +87,18 @@ namespace('js', function() {
     });
 
     desc('Build JavaScript');
-    task({ 'default': [
-         'js:' + BUILD.service,
-         'js:' + BUILD.popup
-    ] }, function() {
+    task('default', [
+         BUILD_DIR,
+            `js:${BUILD.service}`,
+            `js:${BUILD.popup}`
+    ], function() {
         console.log('Finished building JavaScript');
     });
 });
 
 namespace('tpl', function() {
     desc('Compile and minify templates');
-    file(BUILD.tpl, SRC.tpls, function() {
+    file(BUILD.tpl, [...SRC.tpls, BUILD_DIR], function() {
         var compiled = {},
             meta = SRC.tpls.shift(),
             result = template( fs.readFileSync(meta, ENC) );
@@ -111,52 +120,42 @@ namespace('tpl', function() {
     desc('Clean templates');
     task('clean', function() {
         [ BUILD.tpl ].forEach(function(filepath) {
-            if ( fs.existsSync(filepath) ) {
-                fs.unlinkSync(filepath);
-                console.log('Removed:', filepath);
-            }
+            if ( !fs.existsSync(filepath) ) return
+            fs.unlinkSync(filepath);
+            console.log('Removed:', filepath);
         });
     });
 });
 
-// ensure BUILD_DIR directory is there
-jake.mkdirP( BUILD_DIR );
-
 desc('Build all');
-task({ 'default': [
+task('default', [
      'js:default',
-     'tpl:' + BUILD.tpl
-] }, function() {
-    console.log('Build completed');
-});
+     `tpl:${BUILD.tpl}`
+]);
 
 desc('Clean all');
-task({ 'clean': ['js:clean', 'tpl:clean'] }, function() {
-    var remains = jake.readdirR(BUILD_DIR);
+task('clean', ['js:clean', 'tpl:clean', 'clobber'], function() {
+    var remains = fs.readdirSync(BUILD_DIR);
     // directory itself is always the 1st item
     remains.shift();
     if (remains.length) {
         console.log( 'Orphanes in %s:\n %s', BUILD_DIR, remains.join('\n ') );
     }
-    jake.rmRf( BUILD_DIR );
+    rmRf( BUILD_DIR );
     console.log('Cleaned');
 });
 
 // Package it up for Webstore
 var manifest = JSON.parse(fs.readFileSync('manifest.json', ENC)),
     pkgName = manifest.name.replace(/ /g, '-').toLowerCase();
-new jake.PackageTask(pkgName, manifest.version, function () {
-    var fileList = [
-        'manifest.json',
-        'build/*',
-        'img/**',
-        'popup.html'
-    ];
-    this.packageFiles.include(fileList);
-    this.needZip = true;
-});
 
-desc('Build & package');
-task({ '_pkg': ['default', 'package'] }, function() {
-    console.log('Package completed');
+packageTask(pkgName, manifest.version, ['default'], function () {
+  var fileList = [
+      'manifest.json',
+      'build/*',
+      'img/**',
+      'popup.html'
+  ];
+  this.packageFiles.include(fileList);
+  this.needZip = true;
 });
