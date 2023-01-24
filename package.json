@@ -3,7 +3,7 @@
   "repository": "git@bitbucket.org:false/yet-another-flags-extension.git",
   "version": "1.0.3",
   "devDependencies": {
-    "uglify-js": "^2.8.29",
-    "jake": "^10.8.5"
+    "jake": "^10.8.5",
+    "uglify-js": "^3.17.4"
   }
 }
