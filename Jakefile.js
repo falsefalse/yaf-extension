@@ -27,9 +27,9 @@ var SRC = {
 };
 
 var BUILD = {
-    service : path.join(BUILD_DIR, 'service.min.js'),
-    popup   : path.join(BUILD_DIR, 'popup.min.js'),
-    tpl     : path.join(BUILD_DIR, 'templates.min.js')
+    service : path.join(BUILD_DIR, 'service.js'),
+    popup   : path.join(BUILD_DIR, 'popup.js'),
+    tpl     : path.join(BUILD_DIR, 'templates.js')
 };
 
 ;(function fill() {
@@ -57,9 +57,10 @@ function minify (sourcepath, resultpath) {
     var compressed,
         sourceSize = size(sourcepath);
 
-    compressed = uglify.minify(fs.readFileSync(sourcepath, ENC));
+    // let { code } = uglify.minify(fs.readFileSync(sourcepath, ENC));
+    let code = (fs.readFileSync(sourcepath, ENC));
 
-    fs.writeFileSync(resultpath || sourcepath, compressed.code);
+    fs.writeFileSync(resultpath || sourcepath, code);
     console.log('Minified:', sourcepath, sourceSize, size(resultpath || sourcepath));
 }
 
@@ -127,29 +128,24 @@ namespace('tpl', function() {
     });
 });
 
-desc('Build all');
-task('default', [
+desc('Compile');
+task('compile', [
+     BUILD_DIR,
      'js:default',
      `tpl:${BUILD.tpl}`
 ]);
 
 desc('Clean all');
 task('clean', ['js:clean', 'tpl:clean', 'clobber'], function() {
-    var remains = fs.readdirSync(BUILD_DIR);
-    // directory itself is always the 1st item
-    remains.shift();
-    if (remains.length) {
-        console.log( 'Orphanes in %s:\n %s', BUILD_DIR, remains.join('\n ') );
-    }
     rmRf( BUILD_DIR );
-    console.log('Cleaned');
+    // package dir as well
 });
 
 // Package it up for Webstore
 var manifest = JSON.parse(fs.readFileSync('manifest.json', ENC)),
     pkgName = manifest.name.replace(/ /g, '-').toLowerCase();
 
-packageTask(pkgName, manifest.version, ['default'], function () {
+packageTask(pkgName, manifest.version, ['compile'], function () {
   var fileList = [
       'manifest.json',
       'build/*',
@@ -159,3 +155,6 @@ packageTask(pkgName, manifest.version, ['default'], function () {
   this.packageFiles.include(fileList);
   this.needZip = true;
 });
+
+desc('Rebuild & package')
+task('default', [ 'clean', 'compile', 'package' ])
