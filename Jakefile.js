@@ -21,9 +21,7 @@ var ENC = 'utf-8',
 var SRC = {
     service : path.join(ROOT, 'js/service.js'),
     popup   : path.join(ROOT, 'js/popup.js'),
-    tpls    : [
-        '_compiled.js'
-    ]
+    tpls    : [ 'precompile_to_modules.ejs.js' ]
 };
 
 var BUILD = {
