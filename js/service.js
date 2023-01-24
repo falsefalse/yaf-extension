@@ -60,8 +60,9 @@ function passedMoreThan (seconds, date) {
     return (new Date()).getTime() - date > ( seconds * 1000 );
 }
 
-var c = document.createElement('canvas').getContext('2d');
-c.width = c.height = 19;
+var SIZE = 19;
+var c = document.createElement('canvas').getContext('2d', { willReadFrequently: true, alpha: false });
+c.width = c.height = SIZE;
 
 function center(whole, part) { return Math.round((whole - part) / 2); }
 
@@ -69,12 +70,11 @@ function setIcon(tabId, path) {
     var img = new Image();
     img.onload = function() {
         c.clearRect(0, 0, c.width, c.height);
-        console.log(img.width, img.height);
         c.drawImage(img, center(c.width, img.width), center(c.height, img.height), img.width, img.height);
 
         chrome.pageAction.setIcon({
-            tabId : tabId,
-            imageData : c.getImageData(0, 0, 19, 19)
+            tabId: tabId,
+            imageData: c.getImageData(0, 0, SIZE, SIZE)
         });
     };
     img.src = path;
