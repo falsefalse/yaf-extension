@@ -57,8 +57,7 @@ function minify (sourcepath, resultpath) {
     var compressed,
         sourceSize = size(sourcepath);
 
-    // let { code } = uglify.minify(fs.readFileSync(sourcepath, ENC));
-    let code = (fs.readFileSync(sourcepath, ENC));
+    let { code } = uglify.minify(fs.readFileSync(sourcepath, ENC));
 
     fs.writeFileSync(resultpath || sourcepath, code);
     console.log('Minified:', sourcepath, sourceSize, size(resultpath || sourcepath));

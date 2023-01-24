@@ -19,12 +19,12 @@
       font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
       position: relative;
       margin: 8px 12px;
+      transition: filter .1s ease-out;
     }
-
-    code {
-      font-size: inherit;
-      font-family: monospace;
-    }
+      body.is-loading {
+        filter: blur(1px);
+        pointer-events: none;
+      }
 
     .button {
       cursor: pointer;
@@ -109,12 +109,12 @@
 
         ul.result li.service a.whois { background-image: url(img/popup/domaintools.ico); }
   </style>
+
+  <script type="module" src="./build/popup.js"></script>
 </head>
 
 <body>
   <ul class="toolbar"></ul>
   <ul class="result"></ul>
-
-  <script type="module" src="./build/popup.min.js"></script>
 </body>
 </html>

@@ -159,6 +159,8 @@ var YAF = {
         const geoData = await this.getGeoData( domain, reload )
         YAF.storage.set(domain, geoData)
         updatePageAction(tab, domain, geoData);
+
+        return geoData;
     }
 };
 
@@ -186,7 +188,12 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
 
 YAF.storage = {
     set: function(key, value) {
-        chrome.storage.local.set({ [key]: value })
+        try {
+            chrome.storage.local.set({ [key]: value })
+        } catch (error) {
+            chrome.storage.local.clear()
+        }
+
     },
     get: async function (key) {
         return (await chrome.storage.local.get(key))[key];

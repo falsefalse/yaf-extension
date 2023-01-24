@@ -8,7 +8,7 @@
     "version": "1.0.3",
 
     "background": {
-        "service_worker": "build/service.min.js",
+        "service_worker": "build/service.js",
         "type": "module"
     },
 
