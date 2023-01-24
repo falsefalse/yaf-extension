@@ -88,9 +88,9 @@ namespace('js', function() {
 
     desc('Build JavaScript');
     task('default', [
-         BUILD_DIR,
-            `js:${BUILD.service}`,
-            `js:${BUILD.popup}`
+        BUILD_DIR,
+        `js:${BUILD.service}`,
+        `js:${BUILD.popup}`
     ], function() {
         console.log('Finished building JavaScript');
     });
@@ -107,7 +107,7 @@ namespace('tpl', function() {
             var fileName = path.basename(fullpath),
                 content = fs.readFileSync(fullpath, ENC);
 
-            compiled[fileName] = template(content).source;
+            compiled[fileName] = template(content, null, { variable: 'tplData' }).source;
         });
 
         result = result({ compiled: compiled });

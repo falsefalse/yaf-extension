@@ -1,9 +1,15 @@
-<% if (geo && geo.isLocal && geo.ip) { %>
-  <li class="button is-disabled toolbar-marklocal toolbar-marked"></li>
-<% } else if (geo && geo.isLocal && !trueLocal) { %>
-  <li class="button toolbar-marklocal toolbar-marked" title="Unmark domain as local"></li>
-<% } else if (!geo) { %>
-  <li class="button toolbar-marklocal" title="Mark domain as local"></li>
+<!-- mark as local -->
+<% if (tplData.geo && tplData.geo.isLocal && tplData.geo.ip) { %>
+  <li class="button is-disabled toolbar-marklocal toolbar-marked" />
+<% } else if (tplData.geo && tplData.geo.isLocal && !tplData.trueLocal) { %>
+  <li class="button toolbar-marklocal toolbar-marked" title="Unmark domain as local" />
+<% } else if (!tplData.geo) { %>
+  <li class="button toolbar-marklocal" title="Mark domain as local" />
 <% } %>
 
-<li class="button toolbar-reload" title="Reload geodata"></li>
+<!-- reload data -->
+<% if (tplData.loading) { %>
+  <li class="button is-disabled toolbar-reload" title="Loading..." />
+<% } else { %>
+  <li class="button toolbar-reload" title="Reload geo data" />
+<% } %>

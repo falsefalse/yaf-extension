@@ -1,15 +1,4 @@
-/*global chrome, Promise, YAF:true, _gaq*/
-
-// Background service for YAFlags
-
-window._gaq = window._gaq || [];
-_gaq.push(['_setAccount', 'UA-18454737-1']);
-
-(function() {
-  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-  ga.src = 'https://ssl.google-analytics.com/ga.js';
-  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
+/*global chrome */
 
 // helpers
 function isLocal (ip) {
@@ -61,23 +50,23 @@ function passedMoreThan (seconds, date) {
 }
 
 var SIZE = 19;
-var c = document.createElement('canvas').getContext('2d', { willReadFrequently: true, alpha: false });
+var c = new OffscreenCanvas(SIZE, SIZE).getContext('2d', { willReadFrequently: true });
 c.width = c.height = SIZE;
 
 function center(whole, part) { return Math.round((whole - part) / 2); }
 
-function setIcon(tabId, path) {
-    var img = new Image();
-    img.onload = function() {
-        c.clearRect(0, 0, c.width, c.height);
-        c.drawImage(img, center(c.width, img.width), center(c.height, img.height), img.width, img.height);
+async function setIcon(tabId, path) {
+    path = '../' + path;
+    const imgBlob = await fetch(path).then(r => r.blob());
+    const img = await createImageBitmap(imgBlob);
 
-        chrome.pageAction.setIcon({
-            tabId: tabId,
-            imageData: c.getImageData(0, 0, SIZE, SIZE)
-        });
-    };
-    img.src = path;
+    c.clearRect(0, 0, c.width, c.height);
+    c.drawImage(img, center(c.width, img.width), center(c.height, img.height), img.width, img.height);
+
+    chrome.action.setIcon({
+        tabId: tabId,
+        imageData: c.getImageData(0, 0, SIZE, SIZE)
+    });
 }
 
 function updatePageAction(tab, domain, data) {
@@ -86,7 +75,7 @@ function updatePageAction(tab, domain, data) {
     if (geo) {
         if (geo.isLocal) {
             setIcon(tab.id, 'img/local_resource.png');
-            chrome.pageAction.setTitle({
+            chrome.action.setTitle({
                 tabId : tab.id,
                 title : domain + ' is a local resource'
             });
@@ -96,112 +85,87 @@ function updatePageAction(tab, domain, data) {
             if (geo.region) title.splice(1, 0, geo.region);
 
             setIcon(tab.id, 'img/flags/' + geo.country_code.toLowerCase() + '.png');
-            chrome.pageAction.setTitle({
+            chrome.action.setTitle({
                 tabId : tab.id,
                 title : title.join(', ')
             });
         }
     } else {
         setIcon(tab.id, 'img/icon/16.png');
-        chrome.pageAction.setTitle({
+        chrome.action.setTitle({
             tabId : tab.id,
             title : data.error || '\'' + domain + '\' was not found in database'
         });
     }
-
-    chrome.pageAction.show(tab.id);
 }
 
 var API_URL = 'http://geo.furman.im:8080/';
-YAF = {
-    request: function(domain) {
+var YAF = {
+    request: async function(domain) {
         var data = {
             date : (new Date()).getTime(),
             geo  : null
         };
-        YAF.storage.set(domain, data);
 
-        return new Promise(function(resolve, reject) {
-            var xhr = new XMLHttpRequest(), resp;
-            xhr.open('GET', API_URL + domain, true);
-            xhr.onload = function() {
-                _gaq.push(['_trackPageview']);
+        let response, json
+        try {
+            response = await fetch(API_URL + domain)
+        } catch (error) {
+            data.error = error
+            return data
+        }
+        if (!response.ok) {
+            data.error = await response.text()
+            return data
+        } else {
+            json = await response.json()
+        }
+        data.geo = normalizeData(json)
 
-                if (xhr.status === 200) {
-                    data.geo = normalizeData( JSON.parse(xhr.responseText) );
-                } else {
-                    try {
-                        resp = JSON.parse(xhr.responseText);
-                    } catch(e) {
-                        resp = xhr.responseText;
-                    }
-                    data.error = resp.error || resp;
-                    if (resp.ip) {
-                        data.geo = {
-                            ip: resp.ip,
-                            isLocal: isLocal(resp.ip)
-                        };
-                    }
-                }
-                // TODO: handle dead server, `reject` should do something
-
-                YAF.storage.set(domain, data);
-                resolve( [domain, data] );
-            };
-            xhr.onerror = function() {
-                reject( new Error('Network Error') );
-            };
-            xhr.send(null);
-        });
+        return data
     },
-    getGeoData : function(domain, reload) {
+    getGeoData : async function(domain, reload) {
         // constants
         var day = 60 * 60 * 24, // seconds
             twoWeeks = day * 14;
 
         // do we already have data for this domain?
-        var data = YAF.storage.get(domain) || {};
+        var data = (await YAF.storage.get(domain)) || {};
 
         // short-circuit for the local domains (boths IPs and user-marked)
         if ( isLocal(domain) || (data.geo && data.geo.isLocal) ) {
-            return Promise.resolve( [domain, { geo: data.geo || { isLocal: true } }] );
+            return { geo: data.geo || { isLocal: true } };
         }
 
         if (data.date && !reload) {
             // if data has been stored for 2 weeks - refetch it
             if ( passedMoreThan(twoWeeks, data.date) ) {
-                return this.request(domain);
+                return await this.request(domain);
             // refetch 404s once a day
             } else if ( !data.geo && passedMoreThan(day, data.date) ) {
-                return this.request(domain);
+                return await this.request(domain);
             } else {
-                return Promise.resolve([domain, data]);
+                return data;
             }
         } else {
-            return this.request(domain);
+            return await this.request(domain);
         }
     },
 
-
-    // need `tab` since it could need to modify it later
-    setFlag : function(tab, reload) {
+    setFlag : async function(tab, reload) {
         var domain = getDomain(tab.url);
-        if (!domain) { return; }
-        return this.getGeoData( domain, reload )
-            .then(function(args) {
-                args.unshift(tab);
-                updatePageAction.apply(YAF, args);
-            });
+        if (!domain) return
+
+        const geoData = await this.getGeoData( domain, reload )
+        YAF.storage.set(domain, geoData)
+        updatePageAction(tab, domain, geoData);
     }
 };
 
-function _getURL(tab) {
-    if (!tab || !tab.url) {
-        return false;
-    } else {
-        return tab.url;
-    }
+function tabHasUrl(tab) {
+    return Boolean(tab && tab.url)
 }
+
 
 // update icon when tab is updated
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
@@ -214,46 +178,19 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 chrome.tabs.onActivated.addListener(function(activeInfo) {
     // TODO: execute only if domain has changed
     chrome.tabs.get( activeInfo.tabId, function(tab) {
-        if (_getURL(tab)) {
+        if (tabHasUrl(tab)) {
             YAF.setFlag( tab );
         }
     } );
 });
 
 YAF.storage = {
-    set: function(key, data) {
-        try {
-            localStorage.setItem(key, JSON.stringify(data));
-        } catch(e) {
-            // at certain point we'll bump into localStorage 5MB limit
-            if (e.code && e.code === window.DOMException.prototype.QUOTA_EXCEEDED_ERR) {
-                console.info('Run into 5MB localStorage limit, flushing the cache now');
-                YAF.storage.flush();
-
-                // try writing again
-                localStorage.setItem(key, data);
-            } else {
-                throw e;
-            }
-        }
+    set: function(key, value) {
+        chrome.storage.local.set({ [key]: value })
     },
-    get: function(key) {
-        return JSON.parse(localStorage.getItem(key));
-    },
-    flush: function() {
-        var version = this.get('_schema');
-        localStorage.clear();
-        this.set('_schema', version);
+    get: async function (key) {
+        return (await chrome.storage.local.get(key))[key];
     }
 };
 
-// INFO: Migrations sucks balls
-(function() {
-    var schema = YAF.storage.get('_schema') || 0,
-        current = 15;
-    //  increment ↑↑ number in order to wipe all data
-    if (schema < current) {
-        YAF.storage.flush();
-        YAF.storage.set('_schema', current + 1);
-    }
-})();
+export { YAF, getDomain, isLocal }

@@ -2,81 +2,81 @@
 
 // Render services links for domain/IP and display them in popup
 
+import Templates from './templates.min.js'
+import { YAF, getDomain, isLocal } from './service.min.js'
+
 function get(template) {
-    return window.TPL[template];
+    return Templates[template];
 }
 
-window.addEventListener('DOMContentLoaded', function() {
+async function renderPopup (tab) {
+    let domain = getDomain(tab.url)
+    let data = await YAF.storage.get(domain)
+
     var toolbar = document.querySelector('.toolbar');
     var result = document.querySelector('.result');
 
-    chrome.runtime.getBackgroundPage(function(service) {
-        service._gaq.push(['_trackEvent', 'popup', 'shown']);
-
-        chrome.tabs.query({
-            active: true,
-            currentWindow: true
-        }, function(tabs) {
-            var tab = tabs[0];
-
-            service.YAF.getGeoData( service.getDomain(tab.url) )
-                .then(function(args) {
-                    args.unshift(tab);
-                    renderPopup.apply(service, args);
-                });
-        });
+    // toolbar
+    toolbar.innerHTML = get('toolbar.ejs')({
+        geo: data.geo,
+        trueLocal: isLocal(domain)
     });
 
-    function renderPopup (tab, domain, data) {
-        var service = this;
+    var mark = toolbar.querySelector('.toolbar-marklocal'),
+        reload = toolbar.querySelector('.toolbar-reload');
 
-        toolbar.innerHTML = get('toolbar.ejs')({
-            geo: data.geo,
-            trueLocal: service.isLocal(domain)
-        });
-        var mark = toolbar.querySelector('.toolbar-marklocal'),
-            reload = toolbar.querySelector('.toolbar-reload');
+    mark && mark.addEventListener('click', async function() {
+        if (data.geo && data.geo.isLocal) {
+            delete data.geo.isLocal;
+        } else {
+            data.geo = data.geo || {};
+            data.geo.isLocal = true;
+        }
 
-        mark && mark.addEventListener('click', function() {
-            if (data.geo && data.geo.isLocal) {
-                delete data.geo.isLocal;
-                service._gaq.push(['_trackEvent', 'popup', 'unmark']);
-            } else {
-                data.geo = data.geo || {};
-                data.geo.isLocal = true;
-                service._gaq.push(['_trackEvent', 'popup', 'mark']);
-            }
+        YAF.storage.set(domain, data);
+        await YAF.setFlag(tab);
 
-            service.YAF.storage.set(domain, data);
-            service.YAF.setFlag(tab).then(function() {
-                window.location.reload(true);
-            });
-        });
-        reload && reload.addEventListener('click', function() {
-            service.YAF.setFlag(tab, true)
-                .then(function() {
-                    window.location.reload(true);
-                });
-            service._gaq.push(['_trackEvent', 'popup', 'reload']);
-        });
-
-        if (data.error) {
-            result.innerHTML = get('not_found.ejs')({
-                domain: domain,
-                error: data.error
+        window.location.reload();
+    });
+    reload && reload.addEventListener('click', async function() {
+        if (data.geo && !data.geo.isLocal) {
+            toolbar.innerHTML = get('toolbar.ejs')({
+                geo: data.geo,
+                trueLocal: isLocal(domain),
+                loading: true
             });
         }
-        else if (data.geo.isLocal) {
-            result.innerHTML = get('local.ejs')({
-                domain: domain,
-                geo: data.geo
-            });
-        }
-        else {
-            result.innerHTML = get('regular.ejs')({
-                domain: domain,
-                geo: data.geo
-            });
-        }
+
+        await YAF.setFlag(tab, true)
+        window.location.reload(true);
+    });
+
+    // data
+    if (data.error) {
+        result.innerHTML = get('not_found.ejs')({
+            domain: domain,
+            error: data.error
+        });
     }
-}, false);
+    else if (data.geo.isLocal) {
+        result.innerHTML = get('local.ejs')({
+            domain: domain,
+            geo: data.geo
+        });
+    }
+    else {
+        result.innerHTML = get('regular.ejs')({
+            domain: domain,
+            geo: data.geo
+        });
+    }
+}
+
+window.addEventListener('DOMContentLoaded', async function() {
+  let [currentTab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true
+  })
+
+  await renderPopup(currentTab)
+})

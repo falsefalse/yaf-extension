@@ -1,13 +1,13 @@
-<li class="header"><%= geo.country_name %></li>
+<li class="header"><%= tplData.geo.country_name %></li>
 <%
-var region = [];
-geo.city && region.push(geo.city);
-geo.region && region.push(geo.region);
-if (region.length) { %>
-  <li class="data small"><%= region.join(', ') %></li>
+tplData.region = [];
+tplData.geo.city && tplData.region.push(tplData.geo.city);
+tplData.geo.region && tplData.region.push(tplData.geo.region);
+if (tplData.region.length) { %>
+  <li class="tplData.small"><%= tplData.region.join(', ') %></li>
 <% } %>
-<li><%= geo.ip %></li>
+<li><%= tplData.geo.ip %></li>
 <li class="separator"></li>
 <li class="service">
-  <a class="whois" target="_blank" href="http://whois.domaintools.com/<%= domain %>">Whois</a>
+  <a class="whois" target="_blank" href="http://whois.domaintools.com/<%= tplData.domain %>">Whois</a>
 </li>

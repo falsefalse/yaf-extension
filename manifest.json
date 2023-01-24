@@ -1,30 +1,28 @@
 {
-    "manifest_version": 2,
+    "manifest_version": 3,
 
     "name": "Yet another flags",
     "short_name": "YAFlags",
-    "description": "Shows flag for the website in the location bar.",
+    "description": "Shows flag for the website near the location bar",
 
-    "version": "1.0.2",
-
-    "permissions": [
-        "tabs",
-        "http://geo.furman.im/*"
-    ],
+    "version": "1.0.3",
 
     "background": {
-        "scripts": ["build/service.min.js"],
-        "persistent": false
+        "service_worker": "build/service.min.js",
+        "type": "module"
     },
+
+    "permissions": ["tabs", "storage"],
+    "host_permissions": ["http://geo.furman.im/*"],
 
     "icons": {
         "128": "img/icon/128.png",
-        "48" : "img/icon/48.png",
-        "32" : "img/icon/32.png",
-        "16" : "img/icon/16.png"
+        "48": "img/icon/48.png",
+        "32": "img/icon/32.png",
+        "16": "img/icon/16.png"
     },
 
-    "page_action": {
+    "action": {
         "default_icon": {
             "19": "img/icon/16_padded_to_19.png",
             "38": "img/icon/32_padded_to_38.png"
@@ -33,5 +31,7 @@
         "default_popup": "popup.html"
     },
 
-    "content_security_policy": "script-src 'self' https://ssl.google-analytics.com; object-src 'self'"
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
+    }
 }

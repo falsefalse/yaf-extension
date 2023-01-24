@@ -1,8 +1,5 @@
 <html>
 <head>
-  <script type="text/javascript" src="build/templates.min.js"></script>
-  <script type="text/javascript" src="build/popup.min.js"></script>
-
   <style type="text/css">
     * {
       margin: 0; padding: 0;
@@ -13,17 +10,27 @@
       text-decoration: none;
     }
 
+    html {
+      min-width: 150px;
+      min-height: 2.5rem;
+    }
+
     body {
-      position: relative;
       font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
-      margin: 4px 4px 3px 4px;
+      position: relative;
+      margin: 8px 12px;
+    }
+
+    code {
+      font-size: inherit;
+      font-family: monospace;
     }
 
     .button {
       cursor: pointer;
       border-radius: 4px;
       border: 1px solid rgba(132, 146, 172, .33);
-      -webkit-transition: background-color .3s, border-color .3s;
+      transition: background-color .3s, border-color .3s;
     }
       .button:hover {
         border-color: rgba(132, 146, 172, 1);
@@ -31,6 +38,7 @@
       .button.is-disabled {
         border-color: transparent;
         pointer-events: none;
+        opacity: .5;
       }
 
     ul.toolbar {
@@ -92,7 +100,7 @@
           padding-left: 28px;
           border-radius: 4px;
           border: 1px solid #fff;
-          -webkit-transition: border-color .3s, background-color .3s;
+          transition: border-color .3s, background-color .3s;
         }
         ul.result li.service a:hover {
           border-color: #8492ac;
@@ -106,5 +114,7 @@
 <body>
   <ul class="toolbar"></ul>
   <ul class="result"></ul>
+
+  <script type="module" src="./build/popup.min.js"></script>
 </body>
 </html>
