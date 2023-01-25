@@ -4,17 +4,19 @@ var { task, desc, namespace, directory, rmRf, packageTask } = require('jake')
 
 var fs = require('fs'),
   path = require('path'),
-  uglify = require('uglify-js')
-
-var template = require('./js/lib/underscore.templates.js').template
+  uglify = require('uglify-js'),
+  template = require('lodash.template')
 
 var ENC = 'utf-8',
   ROOT = './',
   BUILD_DIR = path.join(ROOT, './build')
 
+var TEMPLATES_DIR = path.join(ROOT, './src/templates')
+
 var SRC = {
-  service: path.join(ROOT, 'js/service.js'),
-  popup: path.join(ROOT, 'js/popup.js'),
+  service: path.join(ROOT, 'src/service.js'),
+  popup: path.join(ROOT, 'src/popup.js'),
+  // gets expanded in `readEjs` with others
   templates: ['index.ejs.js']
 }
 
@@ -24,13 +26,11 @@ var BUILD = {
   templates: path.join(BUILD_DIR, 'templates.js')
 }
 
-var TEMPLATES_DIR = path.join(ROOT, './templates')
-
 ;(function readEjs() {
   SRC.templates = [
     ...SRC.templates,
-    ...fs.readdirSync(TEMPLATES_DIR).filter(fileName => /\.ejs$/.test(fileName))
-  ].map(fileName => path.join(TEMPLATES_DIR, fileName))
+    ...fs.readdirSync(TEMPLATES_DIR).filter(name => /\.ejs$/.test(name))
+  ].map(name => path.join(TEMPLATES_DIR, name))
 })()
 
 // utilities
@@ -95,9 +95,7 @@ namespace('tpl', function () {
       var fileName = path.basename(fullpath),
         content = fs.readFileSync(fullpath, ENC)
 
-      compiled[fileName] = template(content, null, {
-        variable: 'locals'
-      }).source
+      compiled[fileName] = template(content, { variable: 'locals' }).source
     })
 
     result = result({ compiled: compiled })
@@ -135,9 +133,10 @@ var manifest = JSON.parse(fs.readFileSync('manifest.json', ENC)),
   pkgName = manifest.name.replace(/ /g, '-').toLowerCase()
 
 packageTask(pkgName, manifest.version, ['compile'], function () {
-  var fileList = ['manifest.json', 'build/*', 'img/**', 'popup.html']
+  var fileList = ['manifest.json', 'build/*', 'img/**', 'src/popup.html']
   this.packageFiles.include(fileList)
   this.needZip = true
+  this.archiveNoBaseDir = true
 })
 
 desc('Rebuild & package')
