@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
   <style type="text/css">
@@ -27,6 +28,8 @@
       margin: 8px;
       transition: filter .1s ease-out;
       user-select: none;
+      /* uncollapse */
+      border: 1px solid transparent;
     }
       body.is-loading {
         filter: blur(1px);
@@ -86,8 +89,8 @@
       }
       ul.result li.header {
         font-size: 16px;
+        line-height: 1.6;
         padding-right: 78px;
-        margin-bottom: .25rem;
       }
       ul.result li.separator {
         height: 1px;

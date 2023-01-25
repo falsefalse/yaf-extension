@@ -3,14 +3,13 @@
   <li class="button toolbar-reload" title="Refresh data" />
 <% } %>
 
-<% // mark as local  %>
-<% if (locals.isLocal && locals.ip) { %>
-  <li class="button is-disabled toolbar-marklocal toolbar-marked"
-    title="This is an IP from local range" />
-<% } else if (locals.isLocal) { %>
-  <li class="button toolbar-marklocal toolbar-marked"
-    title="Unmark domain as local" />
-<% } else if (!locals.ip) { %>
-  <li class="button toolbar-marklocal"
-    title="Mark domain as local" />
+<% if (!locals.ip) { %>
+  <% // mark as local  %>
+  <% if (locals.isLocal) { %>
+    <li class="button toolbar-marklocal toolbar-marked"
+      title="Unmark domain as local" />
+  <% } else { %>
+    <li class="button toolbar-marklocal"
+      title="Mark domain as local" />
+  <% } %>
 <% } %>

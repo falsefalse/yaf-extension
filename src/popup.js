@@ -1,7 +1,8 @@
 /* eslint-env browser, webextensions */
 
 import Tpl from './templates.js'
-import { YAF, getDomain, isLocal, GeoData } from './service.js'
+import setFlag from './service.js'
+import { storage, getDomain, isLocal, GeoData } from './helpers.js'
 
 function setLoading() {
   document.body.classList.add('is-loading')
@@ -13,8 +14,8 @@ function unSetLoading() {
 function renderPopup(domain, { geo, error }) {
   const toolbar = document.querySelector('.toolbar')
   const result = document.querySelector('.result')
-  geo = new GeoData(geo)
 
+  geo = new GeoData(geo)
   // localhost and alike doesn't get the toolbar
   if (!isLocal(domain)) {
     toolbar.innerHTML = Tpl.toolbar_ejs({
@@ -28,49 +29,51 @@ function renderPopup(domain, { geo, error }) {
     result.innerHTML = Tpl.local_ejs({ domain, geo: geo.valueOf() })
     return
   }
+  geo = geo.valueOf()
 
   // error
-  if (!geo.valueOf() || error) {
+  if (!geo || error) {
     result.innerHTML = Tpl.not_found_ejs({ domain, error })
     return
   }
 
   // regular case
-  result.innerHTML = Tpl.regular_ejs({ domain, geo: geo.valueOf() })
+  result.innerHTML = Tpl.regular_ejs({ domain, geo })
 }
-window.addEventListener('DOMContentLoaded', async function () {
+
+window.addEventListener('DOMContentLoaded', async () => {
   const [currentTab] = await chrome.tabs.query({
     active: true,
     currentWindow: true
   })
 
   const domain = getDomain(currentTab.url)
-  const data = await YAF.storage.get(domain)
+  const data = await setFlag(currentTab)
 
   renderPopup(domain, data)
 
   // mark
-  document.body.addEventListener('click', async function (event) {
+  document.body.addEventListener('click', async event => {
     if (!event.target.classList.contains('toolbar-marklocal')) return
 
-    const currentData = await YAF.storage.get(domain)
+    const currentData = await storage.get(domain)
     const currentGeo = new GeoData(currentData.geo)
 
     currentGeo.isLocal = !currentGeo.isLocal
     currentData.geo = currentGeo.valueOf()
-    await YAF.storage.set(domain, currentData)
+    await storage.set(domain, currentData)
 
-    await YAF.setFlag(currentTab)
+    await setFlag(currentTab)
 
     renderPopup(domain, currentData)
   })
 
   // reload
-  document.body.addEventListener('click', async function (event) {
+  document.body.addEventListener('click', async event => {
     if (!event.target.classList.contains('toolbar-reload')) return
 
     setLoading()
-    const newData = await YAF.setFlag(currentTab, true)
+    const newData = await setFlag(currentTab, true)
 
     unSetLoading()
     renderPopup(domain, newData)
