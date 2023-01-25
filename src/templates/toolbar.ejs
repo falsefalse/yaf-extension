@@ -1,9 +1,9 @@
-<!-- reload -->
+<% // reload  %>
 <% if (!locals.isLocal) { %>
   <li class="button toolbar-reload" title="Refresh data" />
 <% } %>
 
-<!-- mark as local -->
+<% // mark as local  %>
 <% if (locals.isLocal && locals.ip) { %>
   <li class="button is-disabled toolbar-marklocal toolbar-marked"
     title="This is an IP from local range" />
