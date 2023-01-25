@@ -1,0 +1,11 @@
+{
+  // order matters!
+  "extends": ["eslint:recommended", "prettier"],
+  "parserOptions": {
+    "ecmaVersion": 2018,
+    "sourceType": "module"
+  },
+  "env": {
+    "es2018": true
+  }
+}

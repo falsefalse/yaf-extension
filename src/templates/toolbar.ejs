@@ -1,11 +1,16 @@
-<!-- mark as local -->
-<% if (locals.geo && locals.geo.isLocal && locals.geo.ip) { %>
-  <li class="button is-disabled toolbar-marklocal toolbar-marked" />
-<% } else if (locals.geo && locals.geo.isLocal && !locals.trueLocal) { %>
-  <li class="button toolbar-marklocal toolbar-marked" title="Unmark domain as local" />
-<% } else if (!locals.geo) { %>
-  <li class="button toolbar-marklocal" title="Mark domain as local" />
+<!-- reload -->
+<% if (!locals.isLocal) { %>
+  <li class="button toolbar-reload" title="Reload geo data" />
 <% } %>
 
-<!-- reload data -->
-<li class="button toolbar-reload" title="Reload geo data" />
+<!-- mark as local -->
+<% if (locals.isLocal && locals.ip) { %>
+  <li class="button is-disabled toolbar-marklocal toolbar-marked"
+    title="This is an IP from local range" />
+<% } else if (locals.isLocal) { %>
+  <li class="button toolbar-marklocal toolbar-marked"
+    title="Unmark domain as local" />
+<% } else if (!locals.ip) { %>
+  <li class="button toolbar-marklocal"
+    title="Mark domain as local" />
+<% } %>

@@ -1,9 +1,7 @@
-/*global chrome */
-
-// Render services links for domain/IP and display them in popup
+/* eslint-env browser, webextensions */
 
 import Tpl from './templates.js'
-import { YAF, getDomain, isLocal } from './service.js'
+import { YAF, getDomain, isLocal, GeoData } from './service.js'
 
 function setLoading() {
   document.body.classList.add('is-loading')
@@ -12,46 +10,42 @@ function unSetLoading() {
   document.body.classList.remove('is-loading')
 }
 
-function renderPopup(domain, data) {
-  var toolbar = document.querySelector('.toolbar')
-  var result = document.querySelector('.result')
+function renderPopup(domain, { geo, error }) {
+  const toolbar = document.querySelector('.toolbar')
+  const result = document.querySelector('.result')
+  geo = new GeoData(geo)
 
-  // toolbar
-  toolbar.innerHTML = Tpl.toolbar_ejs({
-    geo: data.geo,
-    trueLocal: isLocal(domain)
-  })
-
-  var mark = toolbar.querySelector('.toolbar-marklocal'),
-    reload = toolbar.querySelector('.toolbar-reload')
-
-  // data
-  if (data.error) {
-    result.innerHTML = Tpl.not_found_ejs({
-      domain: domain,
-      error: data.error
-    })
-  } else if (data.geo.isLocal) {
-    result.innerHTML = Tpl.local_ejs({
-      domain: domain,
-      geo: data.geo
-    })
-  } else {
-    result.innerHTML = Tpl.regular_ejs({
-      domain: domain,
-      geo: data.geo
+  // localhost and alike doesn't get the toolbar
+  if (!isLocal(domain)) {
+    toolbar.innerHTML = Tpl.toolbar_ejs({
+      ip: geo.ip,
+      isLocal: geo.isLocal
     })
   }
-}
 
+  // 'marked as local' overrides error
+  if (isLocal(domain) || geo.isLocal) {
+    result.innerHTML = Tpl.local_ejs({ domain, geo: geo.valueOf() })
+    return
+  }
+
+  // error
+  if (!geo.valueOf() || error) {
+    result.innerHTML = Tpl.not_found_ejs({ domain, error })
+    return
+  }
+
+  // regular case
+  result.innerHTML = Tpl.regular_ejs({ domain, geo: geo.valueOf() })
+}
 window.addEventListener('DOMContentLoaded', async function () {
-  let [currentTab] = await chrome.tabs.query({
+  const [currentTab] = await chrome.tabs.query({
     active: true,
     currentWindow: true
   })
 
-  let domain = getDomain(currentTab.url)
-  let data = await YAF.storage.get(domain)
+  const domain = getDomain(currentTab.url)
+  const data = await YAF.storage.get(domain)
 
   renderPopup(domain, data)
 
@@ -60,19 +54,17 @@ window.addEventListener('DOMContentLoaded', async function () {
     if (!event.target.classList.contains('toolbar-marklocal')) return
 
     const currentData = await YAF.storage.get(domain)
+    const currentGeo = new GeoData(currentData.geo)
 
-    if (currentData.geo && currentData.geo.isLocal) {
-      delete currentData.geo.isLocal
-    } else {
-      currentData.geo = currentData.geo || {}
-      currentData.geo.isLocal = true
-    }
+    currentGeo.isLocal = !currentGeo.isLocal
+    currentData.geo = currentGeo.valueOf()
+    await YAF.storage.set(domain, currentData)
 
-    YAF.storage.set(domain, currentData)
     await YAF.setFlag(currentTab)
 
     renderPopup(domain, currentData)
   })
+
   // reload
   document.body.addEventListener('click', async function (event) {
     if (!event.target.classList.contains('toolbar-reload')) return
