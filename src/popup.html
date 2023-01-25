@@ -4,6 +4,7 @@
     * {
       margin: 0; padding: 0;
       outline: none;
+      list-style: none;
     }
     a, a:visited, a:hover {
       color: #000;
@@ -14,11 +15,18 @@
       min-width: 150px;
     }
 
+    :root {
+      --hover-color: #d5e4ff;
+      --button-size: 26px;
+      --button-bg-size: 14px 14px;
+    }
+
     body {
       font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
       position: relative;
       margin: 8px;
       transition: filter .1s ease-out;
+      user-select: none;
     }
       body.is-loading {
         filter: blur(1px);
@@ -27,51 +35,49 @@
 
     .button {
       cursor: pointer;
-      border-radius: 4px;
-      border: 1px solid rgba(132, 146, 172, .33);
-      transition: background-color .3s, border-color .3s;
+      border-radius: 50%;
+      transition: background-color .2s, filter .2s;
+      background-color: transparent;
     }
       .button:hover {
-        border-color: rgba(132, 146, 172, 1);
+        background-color: var(--hover-color);
       }
       .button.is-disabled {
-        border-color: transparent;
+        background-color: transparent;
         pointer-events: none;
         opacity: .5;
       }
 
     ul.toolbar {
-      list-style: none;
       position: absolute;
       top: 0;
       right: 0;
+      display: flex;
+      gap: .25rem;
     }
       ul.toolbar li {
         display: inline-block;
-        width: 22px;
-        height: 22px;
-        margin-left: 8px;
+        width: var(--button-size);
+        height: var(--button-size);
         background: center no-repeat;
+        background-size: var(--button-bg-size);
       }
       ul.toolbar li.toolbar-marked {
-        background-color: #d5e4ff;
+        background-color: var(--hover-color);
+        filter: brightness(90%);
       }
         ul.toolbar li.toolbar-marked:hover {}
+
     ul.toolbar li.toolbar-reload {
       background-image: url(/img/refresh.png);
-      opacity: .77;
     }
     ul.toolbar li.toolbar-marklocal {
       background-image: url(/img/local_resource.png);
     }
 
-    ul.result li.header {
-      padding-right: 78px;
-    }
-
     ul.result {
-      list-style: none;
       min-height: 2rem;
+      user-select: text;
     }
       ul.result li {
         padding: 0 6px;
@@ -80,6 +86,8 @@
       }
       ul.result li.header {
         font-size: 16px;
+        padding-right: 78px;
+        margin-bottom: .25rem;
       }
       ul.result li.separator {
         height: 1px;

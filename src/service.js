@@ -51,28 +51,33 @@ function passedMoreThan(seconds, date) {
   return new Date().getTime() - date > seconds * 1000
 }
 
-const SIZE = 19
+const SIZE = 20
 const c = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
   willReadFrequently: true
 })
 c.width = c.height = SIZE
 
 function center(whole, part) {
-  return Math.round((whole - part) / 2)
+  return Math.round(Math.max(whole - part, 0) / 2)
 }
 
 async function setIcon(tabId, path) {
   path = '../' + path
-  const imgBlob = await fetch(path).then(r => r.blob())
+  const imgBlob = await (await fetch(path)).blob()
   const img = await createImageBitmap(imgBlob)
+
+  let { width, height } = img
+  if (width === height && width > SIZE) {
+    width = height = 16
+  }
 
   c.clearRect(0, 0, c.width, c.height)
   c.drawImage(
     img,
-    center(c.width, img.width),
-    center(c.height, img.height),
-    img.width,
-    img.height
+    center(c.width, width),
+    center(c.height, height),
+    width,
+    height
   )
 
   chrome.action.setIcon({
@@ -86,7 +91,7 @@ function updatePageAction(tab, domain, { geo, error }) {
 
   // marked local or is 'localhost'
   if (isLocal(domain) || geo.isLocal) {
-    setIcon(tab.id, 'img/local_resource.png')
+    setIcon(tab.id, '/img/local_resource.png')
     chrome.action.setTitle({
       tabId: tab.id,
       title: domain + ' is a local resource'
@@ -96,7 +101,7 @@ function updatePageAction(tab, domain, { geo, error }) {
 
   // not found
   if (!geo.valueOf()) {
-    setIcon(tab.id, 'img/icon/16.png')
+    setIcon(tab.id, '/img/icon/16.png')
     chrome.action.setTitle({
       tabId: tab.id,
       title: error || "'" + domain + "' was not found in database"
@@ -111,7 +116,7 @@ function updatePageAction(tab, domain, { geo, error }) {
   if (geo.city) title.splice(0, 0, geo.city)
   if (geo.region) title.splice(1, 0, geo.region)
 
-  setIcon(tab.id, 'img/flags/' + geo.country_code.toLowerCase() + '.png')
+  setIcon(tab.id, '/img/flags/' + geo.country_code.toLowerCase() + '.png')
   chrome.action.setTitle({
     tabId: tab.id,
     title: title.join(', ')
