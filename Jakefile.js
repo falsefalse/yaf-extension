@@ -1,6 +1,5 @@
 /* BUILD ALL THE THINGS */
 
-/*global jake, task, desc, namespace, file */
 var { task, desc, namespace, directory, rmRf, packageTask } = require('jake')
 
 var fs = require('fs'),
@@ -16,25 +15,22 @@ var ENC = 'utf-8',
 var SRC = {
   service: path.join(ROOT, 'js/service.js'),
   popup: path.join(ROOT, 'js/popup.js'),
-  tpls: ['precompile_to_modules.ejs.js']
+  templates: ['index.ejs.js']
 }
 
 var BUILD = {
   service: path.join(BUILD_DIR, 'service.js'),
   popup: path.join(BUILD_DIR, 'popup.js'),
-  tpl: path.join(BUILD_DIR, 'templates.js')
+  templates: path.join(BUILD_DIR, 'templates.js')
 }
 
-;(function fill() {
-  SRC.tpls = SRC.tpls
-    .concat(
-      fs.readdirSync(path.join(ROOT, './tpl')).filter(function (fileName) {
-        return /\.ejs$/.test(fileName)
-      })
-    )
-    .map(function (fileName) {
-      return path.join(ROOT, './tpl', fileName)
-    })
+var TEMPLATES_DIR = path.join(ROOT, './templates')
+
+;(function readEjs() {
+  SRC.templates = [
+    ...SRC.templates,
+    ...fs.readdirSync(TEMPLATES_DIR).filter(fileName => /\.ejs$/.test(fileName))
+  ].map(fileName => path.join(TEMPLATES_DIR, fileName))
 })()
 
 // utilities
@@ -46,18 +42,13 @@ function size(filepath) {
 // minifies passed JS file
 // if no resultpath was passed, overwrites the source file
 function minify(sourcepath, resultpath) {
-  var compressed,
-    sourceSize = size(sourcepath)
+  var sourceSize = size(sourcepath)
+  resultpath = resultpath || sourcepath
 
   let { code } = uglify.minify(fs.readFileSync(sourcepath, ENC))
 
-  fs.writeFileSync(resultpath || sourcepath, code)
-  console.log(
-    'Minified:',
-    sourcepath,
-    sourceSize,
-    size(resultpath || sourcepath)
-  )
+  fs.writeFileSync(resultpath, code)
+  console.log('Minified:', sourcepath, sourceSize, '→', size(resultpath))
 }
 
 directory(BUILD_DIR)
@@ -76,10 +67,10 @@ namespace('js', function () {
   desc('Clean JavaScript')
   task('clean', function () {
     ;[BUILD.service, BUILD.popup].forEach(function (filepath) {
-      if (fs.existsSync(filepath)) {
-        fs.unlinkSync(filepath)
-        console.log('Removed:', filepath)
-      }
+      if (!fs.existsSync(filepath)) return
+
+      fs.unlinkSync(filepath)
+      console.log('Removed:', filepath)
     })
   })
 
@@ -95,30 +86,34 @@ namespace('js', function () {
 
 namespace('tpl', function () {
   desc('Compile and minify templates')
-  file(BUILD.tpl, [...SRC.tpls, BUILD_DIR], function () {
+  file(BUILD.templates, [...SRC.templates, BUILD_DIR], function () {
     var compiled = {},
-      meta = SRC.tpls.shift(),
+      meta = SRC.templates.shift(),
       result = template(fs.readFileSync(meta, ENC))
 
-    SRC.tpls.forEach(function (fullpath) {
+    SRC.templates.forEach(function (fullpath) {
       var fileName = path.basename(fullpath),
         content = fs.readFileSync(fullpath, ENC)
 
       compiled[fileName] = template(content, null, {
-        variable: 'tplData'
+        variable: 'locals'
       }).source
     })
 
     result = result({ compiled: compiled })
-    fs.writeFileSync(BUILD.tpl, result, ENC)
-    console.log('Compiled %s templates %s', SRC.tpls.length, size(BUILD.tpl))
+    fs.writeFileSync(BUILD.templates, result, ENC)
+    console.log(
+      'Compiled %s templates → %s',
+      SRC.templates.length,
+      size(BUILD.templates)
+    )
 
-    minify(BUILD.tpl)
+    minify(BUILD.templates)
   })
 
   desc('Clean templates')
   task('clean', function () {
-    ;[BUILD.tpl].forEach(function (filepath) {
+    ;[BUILD.templates].forEach(function (filepath) {
       if (!fs.existsSync(filepath)) return
       fs.unlinkSync(filepath)
       console.log('Removed:', filepath)
@@ -127,7 +122,7 @@ namespace('tpl', function () {
 })
 
 desc('Compile')
-task('compile', [BUILD_DIR, 'js:default', `tpl:${BUILD.tpl}`])
+task('compile', [BUILD_DIR, 'js:default', `tpl:${BUILD.templates}`])
 
 desc('Clean all')
 task('clean', ['js:clean', 'tpl:clean', 'clobber'], function () {

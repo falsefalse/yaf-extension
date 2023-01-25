@@ -1,9 +1,9 @@
 <!-- mark as local -->
-<% if (tplData.geo && tplData.geo.isLocal && tplData.geo.ip) { %>
+<% if (locals.geo && locals.geo.isLocal && locals.geo.ip) { %>
   <li class="button is-disabled toolbar-marklocal toolbar-marked" />
-<% } else if (tplData.geo && tplData.geo.isLocal && !tplData.trueLocal) { %>
+<% } else if (locals.geo && locals.geo.isLocal && !locals.trueLocal) { %>
   <li class="button toolbar-marklocal toolbar-marked" title="Unmark domain as local" />
-<% } else if (!tplData.geo) { %>
+<% } else if (!locals.geo) { %>
   <li class="button toolbar-marklocal" title="Mark domain as local" />
 <% } %>
 

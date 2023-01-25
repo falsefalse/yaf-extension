@@ -1,0 +1,13 @@
+<li class="header"><%= locals.geo.country_name %></li>
+<%
+locals.region = [];
+locals.geo.city && locals.region.push(locals.geo.city);
+locals.geo.region && locals.region.push(locals.geo.region);
+if (locals.region.length) { %>
+  <li class="locals.small"><%= locals.region.join(', ') %></li>
+<% } %>
+<li><%= locals.geo.ip %></li>
+<li class="separator"></li>
+<li class="service">
+  <a class="whois" target="_blank" href="http://whois.domaintools.com/<%= locals.domain %>">Whois</a>
+</li>
