@@ -5,7 +5,7 @@
   "short_name": "YAFlags",
   "description": "Shows flag for the website near the location bar",
 
-  "version": "1.0.3",
+  "version": "1.0.4",
 
   "background": {
     "service_worker": "build/service.js",
