@@ -24,8 +24,8 @@
 
   "action": {
     "default_icon": {
-      "19": "img/icon/16_padded_to_19.png",
-      "38": "img/icon/32_padded_to_38.png"
+      "16": "img/icon/16.png",
+      "32": "img/icon/32.png"
     },
     "default_title": "Yet Another Flags",
     "default_popup": "src/popup.html"

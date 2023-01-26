@@ -1,10 +1,10 @@
 ### Yet Another Flags
 
-The source code for Google Chrome [extenstion](https://chrome.google.com/webstore/detail/dmchcmgddbhmbkakammmklpoonoiiomk).
+The source code for Google Chrome [extension].
 
-Extension show data from free [MaxMind City DB](http://www.maxmind.com/app/geolitecity)
-files. Take a look at [server code](https://github.com/falsefalse/geoip-server) as well.
+Extension uses data from free [MaxMind City DB].
+Take a look at [server code] as well.
 
-#### Run in unpacked mode
-
-...
+[extension]: https://chrome.google.com/webstore/detail/dmchcmgddbhmbkakammmklpoonoiiomk
+[MaxMind City DB]: https://dev.maxmind.com/geoip/geolite2-free-geolocation-data
+[server code]: https://github.com/falsefalse/geoip-server

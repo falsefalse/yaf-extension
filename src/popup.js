@@ -63,6 +63,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   const domain = getDomain(currentTab.url)
   const data = await setFlag(currentTab)
 
+  // happens on extensions page
+  if (!data) {
+    await chrome.action.disable(currentTab.id)
+    window.close()
+    return
+  }
+
   renderPopup(domain, data)
 
   // mark
@@ -79,8 +86,16 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // reload
-  document.body.addEventListener('click', async event => {
-    if (!event.target.classList.contains('toolbar-reload')) return
+  document.body.addEventListener('click', async ({ target, metaKey }) => {
+    if (!target.classList.contains('toolbar-reload')) return
+
+    if (metaKey) {
+      window.open(
+        'https://savelife.in.ua/en/donate-en/#donate-army-card-once',
+        '_blank',
+        'noopener,noreferrer'
+      )
+    }
 
     setLoading()
     const newData = await setFlag(currentTab, true)
@@ -88,4 +103,19 @@ window.addEventListener('DOMContentLoaded', async () => {
     unSetLoading()
     renderPopup(domain, newData)
   })
+
+  if (Math.random() > 1 / 3) {
+    return
+  }
+  document
+    .querySelectorAll('.animate')
+    .forEach(({ classList }) => classList.add('rotator'))
+
+  setTimeout(
+    () =>
+      document
+        .querySelectorAll('.rotator')
+        .forEach(({ classList }) => classList.remove('rotator')),
+    2 * 1000
+  )
 })

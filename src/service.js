@@ -3,7 +3,7 @@
 import { getDomain, isLocal, storage } from './helpers.js'
 
 /* Draw raster icons onto page action */
-const SIZE = 20
+const SIZE = 16
 const c = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
   willReadFrequently: true
 })
@@ -13,12 +13,15 @@ const center = (whole, part) => Math.round(Math.max(whole - part, 0) / 2)
 
 async function setIcon({ id: tabId }, path) {
   path = '../' + path
+
   const imgBlob = await (await fetch(path)).blob()
   const img = await createImageBitmap(imgBlob)
-
   let { width, height } = img
-  if (width === height && width > SIZE) {
-    width = height = 16
+
+  // we need resizing for rectangular flags, square icons are fine as is
+  if (width === height) {
+    chrome.action.setIcon({ tabId, path })
+    return
   }
 
   c.clearRect(0, 0, c.width, c.height)
@@ -52,8 +55,8 @@ function updatePageAction(tab, domain, data) {
 
   // not found
   if (!country_code) {
-    setIcon(tab, '/img/icon/16.png')
-    setTitle(tab, `Error: ${error}` || 'Country code was not found')
+    setIcon(tab, '/img/icon/32.png')
+    setTitle(tab, error ? `Error: ${error}` : 'Country code was not found')
 
     return
   }
@@ -93,7 +96,7 @@ function normalizeData({
 }
 
 // const API_URL = 'http://geo.furman.im:8080/'
-const API_URL = 'http://localhost:8080/'
+const API_URL = 'http://77.81.240.180/'
 
 async function request(domain) {
   let data = { error: null }
@@ -193,10 +196,7 @@ async function setFlag(tab, reload) {
   const domain = getDomain(tab.url)
   if (!domain) {
     await chrome.action.disable(tab.id)
-    setTitle(
-      tab,
-      'Extension is disabled for this page, try real website instead!'
-    )
+    setTitle(tab, '😴')
 
     return
   } else {

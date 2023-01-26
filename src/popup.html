@@ -1,135 +1,193 @@
 <!DOCTYPE html>
+
 <html>
-<head>
-  <style type="text/css">
-    * {
-      margin: 0; padding: 0;
-      outline: none;
-      list-style: none;
-    }
-    a, a:visited, a:hover {
-      color: #000;
-      text-decoration: none;
-    }
+  <head>
+    <style type="text/css">
+      @property --ang {
+        syntax: '<angle>';
+        initial-value: 0deg;
+        inherits: false;
+      }
+      @property --blue {
+        syntax: '<color>';
+        initial-value: #0057b7;
+        inherits: false;
+      }
+      @property --yellow {
+        syntax: '<color>';
+        initial-value: #ffd700;
+        inherits: false;
+      }
 
-    html {
-      min-width: 150px;
-    }
+      @keyframes rot {
+        to {
+          --ang: 1turn;
+        }
+      }
 
-    :root {
-      --hover-color: #d5e4ff;
-      --button-size: 26px;
-      --button-bg-size: 14px 14px;
-    }
+      @keyframes fade_out {
+        to {
+          --blue: transparent;
+          --yellow: transparent;
+        }
+      }
 
-    body {
-      font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
-      position: relative;
-      margin: 8px;
-      transition: filter .1s ease-out;
-      user-select: none;
-      /* uncollapse */
-      border: 1px solid transparent;
-    }
+      .animate {
+        position: relative;
+      }
+
+      .rotator:after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+
+        background: linear-gradient(
+          var(--ang, 0deg),
+          var(--yellow) 50%,
+          var(--blue) 0
+        );
+        animation: rot 2s cubic-bezier(0.68, -0.57, 0.26, 1.65) 0s 1,
+          fade_out 1s ease-out 1s 1;
+      }
+    </style>
+
+    <style type="text/css">
+      :root {
+        --hover-color: #d5e4ff;
+        --button-size: 26px;
+        --button-bg-size: 14px 14px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        outline: none;
+        list-style: none;
+      }
+      a,
+      a:visited,
+      a:hover {
+        color: #000;
+        text-decoration: none;
+      }
+
+      html {
+        min-width: 150px;
+      }
+
+      body {
+        font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
+        position: relative;
+        margin: 8px;
+        transition: filter 0.1s ease-out;
+        user-select: none;
+        /* uncollapse */
+        border: 1px solid transparent;
+      }
       body.is-loading {
         filter: blur(1px);
         pointer-events: none;
       }
 
-    .button {
-      cursor: pointer;
-      border-radius: 50%;
-      transition: background-color .2s, filter .2s;
-      background-color: transparent;
-    }
+      .button {
+        cursor: pointer;
+        border-radius: 50%;
+        overflow: hidden;
+        transition: background-color 0.2s, filter 0.2s;
+        background-color: transparent;
+      }
       .button:hover {
         background-color: var(--hover-color);
       }
       .button.is-disabled {
         background-color: transparent;
         pointer-events: none;
-        opacity: .5;
+        opacity: 0.5;
       }
 
-    ul.toolbar {
-      position: absolute;
-      top: 0;
-      right: 0;
-      display: flex;
-      gap: .25rem;
-    }
+      ul.toolbar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        display: flex;
+        gap: 0.25rem;
+      }
       ul.toolbar li {
         display: inline-block;
         width: var(--button-size);
         height: var(--button-size);
-        background: center no-repeat;
+        background-position: center;
+        background-repeat: no-repeat;
         background-size: var(--button-bg-size);
       }
       ul.toolbar li.toolbar-marked {
         background-color: var(--hover-color);
         filter: brightness(90%);
       }
-        ul.toolbar li.toolbar-marked:hover {}
 
-    ul.toolbar li.toolbar-reload {
-      background-image: url(/img/refresh.png);
-    }
-    ul.toolbar li.toolbar-marklocal {
-      background-image: url(/img/local_resource.png);
-    }
+      ul.toolbar li.toolbar-reload {
+        background-image: url(/img/refresh.png);
+      }
+      ul.toolbar li.toolbar-marklocal {
+        background-image: url(/img/local_resource.png);
+      }
 
-    ul.result {
-      min-height: 2rem;
-      user-select: text;
-    }
+      ul.result {
+        user-select: text;
+      }
       ul.result li {
         padding: 0 6px;
         white-space: nowrap;
         font-size: 13px;
       }
-        ul.result li > i {
-          user-select: none;
-          font-style: normal;
-        }
+      ul.result li > i {
+        user-select: none;
+        font-style: normal;
+      }
       ul.result li.header {
         font-size: 16px;
-        line-height: 1.6;
+        line-height: 1.8;
         padding-right: 78px;
       }
       ul.result li.separator {
         height: 1px;
         background-color: #e1e1e1;
         margin: 8px 0 4px;
-        opacity: .5;
+        opacity: 0.5;
       }
       ul.result li.service {
         padding: 0;
       }
-        ul.result li.service a {
-          display: block;
-          font-size: inherit;
-          padding: 4px 6px;
-          height: 16px;
-          line-height: 16px;
-          background: 6px center no-repeat;
-          padding-left: 28px;
-          border-radius: 4px;
-          border: 1px solid #fff;
-          transition: border-color .3s, background-color .3s;
-        }
-        ul.result li.service a:hover {
-          border-color: #8492ac;
-          background-color: #d5e4ff;
-        }
+      ul.result li.service a {
+        display: block;
+        font-size: inherit;
+        padding: 4px 6px;
+        height: 16px;
+        line-height: 16px;
+        background: 6px center no-repeat;
+        padding-left: 28px;
+        border-radius: 4px;
+        border: 1px solid #fff;
+        transition: border-color 0.3s, background-color 0.3s;
+      }
+      ul.result li.service a:hover {
+        border-color: #8492ac;
+        background-color: #d5e4ff;
+      }
 
-        ul.result li.service a.whois { background-image: url(/img/popup/domaintools.ico); }
-  </style>
+      ul.result li.service a.whois {
+        background-image: url(/img/popup/domaintools.ico);
+      }
+    </style>
+    <script type="module" src="/build/popup.js"></script>
+  </head>
 
-  <script type="module" src="/build/popup.js"></script>
-</head>
-
-<body>
-  <ul class="toolbar"></ul>
-  <ul class="result"></ul>
-</body>
+  <body>
+    <ul class="toolbar"></ul>
+    <ul class="result"> </ul>
+  </body>
 </html>

@@ -5,7 +5,7 @@ locals.city && area.push(locals.city);
 locals.region && area.push(locals.region);
 locals.postal_code && area.push(locals.postal_code);
 if (area.length) { %>
-  <li><%= area.join(', ') %><i> 📍</i></li>
+  <li><%= area.join(', ') %><i title="Located!">📍</i></li>
 <% } %>
 <li><%= locals.ip %></li>
 <li class="separator"></li>
