@@ -95,8 +95,7 @@ function normalizeData({
   return normal
 }
 
-// const API_URL = 'http://geo.furman.im:8080/'
-const API_URL = 'http://77.81.240.180/'
+const API_URL = 'http://geoip.furman.im/'
 
 async function request(domain) {
   let data = { error: null }
@@ -212,7 +211,9 @@ async function setFlag(tab, reload) {
 
 // update icon when tab is updated
 chrome.tabs.onUpdated.addListener((tabId, { status, url } = {}, tab) => {
-  if (url && status === 'loading') {
+  // doesn't always come, on refresh doesn't
+  url = tab.url
+  if (url && (status === 'loading' || status === 'completed')) {
     setFlag(tab)
   }
 })
