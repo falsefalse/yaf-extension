@@ -22,28 +22,22 @@ const ENC = 'utf-8'
 const ROOT = './'
 const BUILD_DIR = path.join(ROOT, './build')
 
-const TEMPLATES_DIR = path.join(ROOT, './src/templates')
-
-const jsList = new FileList()
-jsList.include(path.join(ROOT, 'src/*.js'))
+const scriptsList = new FileList()
+scriptsList.include(path.join(ROOT, 'src/*.js'))
+const templatesList = new FileList()
+templatesList.include(path.join(ROOT, 'src/templates/*.ejs'))
 
 const SRC = {
-  js: jsList.toArray(),
-  // gets expanded in `readEjs`
-  templates: ['index.ejs.js']
+  scripts: scriptsList.toArray(),
+  templates: templatesList.toArray()
 }
 
 const BUILD = {
-  js: [...SRC.js]
+  scripts: [...SRC.scripts]
     .map(srcPath => path.basename(srcPath))
     .map(srcName => path.join(BUILD_DIR, srcName)),
   templates: path.join(BUILD_DIR, 'templates.js')
 }
-
-SRC.templates = [
-  ...SRC.templates,
-  ...fs.readdirSync(TEMPLATES_DIR).filter(name => /\.ejs$/.test(name))
-].map(name => path.join(TEMPLATES_DIR, name))
 
 // utilities
 function size(filepath) {
@@ -57,23 +51,26 @@ function minify(sourcepath, resultpath) {
   const sourceSize = size(sourcepath)
   resultpath = resultpath || sourcepath
 
-  const { code } = uglify.minify(fs.readFileSync(sourcepath, ENC))
-
+  let code = fs.readFileSync(sourcepath, ENC)
+  if (!process.env.DEV_BUILD) {
+    code = uglify.minify(fs.readFileSync(sourcepath, ENC)).code
+  }
   fs.writeFileSync(resultpath, code)
+
   console.log('Minified:', sourcepath, sourceSize, '→', size(resultpath))
 }
 
 directory(BUILD_DIR)
 
-namespace('js', () => {
+namespace('scripts', () => {
   desc('Minify scripts')
   task('default', [BUILD_DIR], () => {
-    SRC.js.forEach((srcPath, i) => minify(srcPath, BUILD.js[i]))
+    SRC.scripts.forEach((srcPath, i) => minify(srcPath, BUILD.scripts[i]))
   })
 
   desc('Clean scripts')
   task('clean', () => {
-    BUILD.js.forEach(filepath => {
+    BUILD.scripts.forEach(filepath => {
       if (!fs.existsSync(filepath)) return
 
       fs.unlinkSync(filepath)
@@ -82,22 +79,30 @@ namespace('js', () => {
   })
 })
 
-namespace('tpl', () => {
+const isIndex = filepath => path.basename(filepath).startsWith('index.js')
+
+namespace('templates', () => {
   desc('Compile and minify templates')
   file(BUILD.templates, [...SRC.templates, BUILD_DIR], () => {
-    const compiled = {}
-    const meta = SRC.templates.shift()
-    let result = template(fs.readFileSync(meta, ENC))
+    // prepare templates
+    const templates = SRC.templates.filter(path => !isIndex(path))
 
-    SRC.templates.forEach(fullpath => {
-      const fileName = path.basename(fullpath)
-      const content = fs.readFileSync(fullpath, ENC)
+    const compiled = templates.reduce((acc, filepath) => {
+      const fileName = path.basename(filepath)
+      const fileContent = fs.readFileSync(filepath, ENC)
+      acc[fileName] = template(fileContent, { variable: 'locals' }).source
+      return acc
+    }, {})
 
-      compiled[fileName] = template(content, { variable: 'locals' }).source
-    })
+    // prepare index meta template
+    let indexTemplate = template(
+      fs.readFileSync(SRC.templates.find(isIndex), ENC),
+      { variable: 'locals' }
+    )
 
-    result = result({ compiled })
-    fs.writeFileSync(BUILD.templates, result, ENC)
+    indexTemplate = indexTemplate({ entries: Object.entries(compiled) })
+    fs.writeFileSync(BUILD.templates, indexTemplate, ENC)
+
     console.log(
       'Compiled %s templates → %s',
       SRC.templates.length,
@@ -118,10 +123,12 @@ namespace('tpl', () => {
 })
 
 desc('Compile all')
-task('compile', [BUILD_DIR, 'js:default', `tpl:${BUILD.templates}`])
+task('compile', [BUILD_DIR, 'scripts:default', `templates:${BUILD.templates}`])
 
 desc('Clean all')
-task('clean', ['js:clean', 'tpl:clean', 'clobber'], () => rmRf(BUILD_DIR))
+task('clean', ['scripts:clean', 'templates:clean', 'clobber'], () =>
+  rmRf(BUILD_DIR)
+)
 
 // Package it up for Webstore
 const manifest = JSON.parse(fs.readFileSync('manifest.json', ENC))

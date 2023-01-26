@@ -1,77 +1,42 @@
 {
-    "folders":
-    [
-        {
-            "name": "YAF",
-            "path": ".",
-            "folder_exclude_patterns": [
-                "node_modules"
-            ],
-            "file_exclude_patterns": [
-                "build/*",
-                "pkg/*",
-
-                "*.sublime-workspace"
-            ]
-        }
-    ],
-    "settings": {
-        "trim_trailing_white_space_on_save": true,
-        "translate_tabs_to_spaces": true,
-        "word_wrap": true,
-        "word_wrap_width": "auto",
-        "rulers": [ 80 ],
-
-        "build_switcher_systems": [
-            "_jake",
-            "jake clean",
-            "jake package",
-            "jshint"
-        ]
+  "folders": [
+    {
+      "name": "YAF",
+      "path": ".",
+      "folder_exclude_patterns": ["node_modules"],
+      "file_exclude_patterns": ["*.sublime-workspace"]
+    }
+  ],
+  "settings": {
+    "trim_trailing_white_space_on_save": true,
+    "translate_tabs_to_spaces": true,
+    "word_wrap": true,
+    "word_wrap_width": "auto",
+    "rulers": [80]
+  },
+  "build_systems": [
+    {
+      "name": "lint",
+      "shell_cmd": "npm run lint --color",
+      "working_dir": "$project_path",
+      "file_regex": "^((/[^/\\s]*)+)$",
+      "line_regex": "^\\s*(\\d+):(\\d)\\s+(.*)$",
+      "target": "terminus_exec"
     },
-    "build_systems": [
-        {
-            "name": "_jake",
-            "cmd": ["jake", "_pkg"],
-            "windows": {
-                "cmd": ["jake.cmd"]
-            },
-            "working_dir": "$project_path"
-        },
-        {
-            "name": "jake",
-            "cmd": ["jake"],
-            "windows": {
-                "cmd": ["jake.cmd"]
-            },
-            "working_dir": "$project_path"
-        },
-        {
-            "name": "jake clean",
-            "cmd": ["jake", "clean"],
-            "windows": {
-                "cmd": ["jake.cmd", "clean"]
-            },
-            "working_dir": "$project_path"
-        },
-        {
-            "name": "jake package",
-            "cmd": ["jake", "package"],
-            "windows": {
-                "cmd": ["jake.cmd", "package"]
-            },
-            "working_dir": "$project_path"
-        },
-        {
-            "name": "jshint",
-            "cmd": ["jshint", "."],
-            "windows": {
-                "cmd": ["jshint.cmd", "."]
-            },
-            "file_regex": "^(.+): line (\\d+), col (\\d+), (.+)$",
 
-            "working_dir": "$project_path"
-        }
-    ]
+    {
+      "name": "build",
+      "env": { "DEV_BUILD": "1" },
+      "working_dir": "$project_path",
+      "cmd": ["jake"],
+      "target": "terminus_exec"
+    },
 
+    {
+      "name": "release",
+      "cmd": ["jake"],
+      "working_dir": "$project_path",
+      "target": "terminus_exec"
+    }
+  ]
 }
