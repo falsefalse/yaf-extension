@@ -1,8 +1,8 @@
 /* eslint-env browser, webextensions */
 
-import Tpl from './templates.js'
+import T from './templates.js'
 import setFlag from './service.js'
-import { storage, getDomain, isLocal, GeoData } from './helpers.js'
+import { storage, getDomain, isLocal } from './helpers.js'
 
 function setLoading() {
   document.body.classList.add('is-loading')
@@ -11,34 +11,47 @@ function unSetLoading() {
   document.body.classList.remove('is-loading')
 }
 
-function renderPopup(domain, { geo, error }) {
+function renderPopup(domain, data) {
   const toolbar = document.querySelector('.toolbar')
   const result = document.querySelector('.result')
 
-  geo = new GeoData(geo)
-  // localhost and alike doesn't get the toolbar
+  const {
+    error,
+    is_local,
+    ip,
+    country_code,
+    country_name,
+    city,
+    region,
+    postal_code
+  } = data
+
+  // 'locahost' and alike domains don't need toolbar
   if (!isLocal(domain)) {
-    toolbar.innerHTML = Tpl.toolbar_ejs({
-      ip: geo.ip,
-      isLocal: geo.isLocal
-    })
+    toolbar.innerHTML = T.toolbar_ejs({ ip, is_local })
   }
 
   // 'marked as local' overrides error
-  if (isLocal(domain) || geo.isLocal) {
-    result.innerHTML = Tpl.local_ejs({ domain, geo: geo.valueOf() })
+  if (isLocal(domain) || is_local) {
+    result.innerHTML = T.local_ejs({ domain, ip })
     return
   }
-  geo = geo.valueOf()
 
   // error
-  if (!geo || error) {
-    result.innerHTML = Tpl.not_found_ejs({ domain, error })
+  if (error || !country_code) {
+    result.innerHTML = T.not_found_ejs({ domain, error })
     return
   }
 
   // regular case
-  result.innerHTML = Tpl.regular_ejs({ domain, geo })
+  result.innerHTML = T.regular_ejs({
+    country_name,
+    domain,
+    city,
+    region,
+    postal_code,
+    ip
+  })
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -57,12 +70,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!event.target.classList.contains('toolbar-marklocal')) return
 
     const currentData = await storage.get(domain)
-    const currentGeo = new GeoData(currentData.geo)
+    currentData.is_local = !currentData.is_local
 
-    currentGeo.isLocal = !currentGeo.isLocal
-    currentData.geo = currentGeo.valueOf()
     await storage.set(domain, currentData)
-
     await setFlag(currentTab)
 
     renderPopup(domain, currentData)

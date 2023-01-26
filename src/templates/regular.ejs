@@ -1,13 +1,13 @@
-<li class="header"><%= locals.geo.country_name || locals.domain  %></li>
+<li class="header"><%= locals.country_name || locals.domain  %></li>
 <%
-locals.region = [];
-locals.geo.city && locals.region.push(locals.geo.city);
-locals.geo.region && locals.region.push(locals.geo.region);
-locals.geo.postal_code && locals.region.push(locals.geo.postal_code);
-if (locals.region.length) { %>
-  <li class="locals.small"><%= locals.region.join(', ') %></li>
+let area = [];
+locals.city && area.push(locals.city);
+locals.region && area.push(locals.region);
+locals.postal_code && area.push(locals.postal_code);
+if (area.length) { %>
+  <li><%= area.join(', ') %><i> 📍</i></li>
 <% } %>
-<li><%= locals.geo.ip %></li>
+<li><%= locals.ip %></li>
 <li class="separator"></li>
 <li class="service">
   <a class="whois" target="_blank" href="http://whois.domaintools.com/<%= locals.domain %>">Whois</a>

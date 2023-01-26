@@ -1,11 +1,11 @@
 <% // reload  %>
-<% if (!locals.isLocal) { %>
+<% if (!locals.is_local) { %>
   <li class="button toolbar-reload" title="Refresh data" />
 <% } %>
 
 <% if (!locals.ip) { %>
   <% // mark as local  %>
-  <% if (locals.isLocal) { %>
+  <% if (locals.is_local) { %>
     <li class="button toolbar-marklocal toolbar-marked"
       title="Unmark domain as local" />
   <% } else { %>
