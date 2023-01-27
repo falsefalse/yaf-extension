@@ -154,7 +154,7 @@ async function getCachedResponse(domain, reload) {
   const storedData = await storage.get(domain)
 
   // we don't have any data at all
-  if (!storedData) {
+  if (!storedData || !storedData.fetched_at) {
     const newData = {
       fetched_at: new Date().getTime(),
       is_local: isLocal(domain)

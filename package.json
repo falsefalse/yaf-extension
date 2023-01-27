@@ -1,17 +1,18 @@
 {
   "name": "yaf-extension",
   "repository": "git@bitbucket.org:false/yet-another-flags-extension.git",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "private": true,
   "scripts": {
-    "lint": "npm run eslint && npm run format",
+    "lint": "npm-run-all -pc --aggregate-output --silent format eslint",
     "eslint": "eslint src/*.js Jakefile.js",
-    "format": "prettier --check src/*.js src/popup.html"
+    "format": "prettier --list-different *.js *.md *.json src/*.js src/popup.html"
   },
   "devDependencies": {
     "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.6.0",
     "lodash.template": "^4.5.0",
+    "npm-run-all": "^4.1.5",
     "prettier": "^2.8.3",
     "uglify-js": "^3.17.4"
   }
