@@ -53,9 +53,7 @@
         animation: rot 2s cubic-bezier(0.68, -0.57, 0.26, 1.65) 0s 1,
           fade_out 1s ease-out 1s 1;
       }
-    </style>
 
-    <style type="text/css">
       :root {
         --hover-color: #d5e4ff;
         --button-size: 26px;
@@ -84,6 +82,8 @@
         position: relative;
         margin: 8px;
         transition: filter 0.1s ease-out;
+        -webkit-user-select: none;
+        -moz-user-select: none;
         user-select: none;
         /* uncollapse */
         border: 1px solid transparent;
@@ -137,6 +137,8 @@
       }
 
       ul.result {
+        -webkit-user-select: text;
+        -moz-user-select: text;
         user-select: text;
       }
       ul.result li {
@@ -145,6 +147,8 @@
         font-size: 13px;
       }
       ul.result li > i {
+        -webkit-user-select: none;
+        -moz-user-select: none;
         user-select: none;
         font-style: normal;
       }
