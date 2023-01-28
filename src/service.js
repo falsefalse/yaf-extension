@@ -4,10 +4,10 @@ import { getDomain, isLocal, storage } from './helpers.js'
 
 /* Draw raster icons onto page action */
 const SIZE = 16
-const c = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
+const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
   willReadFrequently: true
 })
-c.width = c.height = SIZE
+ctx.width = ctx.height = SIZE
 
 const center = (whole, part) => Math.round(Math.max(whole - part, 0) / 2)
 
@@ -24,18 +24,18 @@ async function setIcon({ id: tabId }, path) {
     return
   }
 
-  c.clearRect(0, 0, c.width, c.height)
-  c.drawImage(
+  ctx.clearRect(0, 0, ctx.width, ctx.height)
+  ctx.drawImage(
     img,
-    center(c.width, width),
-    center(c.height, height),
+    center(ctx.width, width),
+    center(ctx.height, height),
     width,
     height
   )
 
   chrome.action.setIcon({
     tabId,
-    imageData: c.getImageData(0, 0, SIZE, SIZE)
+    imageData: ctx.getImageData(0, 0, SIZE, SIZE)
   })
 }
 
@@ -66,7 +66,7 @@ function updatePageAction(tab, domain, data) {
   if (city) title.splice(0, 0, city)
   if (region) title.splice(1, 0, region)
 
-  setIcon(tab, '/img/flags/' + country_code.toLowerCase() + '.png')
+  setIcon(tab, `/img/flags/${country_code.toLowerCase()}.png`)
   setTitle(tab, title.join(', '))
 }
 

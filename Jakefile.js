@@ -15,7 +15,9 @@ const {
 const fs = require('fs')
 const path = require('path')
 const uglify = require('uglify-js')
+const prettier = require('prettier')
 const template = require('lodash.template')
+const { execSync: exec } = require('node:child_process')
 
 const { DEV_BUILD } = process.env
 
@@ -37,6 +39,8 @@ function size(fpath) {
   const fsize = fs.statSync(fpath).size
   return fsize < 1024 ? fsize + 'B' : ~~(fsize / 1024) + 'KB'
 }
+
+const exportDefaultObj = content => `export default { ${content} }`
 
 /* eslint-disable no-unused-vars */
 const green = s => `\x1b[32m${s}\x1b[0m`
@@ -95,30 +99,18 @@ namespace('scripts', () => {
   task('clean', () => BUILD.scripts.forEach(sp => rmRf(sp)))
 })
 
-const isIndexJs = p => path.basename(p).startsWith('index.js')
-
 desc('Compile and minify templates')
 task('templates', [BUILD_DIR], () => {
-  // prepare templates
-  const templates = SRC.templates.filter(tp => !isIndexJs(tp))
-
-  const compiled = templates.reduce((_, tp) => {
+  const compiled = SRC.templates.reduce((acc, tp) => {
     const fileName = path.basename(tp)
-    const fileContent = fs.readFileSync(tp, utf)
-    return {
-      ..._,
-      [fileName]: template(fileContent, { variable: 'locals' }).source
-    }
-  }, {})
+    let fileContent = fs.readFileSync(tp, utf)
+    fileContent = template(fileContent, { variable: 'locals' }).source
 
-  // prepare index meta template
-  let indexTemplate = template(
-    fs.readFileSync(SRC.templates.find(isIndexJs), utf),
-    { variable: 'locals' }
-  )
+    acc += `${fileName.replace('.', '_')}: ${fileContent},`
+    return acc
+  }, '')
 
-  indexTemplate = indexTemplate({ entries: Object.entries(compiled) })
-  fs.writeFileSync(BUILD.templates, indexTemplate, utf)
+  fs.writeFileSync(BUILD.templates, exportDefaultObj(compiled))
 
   log(
     'Compiled %s templates → %s',
@@ -132,6 +124,16 @@ task('templates', [BUILD_DIR], () => {
 namespace('templates', () => {
   desc('Remove templates')
   task('clean', () => rmRf(BUILD.templates))
+})
+
+desc('🖼 Update image sizes')
+task('sizes', async () => {
+  let content = exec(`identify -format "'%f': [%w, %h],\n" img/flags/*.png`)
+  content = prettier.format(
+    exportDefaultObj(content),
+    await prettier.resolveConfig(BUILD_DIR)
+  )
+  fs.writeFileSync('src/sizes.js', content)
 })
 
 desc('Compile all')
@@ -173,8 +175,14 @@ packageTask(pkgName, aManifest.version, ['compile'], function () {
   const fileList = ['manifest.json', 'build/*', 'img/**', 'src/*.html']
   this.packageFiles.include(fileList)
   this.needZip = true
-  this.archiveNoBaseDir = true
 })
+
+// desc('Package source')
+// packageTask(`${pkgName}-source`, aManifest.version, [], function () {
+//   const fileList = ['src/**', 'img/**', '*']
+//   this.packageFiles.include(fileList)
+//   this.needZip = true
+// })
 
 const [_, ...__] = ['manifest', 'package', 'manifest:clean']
 
