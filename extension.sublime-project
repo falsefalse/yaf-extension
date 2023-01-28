@@ -19,8 +19,8 @@
       "name": "lint",
       "shell_cmd": "yarn lint",
       "working_dir": "$project_path",
-      "file_regex": "^(\\S+)()()$",
-      "line_regex": "^\\s*(\\d+):(\\d)\\s+(.*)$",
+      "file_regex": "^(\\S+)$",
+      "line_regex": "^\\s+(\\d+):(\\d+)\\s+(.*)$",
       "target": "terminus_exec",
       "auto_close": true
     },
@@ -29,14 +29,14 @@
       "name": "build",
       "env": { "DEV_BUILD": "1" },
       "working_dir": "$project_path",
-      "cmd": ["jake"],
+      "shell_cmd": "jake -q",
       "target": "terminus_exec",
       "auto_close": true
     },
 
     {
       "name": "release",
-      "cmd": ["jake"],
+      "shell_cmd": "jake -q",
       "working_dir": "$project_path",
       "target": "terminus_exec",
       "auto_close": true

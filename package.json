@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "lint": "npm-run-all -pc --aggregate-output --silent format eslint",
-    "eslint": "eslint src/*.js Jakefile.js",
+    "eslint": "eslint --color src/*.js Jakefile.js",
     "format": "prettier --list-different *.js *.md *.json src/*.js src/popup.html"
   },
   "devDependencies": {
