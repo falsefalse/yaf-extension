@@ -27,7 +27,7 @@
 
     {
       "name": "build",
-      "env": { "DEV_BUILD": "1" },
+      "env": { "DEV": "1" },
       "working_dir": "$project_path",
       "shell_cmd": "jake -q",
       "target": "terminus_exec",

@@ -19,7 +19,7 @@ const prettier = require('prettier')
 const template = require('lodash.template')
 const { execSync: exec } = require('node:child_process')
 
-const { DEV_BUILD } = process.env
+const { DEV } = process.env
 
 const manifest = require('./manifest.json.js')
 
@@ -79,9 +79,7 @@ function minify(sourcepath, resultpath) {
   resultpath = resultpath || sourcepath
 
   let code = fs.readFileSync(sourcepath, utf)
-  if (!DEV_BUILD) {
-    code = uglify.minify(fs.readFileSync(sourcepath, utf)).code
-  }
+  code = DEV ? code : uglify.minify(fs.readFileSync(sourcepath, utf)).code
   fs.writeFileSync(resultpath, code)
 
   log('Minified:', sourcepath, grey(sourceSize), '→', blue(size(resultpath)))
