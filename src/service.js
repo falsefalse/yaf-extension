@@ -70,19 +70,12 @@ function updatePageAction(tab, domain, data) {
   setTitle(tab, title.join(', '))
 }
 
-function normalizeData({
-  ip,
-  country_code,
-  country_name,
-  city,
-  postal_code,
-  region
-  /* and many more, see server.js#prepareResponse */
-}) {
-  let normal = { ip, country_code, country_name, city, postal_code }
-  normal = Object.keys(normal)
-    .filter(key => !!normal[key])
-    .reduce((_, key) => ({ ..._, [key]: normal[key] }), {})
+function normalizeData(data) {
+  const normal = Object.entries(data)
+    .filter(([, value]) => Boolean(value))
+    .reduce((_, [key, value]) => ({ ..._, [key]: value }), {})
+
+  const { region, city, ip } = normal
 
   // don't want number-only regions
   if (region && !/^\d+$/.test(region) && region !== city) {
@@ -103,11 +96,14 @@ async function request(domain) {
   const url = new URL(API_URL)
   url.pathname = domain
 
-  let response, json
+  const headers = new Headers({
+    Accept: 'application/json'
+  })
 
+  let response, json
   // handle fetch failure
   try {
-    response = await fetch(url)
+    response = await fetch(url, { headers, credentials: 'omit' })
   } catch (fetchError) {
     data.error = fetchError.message
 
@@ -116,21 +112,22 @@ async function request(domain) {
 
   // handle not found
   if (!response.ok) {
+    // means we have server-side error
+    data.status = response.status
+
     let errorText = await response.text()
     try {
       errorText = JSON.parse(errorText)
     } catch (parseError) {
       // keep non-json error
       data.error = errorText
+
       return data
     }
-
     const { ip, error } = errorText || {}
-
-    // pick up resolved ip if there
     if (ip) data.ip = ip
-    // pick error message itself
     data.error = error
+    // no return, need to normalize because of `ip`
   } else {
     json = await response.json()
   }
@@ -144,48 +141,46 @@ async function request(domain) {
 
 const passedMoreThan = (seconds, since) =>
   new Date().getTime() - since > seconds * 1000
+const twoMins = 2 * 60 // seconds
+const day = 24 * 60 * 60 // seconds
+const week = 7 * day
 
 async function getCachedResponse(domain, reload) {
-  // constants
-  const day = 60 * 60 * 24 // seconds
-  const twoWeeks = day * 14
-
   // do we already have data for this domain?
   const storedData = await storage.get(domain)
 
+  // in case we don't
+  const newData = {
+    fetched_at: new Date().getTime(),
+    is_local: isLocal(domain)
+  }
+
+  // is the domain itself local? 'localhost' or local range IP
+  // use forever-local mode
+  if (newData.is_local) return newData
+
   // we don't have any data at all
   if (!storedData || !storedData.fetched_at) {
-    const newData = {
-      fetched_at: new Date().getTime(),
-      is_local: isLocal(domain)
-    }
-
-    // is the domain itself local? 'localhost' or local range IP
-    // use forever-local mode
-    if (newData.is_local) return newData
-
-    // resolve domain
-    const resolved = await request(domain)
-    return { ...newData, ...resolved }
+    return { ...newData, ...(await request(domain)) }
   }
 
-  // at this point we have data
-  const { fetched_at, is_local, country_code } = storedData
+  // at this point we have some data
+  const { fetched_at, error, status } = storedData
 
-  // skip network for local domains
-  if (is_local) {
-    return storedData
-  }
+  // skip network for local and 'marked as local' domains
+  if (storedData.is_local) return storedData
 
   if (
     // reload if asked to
     reload ||
-    // refetch data older than 2 weeks
-    passedMoreThan(twoWeeks, fetched_at) ||
-    // refetch 404s once a day
-    (!country_code && passedMoreThan(day, fetched_at))
+    // refetch data older than a week
+    passedMoreThan(week, fetched_at) ||
+    // refresh not founds once a day
+    (status === 404 && passedMoreThan(day, fetched_at)) ||
+    // refresh non-http errors often, maybe network is back
+    (error && !status && passedMoreThan(twoMins, fetched_at))
   ) {
-    return await request(domain)
+    return { ...newData, ...(await request(domain)) }
   }
 
   return storedData
