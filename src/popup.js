@@ -1,7 +1,7 @@
 /* eslint-env browser, webextensions */
 
 import T from './templates.js'
-import setFlag from './service.js'
+import setFlag from './set_flag.js'
 import { storage, getDomain, isLocal } from './helpers.js'
 
 function setLoading() {
