@@ -1,8 +1,10 @@
 /* eslint-env browser, webextensions */
 
-import T from './templates.js'
 import setFlag from './set_flag.js'
 import { storage, getDomain, isLocal } from './helpers.js'
+import { toolbar, local, not_found, regular } from './templates.js'
+
+const DONATION = 'https://savelife.in.ua/en/donate-en/#donate-army-card-once'
 
 function setLoading() {
   document.body.classList.add('is-loading')
@@ -12,8 +14,8 @@ function unSetLoading() {
 }
 
 function renderPopup(domain, data) {
-  const toolbar = document.querySelector('.toolbar')
-  const result = document.querySelector('.result')
+  const toolbarEl = document.querySelector('.toolbar')
+  const resultEl = document.querySelector('.result')
 
   const {
     error,
@@ -28,23 +30,23 @@ function renderPopup(domain, data) {
 
   // 'locahost' and alike domains don't need toolbar
   if (!isLocal(domain)) {
-    toolbar.innerHTML = T.toolbar_ejs({ ip, is_local })
+    toolbarEl.innerHTML = toolbar({ ip, is_local })
   }
 
   // 'marked as local' overrides error
   if (isLocal(domain) || is_local) {
-    result.innerHTML = T.local_ejs({ domain, ip })
+    resultEl.innerHTML = local({ domain, ip })
     return
   }
 
   // error
   if (error || !country_code) {
-    result.innerHTML = T.not_found_ejs({ domain, error })
+    resultEl.innerHTML = not_found({ domain, error })
     return
   }
 
   // regular case
-  result.innerHTML = T.regular_ejs({
+  resultEl.innerHTML = regular({
     country_name,
     domain,
     city,
@@ -61,7 +63,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   const domain = getDomain(currentTab.url)
-  const data = await setFlag(currentTab)
+  let data = await storage.get(domain)
 
   // happens on extensions page
   if (!data) {
@@ -73,40 +75,35 @@ window.addEventListener('DOMContentLoaded', async () => {
   renderPopup(domain, data)
 
   // mark
-  document.body.addEventListener('click', async event => {
-    if (!event.target.classList.contains('toolbar-marklocal')) return
+  window.addEventListener('click', async ({ target }) => {
+    if (!target.classList.contains('toolbar-marklocal')) return
 
-    const currentData = await storage.get(domain)
-    currentData.is_local = !currentData.is_local
+    // flip, save and render
+    data = { ...data, is_local: !data.is_local }
+    await storage.set(domain, data)
+    renderPopup(domain, data)
 
-    await storage.set(domain, currentData)
+    // update page action
     await setFlag(currentTab)
-
-    renderPopup(domain, currentData)
   })
 
   // reload
-  document.body.addEventListener('click', async ({ target, metaKey }) => {
+  window.addEventListener('click', async ({ target, metaKey }) => {
     if (!target.classList.contains('toolbar-reload')) return
 
     if (metaKey) {
-      window.open(
-        'https://savelife.in.ua/en/donate-en/#donate-army-card-once',
-        '_blank',
-        'noopener,noreferrer'
-      )
+      window.open(DONATION, '_blank', 'noopener,noreferrer')
     }
 
     setLoading()
-    const newData = await setFlag(currentTab, true)
-
+    const newData = await setFlag(currentTab, { refetch: true })
     unSetLoading()
+
     renderPopup(domain, newData)
   })
 
-  if (Math.random() > 1 / 3) {
-    return
-  }
+  if (Math.random() > 1 / 3) return
+
   document
     .querySelectorAll('.animate')
     .forEach(({ classList }) => classList.add('rotator'))

@@ -19,9 +19,8 @@ const prettier = require('prettier')
 const template = require('lodash.template')
 const { execSync: exec } = require('node:child_process')
 
-const { DEV } = process.env
-
 const manifest = require('./manifest.json.js')
+const { DEV } = process.env
 
 // utilities
 const replacers = ['%s', '%d', '%i', '%f', '%j', '%o', '%O', '%c', '%%']
@@ -40,8 +39,6 @@ function size(fpath) {
   return fsize < 1024 ? fsize + 'B' : ~~(fsize / 1024) + 'KB'
 }
 
-const exportDefaultObj = content => `export default { ${content} }`
-
 /* eslint-disable no-unused-vars */
 const green = s => `\x1b[32m${s}\x1b[0m`
 const magenta = s => `\x1b[35m${s}\x1b[0m`
@@ -53,15 +50,9 @@ const grey = s => `\x1b[90m${s}\x1b[0m`
 
 const utf = 'utf-8'
 
-const scriptsList = new FileList()
-const templatesList = new FileList()
-
-scriptsList.include('src/*.js')
-templatesList.include('src/templates/*.ejs')
-
 const SRC = {
-  scripts: scriptsList.toArray(),
-  templates: templatesList.toArray()
+  scripts: new FileList().include('src/*.js', 'src/*.json').toArray(),
+  templates: new FileList().include('src/templates/*.ejs').toArray()
 }
 
 const BUILD_DIR = './build'
@@ -72,16 +63,21 @@ const BUILD = {
   templates: path.join(BUILD_DIR, 'templates.js')
 }
 
-// minifies passed JS file
+const min = (code, isJson) =>
+  isJson
+    ? JSON.stringify(JSON.parse(code), null, null)
+    : uglify.minify(code).code
+// minifies passed .js or .json
 // if no resultpath was passed, overwrites the source file
 function minify(sourcepath, resultpath) {
   const sourceSize = size(sourcepath)
   resultpath = resultpath || sourcepath
 
+  const isJson = path.extname(sourcepath) == '.json'
   let code = fs.readFileSync(sourcepath, utf)
-  code = DEV ? code : uglify.minify(fs.readFileSync(sourcepath, utf)).code
-  fs.writeFileSync(resultpath, code)
+  code = DEV ? code : min(code, isJson)
 
+  fs.writeFileSync(resultpath, code)
   log('Minified:', sourcepath, grey(sourceSize), '→', blue(size(resultpath)))
 }
 
@@ -99,16 +95,16 @@ namespace('scripts', () => {
 
 desc('Compile and minify templates')
 task('templates', [BUILD_DIR], () => {
-  const compiled = SRC.templates.reduce((acc, tp) => {
-    const fileName = path.basename(tp)
-    let fileContent = fs.readFileSync(tp, utf)
-    fileContent = template(fileContent, { variable: 'locals' }).source
+  const compiled = SRC.templates.reduce((_, tp) => {
+    const name = path.basename(tp).replace('.ejs', '')
+    const { source } = template(fs.readFileSync(tp, utf), {
+      variable: 'locals'
+    })
 
-    acc += `${fileName.replace('.', '_')}: ${fileContent},`
-    return acc
+    return _ + `export const ${name} = ${source}\n`
   }, '')
 
-  fs.writeFileSync(BUILD.templates, exportDefaultObj(compiled))
+  fs.writeFileSync(BUILD.templates, compiled)
 
   log(
     'Compiled %s templates → %s',
@@ -127,11 +123,10 @@ namespace('templates', () => {
 desc('🖼 Update image sizes')
 task('sizes', async () => {
   let content = exec(`identify -format "'%f': [%w, %h],\n" img/flags/*.png`)
-  content = prettier.format(
-    exportDefaultObj(content),
-    await prettier.resolveConfig(BUILD_DIR)
-  )
-  fs.writeFileSync('src/sizes.js', content)
+  const config = await prettier.resolveConfig(BUILD_DIR)
+  content = prettier.format(`{ ${content} }`, { ...config, parser: 'json' })
+
+  fs.writeFileSync('src/sizes.json', content)
 })
 
 desc('Compile all')
@@ -189,3 +184,7 @@ task('firefox', ['manifest[🦊]', ...__])
 
 desc('Build & package')
 task('default', [_, ...__])
+
+// aliases
+task('c', ['clean'])
+task('f', ['firefox'])

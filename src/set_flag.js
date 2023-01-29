@@ -145,7 +145,7 @@ const twoMins = 2 * 60 // seconds
 const day = 24 * 60 * 60 // seconds
 const week = 7 * day
 
-async function getCachedResponse(domain, reload) {
+async function getCachedResponse(domain, refetch) {
   // do we already have data for this domain?
   const storedData = await storage.get(domain)
 
@@ -171,13 +171,13 @@ async function getCachedResponse(domain, reload) {
   if (storedData.is_local) return storedData
 
   if (
-    // reload if asked to
-    reload ||
+    // refetch if asked to
+    refetch ||
     // refetch data older than a week
     passedMoreThan(week, fetched_at) ||
-    // refresh not founds once a day
+    // refetch not founds once a day
     (status === 404 && passedMoreThan(day, fetched_at)) ||
-    // refresh non-http errors often, maybe network is back
+    // refetch non-http errors often, maybe network is back
     (error && !status && passedMoreThan(twoMins, fetched_at))
   ) {
     return { ...newData, ...(await request(domain)) }
@@ -186,7 +186,7 @@ async function getCachedResponse(domain, reload) {
   return storedData
 }
 
-export default async function setFlag(tab, reload) {
+export default async function setFlag(tab, { refetch } = {}) {
   const domain = getDomain(tab.url)
   if (!domain) {
     await chrome.action.disable(tab.id)
@@ -197,7 +197,7 @@ export default async function setFlag(tab, reload) {
     await chrome.action.enable(tab.id)
   }
 
-  const data = await getCachedResponse(domain, reload)
+  const data = await getCachedResponse(domain, refetch)
   await storage.set(domain, data)
   updatePageAction(tab, domain, data)
 
