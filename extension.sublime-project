@@ -4,7 +4,7 @@
       "name": "YAF",
       "path": ".",
       "folder_exclude_patterns": ["node_modules"],
-      "file_exclude_patterns": ["*.sublime-workspace"]
+      "file_exclude_patterns": ["*.sublime-workspace", "yarn.lock"]
     }
   ],
   "settings": {

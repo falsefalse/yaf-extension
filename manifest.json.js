@@ -1,12 +1,14 @@
-let firefoxEventPage = {
+const { version } = require('./package.json')
+
+const firefoxEventPage = {
   page: 'src/module.html'
 }
-let chromeServiceModule = {
+const chromeServiceModule = {
   service_worker: 'build/service.js',
   type: 'module'
 }
 
-let manifest = ({ forFirefox } = {}) => ({
+module.exports = ({ forFirefox } = {}) => ({
   manifest_version: 3,
 
   name: 'Yet another flags',
@@ -15,13 +17,11 @@ let manifest = ({ forFirefox } = {}) => ({
 
   ...(forFirefox
     ? {
-        browser_specific_settings: {
-          gecko: { id: 'yaflags@furman.im' }
-        }
+        browser_specific_settings: { gecko: { id: 'yaflags@furman.im' } }
       }
     : {}),
 
-  version: '1.0.5',
+  version,
 
   background: {
     ...(forFirefox ? firefoxEventPage : chromeServiceModule)
@@ -50,5 +50,3 @@ let manifest = ({ forFirefox } = {}) => ({
     extension_pages: "script-src 'self'; object-src 'self'"
   }
 })
-
-module.exports = manifest

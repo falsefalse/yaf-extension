@@ -1,3 +1,11 @@
+### 1.0.6
+
+Bugfix release
+
+- caching and server error handling improvements, faster recovery after lost network
+- apparently extension works in Firefox with minimal changes to manifest, needs module.html wrapper for service script and that's it
+- simplify and improve Jakefile to handle two manifests
+
 ### 1.0.5
 
 This is basically a rewrite.
@@ -101,7 +109,8 @@ Glory to Ukraine 🇺🇦
 
 ### 0.9.1
 
-- Get rid of ipinfodb.com, they suck balls at DNS resolution, and thus can't found shit :( - Use my own awesome back-end in nodejs instead.
+- Get rid of ipinfodb.com, they suck balls at DNS resolution, and thus can't found shit :(
+- Use my own awesome back-end in nodejs instead.
 
 ### 0.8.4
 
@@ -109,7 +118,7 @@ Glory to Ukraine 🇺🇦
 - Fix cached data so that logic could be applied to cached data as well.
 - Added GA.
 - Caching period is 2 weeks instead of a month. Not found entries are updated
-  daily, along with - DNS propagation.
+  daily, along with DNS propagation.
 - Fixing regressions after updating to latest API.
 
 ### 0.7.7
@@ -134,13 +143,11 @@ Glory to Ukraine 🇺🇦
 
 ### 0.7.1
 
-- Fixes geo data cache storage between browser launches, it was introduced in.
-  0.7. - Flags will be displayed right away after browser launch, without re-requesting data.
+- Fixes geo data cache storage between browser launches, it was introduced in 0.7. Flags will be displayed right away after browser launch, without re-requesting data.
 
 ### 0.7
 
-- Update to match ipinfodb.com API. Old API has been disabled on 15 Nov 2010.
-- This should fix @Fcgbman33 and @lukasz210 issues.
+- Update to match ipinfodb.com API. Old API has been disabled on 15 Nov 2010. This should fix @Fcgbman33 and @lukasz210 issues.
 
 ### 0.6.1
 
@@ -150,7 +157,7 @@ Glory to Ukraine 🇺🇦
 
 ### 0.6
 
-- API change fix: performs less strict check for 'not found' API response. Fixes handling of unknown domains (hosts entries that are mapped to local - IPs for example).
+- API change fix: performs less strict check for 'not found' API response. Fixes handling of unknown domains (hosts entries that are mapped to local IPs for example).
 
 ### 0.5
 
@@ -166,7 +173,8 @@ Glory to Ukraine 🇺🇦
 
 ### 0.2
 
-- invalidates geo data cache: request geo data again after storing it for 30 days - handles - LAN resources: separate icon is used, no service links; refer to screenshot
+- invalidates geo data cache: request geo data again after storing it for 30 days
+- handles LAN resources: separate icon is used, no service links; refer to screenshot
 - handles resources without associated geo data: displays default extension icon, no service links; refer to screenshot
 - use ISO compliant flag icons from http://www.famfamfam.com/lab/icons/flags/ (this fixes flag icon for Taiwan)
 - grey globe icon is shown instead - US flag right after extension was installed
