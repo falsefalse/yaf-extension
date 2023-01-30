@@ -41,6 +41,7 @@ function size(fpath) {
 
 /* eslint-disable no-unused-vars */
 const green = s => `\x1b[32m${s}\x1b[0m`
+const red = s => `\x1b[31m${s}\x1b[0m`
 const magenta = s => `\x1b[35m${s}\x1b[0m`
 const cyan = s => `\x1b[36m${s}\x1b[0m`
 const yellow = s => `\x1b[33m${s}\x1b[0m`
@@ -51,17 +52,18 @@ const grey = s => `\x1b[90m${s}\x1b[0m`
 const utf = 'utf-8'
 
 const SRC = {
-  scripts: new FileList().include('src/*.js', 'src/*.json').toArray(),
-  templates: new FileList().include('src/templates/*.ejs').toArray()
+  scripts: new FileList().include('src/*.js', 'src/*.json'),
+  templates: new FileList().include('src/templates/*.ejs')
 }
 
 const BUILD_DIR = './build'
 const BUILD = {
-  scripts: [...SRC.scripts]
-    .map(sp => path.basename(sp))
-    .map(srcName => path.join(BUILD_DIR, srcName)),
   templates: path.join(BUILD_DIR, 'templates.js')
 }
+const resolveBuild = fileList =>
+  [...fileList.toArray()]
+    .map(sp => path.basename(sp))
+    .map(srcName => path.join(BUILD_DIR, srcName))
 
 const min = (code, isJson) =>
   isJson
@@ -77,25 +79,38 @@ function minify(sourcepath, resultpath) {
   let code = fs.readFileSync(sourcepath, utf)
   code = DEV ? code : min(code, isJson)
 
+  if (!code) {
+    const error = `❌ Failed to minify ${red(sourcepath)}`
+    log(error)
+    throw new Error(error)
+  }
+
   fs.writeFileSync(resultpath, code)
-  log('Minified:', sourcepath, grey(sourceSize), '→', blue(size(resultpath)))
+  if (DEV) {
+    log('Copied', resultpath)
+  } else {
+    log('Minified:', sourcepath, grey(sourceSize), '→', blue(size(resultpath)))
+  }
 }
 
 directory(BUILD_DIR)
 
 desc('Minify scripts')
-task('scripts', [BUILD_DIR], () =>
-  SRC.scripts.forEach((sp, i) => minify(sp, BUILD.scripts[i]))
-)
+task('scripts', [BUILD_DIR], () => {
+  const sources = SRC.scripts.toArray()
+  const build = resolveBuild(SRC.scripts)
+  sources.forEach((sp, i) => minify(sp, build[i]))
+})
 
 namespace('scripts', () => {
   desc('Remove scripts')
-  task('clean', () => BUILD.scripts.forEach(sp => rmRf(sp)))
+  task('clean', () => resolveBuild(SRC.scripts).forEach(bp => rmRf(bp)))
 })
 
 desc('Compile and minify templates')
 task('templates', [BUILD_DIR], () => {
-  const compiled = SRC.templates.reduce((_, tp) => {
+  const sources = SRC.templates.toArray()
+  const compiled = sources.reduce((_, tp) => {
     const name = path.basename(tp).replace('.ejs', '')
     const { source } = template(fs.readFileSync(tp, utf), {
       variable: 'locals'
@@ -108,10 +123,9 @@ task('templates', [BUILD_DIR], () => {
 
   log(
     'Compiled %s templates → %s',
-    yellow(SRC.templates.length),
+    yellow(sources.length),
     grey(size(BUILD.templates))
   )
-
   minify(BUILD.templates)
 })
 
@@ -129,13 +143,41 @@ task('sizes', async () => {
   fs.writeFileSync('src/sizes.json', content)
 })
 
+const PRODUCTION_ENDPOINT = 'http://geoip.furman.im'
+const DEVELOPMENT_ENDPOINT = 'http://localhost:8080'
+desc('Produce src/config.js')
+task('config', () => {
+  const config = {
+    apiUrl: DEV ? DEVELOPMENT_ENDPOINT : PRODUCTION_ENDPOINT,
+    version: aManifest.version
+  }
+
+  fs.writeFileSync(
+    'src/config.js',
+    // TODO: use .json when importing json as a es6 module becomes possible
+    `export default ${JSON.stringify(config, null, 2)}`
+  )
+
+  log(`Created %s config`, DEV ? red('🔧 development') : green('🌍 production'))
+})
+namespace('config', () => {
+  desc('Remove src/config.js')
+  task('clean', () => rmRf('src/config.js'))
+})
+
 desc('Compile all')
-task('compile', ['scripts', `templates`])
+task('compile', ['config', 'scripts', `templates`])
 
 desc('Remove all')
 task(
   'clean',
-  ['scripts:clean', 'templates:clean', 'manifest:clean', 'clobber'],
+  [
+    'scripts:clean',
+    'templates:clean',
+    'manifest:clean',
+    'config:clean',
+    'clobber'
+  ],
   () => rmRf(BUILD_DIR)
 )
 
@@ -168,22 +210,32 @@ packageTask(pkgName, aManifest.version, ['compile'], function () {
   const fileList = ['manifest.json', 'build/*', 'img/**', 'src/*.html']
   this.packageFiles.include(fileList)
   this.needZip = true
+  // otherwise firefox just can't
+  this.archiveNoBaseDir = true
 })
 
 // desc('Package source')
 // packageTask(`${pkgName}-source`, aManifest.version, [], function () {
-//   const fileList = ['src/**', 'img/**', '*']
+//   const fileList = ['build/**', 'pkg/**', 'src/**', 'img/**', '*']
 //   this.packageFiles.include(fileList)
 //   this.needZip = true
+//   this.packageDir = './pkg-source'
 // })
 
-const [_, ...__] = ['manifest', 'package', 'manifest:clean']
+task('onlyzip', () => rmRf(`pkg/${pkgName}-${aManifest.version}`))
+
+const [first, ...rest] = [
+  'manifest',
+  'package',
+  'manifest:clean',
+  'config:clean'
+]
 
 desc('Build & package for Firefox')
-task('firefox', ['manifest[🦊]', ...__])
+task('firefox', ['manifest[🦊]', ...rest, 'onlyzip'])
 
 desc('Build & package')
-task('default', [_, ...__])
+task('default', [first, ...rest])
 
 // aliases
 task('c', ['clean'])

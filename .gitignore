@@ -1,5 +1,9 @@
 *.sublime-workspace
 .DS_Store
 node_modules
+
 build/
 pkg/
+pkg-source/
+
+src/config.js

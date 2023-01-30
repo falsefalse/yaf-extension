@@ -1,5 +1,6 @@
 /* eslint-env browser, webextensions */
 
+import config from './config.js'
 import { getDomain, isLocal, storage } from './helpers.js'
 
 /* Draw raster icons onto page action */
@@ -88,22 +89,21 @@ function normalizeData(data) {
   return normal
 }
 
-const API_URL = 'http://geoip.furman.im/'
-
 async function request(domain) {
   let data = { error: null }
 
-  const url = new URL(API_URL)
+  const url = new URL(config.apiUrl)
   url.pathname = domain
 
   const headers = new Headers({
-    Accept: 'application/json'
+    Accept: 'application/json',
+    'x-client-version': config.version
   })
 
   let response, json
   // handle fetch failure
   try {
-    response = await fetch(url, { headers, credentials: 'omit' })
+    response = await fetch(url, { headers, credentials: 'omit', mode: 'cors' })
   } catch (fetchError) {
     data.error = fetchError.message
 

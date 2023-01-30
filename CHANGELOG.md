@@ -1,3 +1,8 @@
+### 1.0.7
+
+- First Firefox version release got `localhost:8080`, of course. Fix and prevent this.
+- Send `x-client-version` header with `manifest.version` along with requests
+
 ### 1.0.6
 
 Bugfix release
