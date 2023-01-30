@@ -143,12 +143,11 @@ task('sizes', async () => {
   fs.writeFileSync('src/sizes.json', content)
 })
 
-const PRODUCTION_ENDPOINT = 'http://geoip.furman.im'
-const DEVELOPMENT_ENDPOINT = 'http://localhost:8080'
+const ENDPOINT = DEV ? 'http://localhost:8080' : 'http://geoip.furman.im'
 desc('Produce src/config.js')
 task('config', () => {
   const config = {
-    apiUrl: DEV ? DEVELOPMENT_ENDPOINT : PRODUCTION_ENDPOINT,
+    apiUrl: ENDPOINT,
     version: aManifest.version
   }
 

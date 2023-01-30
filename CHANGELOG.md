@@ -1,3 +1,7 @@
+### 1.0.8
+
+- Drop `manifest.host_permissions`🎉, CORS for the win.
+
 ### 1.0.7
 
 - First Firefox version release got `localhost:8080`, of course. Fix and prevent this.

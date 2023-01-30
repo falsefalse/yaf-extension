@@ -28,7 +28,6 @@ module.exports = ({ forFirefox } = {}) => ({
   },
 
   permissions: ['tabs', 'storage'],
-  host_permissions: ['http://geoip.furman.im/*', 'http://localhost/*'],
 
   icons: {
     128: 'img/icon/128.png',

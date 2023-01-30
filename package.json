@@ -1,7 +1,7 @@
 {
   "name": "yaf-extension",
   "repository": "git@bitbucket.org:false/yet-another-flags-extension.git",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "private": true,
   "scripts": {
     "lint": "npm-run-all -pc --aggregate-output --silent format eslint",
