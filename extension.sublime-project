@@ -27,19 +27,18 @@
 
     {
       "name": "build",
-      "env": { "DEV": "1" },
       "working_dir": "$project_path",
-      "shell_cmd": "jake -q",
+      "shell_cmd": "yarn -s ch",
       "target": "terminus_exec",
       "auto_close": true
     },
 
     {
-      "name": "release",
-      "shell_cmd": "jake -q",
+      "name": "build:ff",
       "working_dir": "$project_path",
+      "shell_cmd": "yarn -s ff",
       "target": "terminus_exec",
       "auto_close": true
-    }
+    },
   ]
 }

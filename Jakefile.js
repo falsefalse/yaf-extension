@@ -200,7 +200,8 @@ namespace('manifest', () => {
 })
 
 const aManifest = manifest()
-const pkgName = aManifest.name.replace(/ /g, '-').toLowerCase()
+let pkgName = aManifest.name.toLowerCase().replace(/ /g, '-')
+pkgName = DEV ? `DEV-${pkgName}` : pkgName
 
 let packageFiles
 packageTask(pkgName, aManifest.version, ['compile'], function () {
@@ -213,6 +214,7 @@ packageTask(pkgName, aManifest.version, ['compile'], function () {
   this.archiveNoBaseDir = true
 })
 
+// run after `yarn relase:firefox`, commenting above task out
 // desc('Package source')
 // packageTask(`${pkgName}-source`, aManifest.version, [], function () {
 //   const fileList = ['build/**', 'pkg/**', 'src/**', 'img/**', '*']
@@ -235,7 +237,3 @@ task('firefox', ['manifest[🦊]', ...rest, 'onlyzip'])
 
 desc('Build & package')
 task('default', [first, ...rest])
-
-// aliases
-task('c', ['clean'])
-task('f', ['firefox'])
