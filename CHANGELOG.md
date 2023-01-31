@@ -1,3 +1,8 @@
+### 1.0.9
+
+- HTTPS 🔐
+- Fix page action icon being out of sync with popup content (when clicked on 'fetch error' when network is back already)
+
 ### 1.0.8
 
 - Drop `manifest.host_permissions`🎉, CORS for the win.

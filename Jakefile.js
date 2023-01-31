@@ -144,7 +144,7 @@ task('sizes', async () => {
   fs.writeFileSync('src/sizes.json', content)
 })
 
-const ENDPOINT = DEV ? 'http://localhost:8080' : 'http://geoip.furman.im'
+const ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
 desc('Produce src/config.js')
 task('config', () => {
   const config = {

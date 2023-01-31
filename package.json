@@ -1,11 +1,11 @@
 {
   "name": "yaf-extension",
   "repository": "git@bitbucket.org:false/yet-another-flags-extension.git",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": true,
   "scripts": {
-    "release:chrome": "git stash && jake -q clean && jake -q && git stash pop && open ./pkg",
-    "release:firefox": "git stash && jake -q clean && jake -q firefox && git stash pop && open ./pkg",
+    "release:chrome": "git stash && jake -q clean && jake -q && open ./pkg",
+    "release:firefox": "git stash && jake -q clean && jake -q firefox && open ./pkg",
     "ch": "DEV=1 jake -q",
     "ff": "DEV=1 jake -q firefox",
     "lint": "npm-run-all -pc --aggregate-output --silent format eslint",

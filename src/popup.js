@@ -63,7 +63,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   const domain = getDomain(currentTab.url)
-  let data = await setFlag(domain)
+  let data = await setFlag(currentTab)
 
   // happens on extensions page
   if (!data) {
