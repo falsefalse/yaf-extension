@@ -9,7 +9,8 @@ const {
   packageTask,
   directory,
   rmRf,
-  FileList
+  FileList,
+  Task
 } = require('jake')
 
 const fs = require('fs')
@@ -20,7 +21,8 @@ const template = require('lodash.template')
 const { execSync: exec } = require('node:child_process')
 
 const manifest = require('./manifest.json.js')
-const { DEV } = process.env
+let { DEV } = process.env
+DEV = Boolean(DEV)
 
 // utilities
 const replacers = ['%s', '%d', '%i', '%f', '%j', '%o', '%O', '%c', '%%']
@@ -70,14 +72,13 @@ const min = (code, isJson) =>
     ? JSON.stringify(JSON.parse(code), null, null)
     : uglify.minify(code).code
 // minifies passed .js or .json
-// if no resultpath was passed, overwrites the source file
-function minify(sourcepath, resultpath) {
+function minify(sourcepath, resultpath, skip = false) {
   const sourceSize = size(sourcepath)
-  resultpath = resultpath || sourcepath
+  skip = skip || DEV
 
   const isJson = path.extname(sourcepath) == '.json'
   let code = fs.readFileSync(sourcepath, utf)
-  code = DEV ? code : min(code, isJson)
+  code = skip ? code : min(code, isJson)
 
   if (!code) {
     const error = `❌ Failed to minify ${red(sourcepath)}`
@@ -86,20 +87,20 @@ function minify(sourcepath, resultpath) {
   }
 
   fs.writeFileSync(resultpath, code)
-  if (DEV) {
-    log('Copied', resultpath)
+  if (skip) {
+    log(yellow('Copied'), resultpath, grey(sourceSize))
   } else {
-    log('Minified:', sourcepath, grey(sourceSize), '→', blue(size(resultpath)))
+    log('Minified', sourcepath, grey(sourceSize), '→', blue(size(resultpath)))
   }
 }
 
 directory(BUILD_DIR)
 
 desc('Minify scripts')
-task('scripts', [BUILD_DIR], () => {
+task('scripts', [BUILD_DIR], (skipMinification = false) => {
   const sources = SRC.scripts.toArray()
   const build = resolveBuild(SRC.scripts)
-  sources.forEach((sp, i) => minify(sp, build[i]))
+  sources.forEach((sp, i) => minify(sp, build[i], skipMinification))
 })
 
 namespace('scripts', () => {
@@ -108,7 +109,7 @@ namespace('scripts', () => {
 })
 
 desc('Compile and minify templates')
-task('templates', [BUILD_DIR], () => {
+task('templates', [BUILD_DIR], (skipMinification = false) => {
   const sources = SRC.templates.toArray()
   const compiled = sources.reduce((_, tp) => {
     const name = path.basename(tp).replace('.ejs', '')
@@ -126,7 +127,7 @@ task('templates', [BUILD_DIR], () => {
     yellow(sources.length),
     grey(size(BUILD.templates))
   )
-  minify(BUILD.templates)
+  minify(BUILD.templates, BUILD.templates, skipMinification)
 })
 
 namespace('templates', () => {
@@ -165,7 +166,12 @@ namespace('config', () => {
 })
 
 desc('Compile all')
-task('compile', ['config', 'scripts', `templates`])
+task('compile', (...args) => {
+  ;['config', 'scripts', `templates`].forEach(taskName => {
+    const task = Task[taskName]
+    task.invoke.apply(task, args)
+  })
+})
 
 desc('Remove all')
 task(
@@ -181,8 +187,7 @@ task(
 )
 
 desc('Produce manifest.json')
-task('manifest', forFirefox => {
-  forFirefox = Boolean(forFirefox)
+task('manifest', (forFirefox = false) => {
   const monefest = JSON.stringify(manifest({ forFirefox }), null, 2)
   fs.writeFileSync('manifest.json', monefest)
 
@@ -225,15 +230,16 @@ packageTask(pkgName, aManifest.version, ['compile'], function () {
 
 task('onlyzip', () => rmRf(`pkg/${pkgName}-${aManifest.version}`))
 
-const [first, ...rest] = [
+const [manifestT, compileT, ...restT] = [
   'manifest',
+  'compile',
   'package',
   'manifest:clean',
   'config:clean'
 ]
 
 desc('Build & package for Firefox')
-task('firefox', ['manifest[🦊]', ...rest, 'onlyzip'])
+task('firefox', ['manifest[🦊]', 'compile[🦊]', ...restT, 'onlyzip'])
 
 desc('Build & package')
-task('default', [first, ...rest])
+task('default', [manifestT, compileT, ...restT])
