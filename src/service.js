@@ -3,19 +3,19 @@
 import setFlag from './set_flag.js'
 
 // update icon when tab is updated
-chrome.tabs.onUpdated.addListener((tabId, { status, url } = {}, tab) => {
+chrome.tabs.onUpdated.addListener(async (tabId, { status, url } = {}, tab) => {
   // doesn't always come, on refresh doesn't
   url = tab.url
   if (url && (status === 'loading' || status === 'completed')) {
-    setFlag(tab)
+    await setFlag(tab)
   }
 })
 
 // update icon when tab is selected
 chrome.tabs.onActivated.addListener(activeInfo => {
-  chrome.tabs.get(activeInfo.tabId, tab => {
+  chrome.tabs.get(activeInfo.tabId, async tab => {
     if (!tab || !tab.url) return
 
-    setFlag(tab)
+    await setFlag(tab)
   })
 })

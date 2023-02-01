@@ -102,7 +102,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     renderPopup(domain, newData)
   })
 
-  if (Math.random() > 1 / 3) return
+  if (Math.random() > 2 / 3) return
 
   document
     .querySelectorAll('.animate')

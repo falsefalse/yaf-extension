@@ -8,23 +8,22 @@ import { getDomain, isLocal, storage } from './helpers.js'
 const SIZE = 64
 const OG = { width: 16, height: 11 }
 const factor = SIZE / OG.width
+const center = (whole, part) => Math.round(Math.max(whole - part, 0) / 2)
+
 const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
   willReadFrequently: true
 })
-ctx.width = ctx.height = SIZE
 
-const center = (whole, part) => Math.round(Math.max(whole - part, 0) / 2)
-
-async function setIcon({ id: tabId }, path) {
+async function setIcon(tabId, path) {
   const isFlag = path.startsWith('/img/flags/')
   path = '../' + path
 
   if (!isFlag) {
-    chrome.action.setIcon({ tabId, path })
+    await chrome.action.setIcon({ tabId, path })
     return
   }
 
-  const isNepal = isFlag && path.endsWith('/np.png')
+  const isNepal = path.endsWith('/np.png')
 
   const imgBlob = await (await fetch(path)).blob()
   // read 16x11 bitmap, scale it up 4 times, no smoothing
@@ -35,34 +34,41 @@ async function setIcon({ id: tabId }, path) {
   })
 
   // draw bitmap on canvas, center vertically
-  ctx.clearRect(0, 0, ctx.width, ctx.height)
-  ctx.drawImage(bitmap, 0, center(ctx.height, bitmap.height))
+  ctx.clearRect(0, 0, SIZE, SIZE)
+  ctx.drawImage(bitmap, 0, center(SIZE, bitmap.height))
 
   // pass bitmap to browser
-  chrome.action.setIcon({
+  await chrome.action.setIcon({
     tabId,
     imageData: { [SIZE.toString()]: ctx.getImageData(0, 0, SIZE, SIZE) }
   })
 }
 
-function setTitle({ id: tabId }, title) {
+async function setAction({ id: tabId }, title, iconPath) {
   chrome.action.setTitle({ tabId, title })
+  await setIcon(tabId, iconPath)
 }
 
-function updatePageAction(tab, domain, data) {
+async function updatePageAction(tab, domain, data) {
   const { is_local, error, country_code, country_name, city, region } = data
   // marked local or is 'localhost'
   if (isLocal(domain) || is_local) {
-    setIcon(tab, '/img/local_resource.png')
-    setTitle(tab, `${domain} is a local resource`)
+    await setAction(
+      tab,
+      `${domain} is a local resource`,
+      '/img/local_resource.png'
+    )
 
     return
   }
 
   // not found
   if (!country_code) {
-    setIcon(tab, '/img/icon/32.png')
-    setTitle(tab, error ? `Error: ${error}` : 'Country code was not found')
+    await setAction(
+      tab,
+      error ? `Error: ${error}` : 'Country code was not found',
+      '/img/icon/32.png'
+    )
 
     return
   }
@@ -72,8 +78,11 @@ function updatePageAction(tab, domain, data) {
   if (city) title.splice(0, 0, city)
   if (region) title.splice(1, 0, region)
 
-  setIcon(tab, `/img/flags/${country_code.toLowerCase()}.png`)
-  setTitle(tab, title.join(', '))
+  await setAction(
+    tab,
+    title.join(', '),
+    `/img/flags/${country_code.toLowerCase()}.png`
+  )
 }
 
 function normalizeData(data) {
@@ -146,7 +155,7 @@ async function request(domain) {
 
 const passedMoreThan = (seconds, since) =>
   new Date().getTime() - since > seconds * 1000
-const twoMins = 2 * 60 // seconds
+const aMin = 60 // seconds
 const day = 24 * 60 * 60 // seconds
 const week = 7 * day
 
@@ -183,7 +192,7 @@ async function getCachedResponse(domain, refetch) {
     // refetch not founds once a day
     (status === 404 && passedMoreThan(day, fetched_at)) ||
     // refetch non-http errors often, maybe network is back
-    (error && !status && passedMoreThan(twoMins, fetched_at))
+    (error && !status && passedMoreThan(aMin, fetched_at))
   ) {
     return { ...newData, ...(await request(domain)) }
   }
@@ -195,7 +204,7 @@ export default async function setFlag(tab, { refetch } = {}) {
   const domain = getDomain(tab.url)
   if (!domain) {
     await chrome.action.disable(tab.id)
-    setTitle(tab, '😴')
+    chrome.action.setTitle({ tabId: tab.id, title: '😴' })
 
     return
   } else {
@@ -204,7 +213,7 @@ export default async function setFlag(tab, { refetch } = {}) {
 
   const data = await getCachedResponse(domain, refetch)
   await storage.set(domain, data)
-  updatePageAction(tab, domain, data)
+  await updatePageAction(tab, domain, data)
 
   return data
 }

@@ -16,9 +16,7 @@ const {
 const fs = require('fs')
 const path = require('path')
 const uglify = require('uglify-js')
-const prettier = require('prettier')
 const template = require('lodash.template')
-const { execSync: exec } = require('node:child_process')
 
 const manifest = require('./manifest.json.js')
 let { DEV } = process.env
@@ -200,7 +198,7 @@ let pkgName = aManifest.name.toLowerCase().replace(/ /g, '-')
 pkgName = DEV ? `DEV-${pkgName}` : pkgName
 
 let packageFiles
-packageTask(pkgName, aManifest.version, ['compile'], function () {
+packageTask(pkgName, aManifest.version, [], function () {
   packageFiles = this.packageFiles
 
   const fileList = ['manifest.json', 'build/*', 'img/**', 'src/*.html']
