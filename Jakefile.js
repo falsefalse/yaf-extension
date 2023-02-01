@@ -135,15 +135,6 @@ namespace('templates', () => {
   task('clean', () => rmRf(BUILD.templates))
 })
 
-desc('🖼 Update image sizes')
-task('sizes', async () => {
-  let content = exec(`identify -format "'%f': [%w, %h],\n" img/flags/*.png`)
-  const config = await prettier.resolveConfig(BUILD_DIR)
-  content = prettier.format(`{ ${content} }`, { ...config, parser: 'json' })
-
-  fs.writeFileSync('src/sizes.json', content)
-})
-
 const ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
 desc('Produce src/config.js')
 task('config', () => {

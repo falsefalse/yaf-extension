@@ -1,3 +1,7 @@
+### 1.1.0
+
+- Pixel perfect flags upscaling (even for Nepal 🇳🇵), 4k mode on.
+
 ### 1.0.9
 
 - HTTPS 🔐

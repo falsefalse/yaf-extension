@@ -3,8 +3,11 @@
 import config from './config.js'
 import { getDomain, isLocal, storage } from './helpers.js'
 
-/* Draw raster icons onto page action */
-const SIZE = 16
+/* Upscale flag icons */
+
+const SIZE = 64
+const OG = { width: 16, height: 11 }
+const factor = SIZE / OG.width
 const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
   willReadFrequently: true
 })
@@ -13,30 +16,32 @@ ctx.width = ctx.height = SIZE
 const center = (whole, part) => Math.round(Math.max(whole - part, 0) / 2)
 
 async function setIcon({ id: tabId }, path) {
+  const isFlag = path.startsWith('/img/flags/')
   path = '../' + path
 
-  const imgBlob = await (await fetch(path)).blob()
-  const img = await createImageBitmap(imgBlob)
-  let { width, height } = img
-
-  // we need resizing for rectangular flags, square icons are fine as is
-  if (width === height) {
+  if (!isFlag) {
     chrome.action.setIcon({ tabId, path })
     return
   }
 
-  ctx.clearRect(0, 0, ctx.width, ctx.height)
-  ctx.drawImage(
-    img,
-    center(ctx.width, width),
-    center(ctx.height, height),
-    width,
-    height
-  )
+  const isNepal = isFlag && path.endsWith('/np.png')
 
+  const imgBlob = await (await fetch(path)).blob()
+  // read 16x11 bitmap, scale it up 4 times, no smoothing
+  const bitmap = await createImageBitmap(imgBlob, {
+    resizeQuality: 'pixelated',
+    resizeWidth: (isNepal ? 9 : OG.width) * factor,
+    resizeHeight: OG.height * factor
+  })
+
+  // draw bitmap on canvas, center vertically
+  ctx.clearRect(0, 0, ctx.width, ctx.height)
+  ctx.drawImage(bitmap, 0, center(ctx.height, bitmap.height))
+
+  // pass bitmap to browser
   chrome.action.setIcon({
     tabId,
-    imageData: ctx.getImageData(0, 0, SIZE, SIZE)
+    imageData: { [SIZE.toString()]: ctx.getImageData(0, 0, SIZE, SIZE) }
   })
 }
 
