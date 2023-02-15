@@ -1,6 +1,9 @@
 {
   "name": "yaf-extension",
-  "repository": "git@bitbucket.org:false/yet-another-flags-extension.git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/falsefalse/yaf-extension.git"
+  },
   "version": "1.1.1",
   "private": true,
   "scripts": {
