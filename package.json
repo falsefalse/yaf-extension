@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/falsefalse/yaf-extension.git"
   },
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": true,
   "scripts": {
     "release:chrome": "git stash && jake -q clean && jake -q && open ./pkg",

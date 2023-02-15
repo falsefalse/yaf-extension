@@ -1,3 +1,7 @@
+### 1.1.2
+
+- Drop unused CSP field from manifest.
+
 ### 1.1.1
 
 - Less annoying charity animation, better handling for initial popup load after install.
