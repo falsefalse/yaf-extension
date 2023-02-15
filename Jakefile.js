@@ -121,7 +121,7 @@ task('templates', [BUILD_DIR], (skipMinification = false) => {
   fs.writeFileSync(BUILD.templates, compiled)
 
   log(
-    'Compiled %s templates → %s',
+    'Compiled %s templates %s',
     yellow(sources.length),
     grey(size(BUILD.templates))
   )

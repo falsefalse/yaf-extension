@@ -1,3 +1,8 @@
+### 1.1.1
+
+- Less annoying charity animation, better handling for initial popup load after install.
+- Smaller cache TTLs.
+
 ### 1.1.0
 
 - Pixel perfect flags upscaling (even for Nepal 🇳🇵), 4k mode on.

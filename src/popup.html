@@ -103,11 +103,6 @@
       .button:hover {
         background-color: var(--hover-color);
       }
-      .button.is-disabled {
-        background-color: transparent;
-        pointer-events: none;
-        opacity: 0.5;
-      }
 
       ul.toolbar {
         position: absolute;
@@ -192,6 +187,6 @@
 
   <body>
     <ul class="toolbar"></ul>
-    <ul class="result"> </ul>
+    <ul class="result"><li class="header">Loading...</li></ul>
   </body>
 </html>

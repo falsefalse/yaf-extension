@@ -9,7 +9,7 @@ const DONATION = 'https://savelife.in.ua/en/donate-en/#donate-army-card-once'
 function setLoading() {
   document.body.classList.add('is-loading')
 }
-function unSetLoading() {
+function unsetLoading() {
   document.body.classList.remove('is-loading')
 }
 
@@ -97,12 +97,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     setLoading()
     const newData = await setFlag(currentTab, { refetch: true })
-    unSetLoading()
+    unsetLoading()
 
     renderPopup(domain, newData)
   })
 
-  if (Math.random() > 2 / 3) return
+  // continue for 1/4 of all invocations
+  if (Math.random() > 1 / 4) return
 
   document
     .querySelectorAll('.animate')
