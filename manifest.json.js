@@ -43,9 +43,5 @@ module.exports = ({ forFirefox } = {}) => ({
     },
     default_title: 'Yet Another Flags',
     default_popup: 'src/popup.html'
-  },
-
-  content_security_policy: {
-    extension_pages: "script-src 'self'; object-src 'self'"
   }
 })
