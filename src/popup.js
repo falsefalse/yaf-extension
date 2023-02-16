@@ -76,7 +76,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // mark
   window.addEventListener('click', async ({ target }) => {
-    if (!target.classList.contains('toolbar-marklocal')) return
+    if (!target.classList.contains('marklocal')) return
 
     // flip, save and render
     data = { ...data, is_local: !data.is_local }
@@ -89,10 +89,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // reload
   window.addEventListener('click', async ({ target, metaKey }) => {
-    if (!target.classList.contains('toolbar-reload')) return
+    if (!target.classList.contains('reload')) return
 
     if (metaKey) {
       window.open(DONATION, '_blank', 'noopener,noreferrer')
+      window.close()
+      return
     }
 
     setLoading()
@@ -100,6 +102,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     unsetLoading()
 
     renderPopup(domain, newData)
+  })
+
+  // service link click
+  window.addEventListener('click', ({ target }) => {
+    if (!target.parentElement.classList.contains('service')) return
+    setTimeout(() => window.close(), 250)
   })
 
   // continue for 1/4 of all invocations

@@ -1,17 +1,17 @@
 <% // reload  %>
 <% if (!locals.is_local) { %>
   <li
-    class="button toolbar-reload animate"
+    class="button reload animate"
     title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click." />
 <% } %>
 
 <% if (!locals.ip) { %>
   <% // mark as local  %>
   <% if (locals.is_local) { %>
-    <li class="button toolbar-marklocal toolbar-marked"
+    <li class="button marklocal marked"
       title="Unmark domain as local" />
   <% } else { %>
-    <li class="button toolbar-marklocal"
+    <li class="button marklocal"
       title="Mark domain as local" />
   <% } %>
 <% } %>

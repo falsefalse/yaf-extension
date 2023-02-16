@@ -1,3 +1,7 @@
+### 1.1.3
+
+- Cleanup styles, more legibility, use vector icon for whois service.
+
 ### 1.1.2
 
 - Drop unused CSP field from manifest.

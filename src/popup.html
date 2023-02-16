@@ -55,9 +55,15 @@
       }
 
       :root {
+        --base-color: #2d2d2d;
         --hover-color: #d5e4ff;
+        --border-hover-color: #8492ac;
+        --separator-color: #f6f6f6;
         --button-size: 26px;
         --button-bg-size: 14px 14px;
+
+        --base-font-size: 14px;
+        --header-font-size: 17px;
       }
 
       * {
@@ -69,7 +75,7 @@
       a,
       a:visited,
       a:hover {
-        color: #000;
+        color: inherit;
         text-decoration: none;
       }
 
@@ -78,15 +84,19 @@
       }
 
       body {
-        font: normal 13px/1.5 Calibri, 'Lucida Grande', Arial, sans-serif;
+        font-family: Calibri, 'Lucida Grande', Arial, sans-serif;
+        font-size: var(--base-font-size);
+        line-height: 1.5;
+        color: var(--base-color);
+
         position: relative;
         margin: 8px;
         transition: filter 0.1s ease-out;
+        /* uncollapse */
+        border: 1px solid transparent;
         -webkit-user-select: none;
         -moz-user-select: none;
         user-select: none;
-        /* uncollapse */
-        border: 1px solid transparent;
       }
       body.is-loading {
         filter: blur(1px);
@@ -95,10 +105,15 @@
 
       .button {
         cursor: pointer;
+        width: var(--button-size);
+        height: var(--button-size);
         border-radius: 50%;
         overflow: hidden;
         transition: background-color 0.2s, filter 0.2s;
         background-color: transparent;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: var(--button-bg-size);
       }
       .button:hover {
         background-color: var(--hover-color);
@@ -106,28 +121,20 @@
 
       ul.toolbar {
         position: absolute;
-        top: 0;
+        top: 1px; /* so icon baselines match li.header baseline */
         right: 0;
         display: flex;
         gap: 0.25rem;
       }
-      ul.toolbar li {
-        display: inline-block;
-        width: var(--button-size);
-        height: var(--button-size);
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: var(--button-bg-size);
-      }
-      ul.toolbar li.toolbar-marked {
+      ul.toolbar li.marked {
         background-color: var(--hover-color);
         filter: brightness(90%);
       }
 
-      ul.toolbar li.toolbar-reload {
+      ul.toolbar li.reload {
         background-image: url(/img/refresh.png);
       }
-      ul.toolbar li.toolbar-marklocal {
+      ul.toolbar li.marklocal {
         background-image: url(/img/local_resource.png);
       }
 
@@ -139,7 +146,7 @@
       ul.result li {
         padding: 0 6px;
         white-space: nowrap;
-        font-size: 13px;
+        font-size: var(--base-font-size);
       }
       ul.result li > i {
         -webkit-user-select: none;
@@ -148,15 +155,14 @@
         font-style: normal;
       }
       ul.result li.header {
-        font-size: 16px;
+        font-size: var(--header-font-size);
         line-height: 1.8;
         padding-right: 78px;
       }
       ul.result li.separator {
         height: 1px;
-        background-color: #e1e1e1;
-        margin: 8px 0 4px;
-        opacity: 0.5;
+        background-color: var(--separator-color);
+        margin: 10px 0 6px;
       }
       ul.result li.service {
         padding: 0;
@@ -165,21 +171,23 @@
         display: block;
         font-size: inherit;
         padding: 4px 6px;
+        padding-left: 28px;
         height: 16px;
         line-height: 16px;
-        background: 6px center no-repeat;
-        padding-left: 28px;
+
+        border: 1px solid transparent;
         border-radius: 4px;
-        border: 1px solid #fff;
         transition: border-color 0.3s, background-color 0.3s;
+
+        background: 6px center no-repeat;
       }
       ul.result li.service a:hover {
-        border-color: #8492ac;
-        background-color: #d5e4ff;
+        border-color: var(--border-hover-color);
+        background-color: var(--hover-color);
       }
-
       ul.result li.service a.whois {
-        background-image: url(/img/popup/domaintools.ico);
+        background-image: url(/img/domaintools.svg);
+        background-size: 16px 16px;
       }
     </style>
 
