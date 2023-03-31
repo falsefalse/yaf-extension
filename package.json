@@ -12,15 +12,21 @@
     "ch": "DEV=1 jake -q",
     "ff": "DEV=1 jake -q firefox",
     "lint": "npm-run-all -pc --aggregate-output --silent format eslint",
-    "eslint": "eslint --color src/*.js Jakefile.js",
-    "format": "prettier --list-different *.js *.md *.json src/*.js src/popup.html"
+    "eslint": "eslint --color src/*.ts Jakefile.js",
+    "format": "prettier --list-different *.js *.md *.json src/*.ts src/*.html",
+    "tc": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/chrome": "^0.0.227",
+    "@types/offscreencanvas": "^2019.7.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
     "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.6.0",
     "lodash.template": "^4.5.0",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.8.3",
+    "typescript": "^5.0.3",
     "uglify-js": "^3.17.4"
   }
 }

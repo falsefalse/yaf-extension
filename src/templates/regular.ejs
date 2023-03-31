@@ -1,12 +1,12 @@
-<li class="header"><%= locals.country_name || locals.domain  %></li>
+<li class="header"><%= locals.country_name || locals.domain %></li>
 <%
 let hinted = (val, hint) => `<i title='${hint}'>${val}</i>`
 let { city, region, postal_code } = locals
 
 let area = []
-city && area.push([city, 'City'])
-region && area.push([region, 'Region'])
-postal_code && area.push([postal_code, 'Postal Code'])
+if (city) area.push([city, 'City'])
+if (region) area.push([region, 'Region'])
+if (postal_code) area.push([postal_code, 'Postal Code'])
 
 if (area.length) { %>
   <li>
@@ -18,6 +18,6 @@ if (area.length) { %>
 <li class="separator" />
 <li class="service">
   <% let href = `http://whois.domaintools.com/${locals.domain}` %>
-  <% let title = `Open ${href} in a new tab` %>
+  <% let title = `Open link in a new tab` %>
   <a class="whois" target="_blank" href="<%= href %>" title="<%= title %>">Whois</a>
 </li>

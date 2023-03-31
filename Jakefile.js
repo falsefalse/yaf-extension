@@ -15,22 +15,25 @@ const {
 
 const fs = require('fs')
 const path = require('path')
-const uglify = require('uglify-js')
 const template = require('lodash.template')
+const { minify: uglify } = require('uglify-js')
+const { execSync: exec } = require('child_process')
 
-const manifest = require('./manifest.json.js')
-let { DEV } = process.env
-DEV = Boolean(DEV)
+const DEV = Boolean(process.env.DEV)
 
-// utilities
 const replacers = ['%s', '%d', '%i', '%f', '%j', '%o', '%O', '%c', '%%']
-const prefix = '→'
-const log = (...[first, ...rest]) => {
+const arrow = '→'
+function log(...[first, ...rest]) {
   if (replacers.find(r => first.toString().includes(r))) {
-    console.log(...[`${prefix} ${first}`, ...rest])
+    console.log(...[`${arrow} ${first}`, ...rest])
   } else {
-    console.log(...[prefix, first, ...rest])
+    console.log(...[arrow, first, ...rest])
   }
+}
+
+function logAndThrow(error, output = null) {
+  log(output || error)
+  if (error) throw error
 }
 
 function size(fpath) {
@@ -51,64 +54,67 @@ const grey = s => `\x1b[90m${s}\x1b[0m`
 
 const utf = 'utf-8'
 
-const SRC = {
-  scripts: new FileList().include('src/*.js', 'src/*.json'),
-  templates: new FileList().include('src/templates/*.ejs')
-}
-
-const BUILD_DIR = './build'
-const BUILD = {
-  templates: path.join(BUILD_DIR, 'templates.js')
-}
-const resolveBuild = fileList =>
-  [...fileList.toArray()]
-    .map(sp => path.basename(sp))
-    .map(srcName => path.join(BUILD_DIR, srcName))
-
-const min = (code, isJson) =>
-  isJson
-    ? JSON.stringify(JSON.parse(code), null, null)
-    : uglify.minify(code).code
-// minifies passed .js or .json
-function minify(sourcepath, resultpath, skip = false) {
+function minify(sourcepath, skip = false) {
   const sourceSize = size(sourcepath)
   skip = skip || DEV
 
-  const isJson = path.extname(sourcepath) == '.json'
   let code = fs.readFileSync(sourcepath, utf)
-  code = skip ? code : min(code, isJson)
+  code = skip ? code : uglify(code).code
 
-  if (!code) {
-    const error = `❌ Failed to minify ${red(sourcepath)}`
-    log(error)
-    throw new Error(error)
-  }
+  !code && logAndThrow(`❌ Failed to minify ${red(sourcepath)}`)
 
-  fs.writeFileSync(resultpath, code)
+  fs.writeFileSync(sourcepath, code)
+
   if (skip) {
-    log(yellow('Copied'), resultpath, grey(sourceSize))
+    log(yellow('Copied'), sourcepath, grey(sourceSize))
   } else {
-    log('Minified', sourcepath, grey(sourceSize), '→', blue(size(resultpath)))
+    log('Minified', sourcepath, grey(sourceSize), '→', blue(size(sourcepath)))
   }
 }
 
+// lesssgoo!
+
+const BUILD_DIR = './build'
+
+// templates sources
+const EJS = new FileList().include('src/templates/*.ejs')
+// compiled templates
+const TEMPLATES = path.join(BUILD_DIR, 'templates.js')
+// generated config
+const CONFIG = path.join(BUILD_DIR, 'config.js')
+// generated and emitted scripts
+const SCRIPTS = new FileList().include('build/*.js')
+
 directory(BUILD_DIR)
 
+desc('Typecheck & emit sources')
+task('typescript', [BUILD_DIR], () => {
+  let output
+
+  try {
+    exec('yarn tsc --pretty', { encoding: utf })
+  } catch (error) {
+    output = error.stdout.toString()
+  }
+
+  log('🦜 Typecheck %s', !output ? cyan('passed') : red('failed'))
+
+  output && logAndThrow('❌ Typecheck failed', output)
+})
+
 desc('Minify scripts')
-task('scripts', [BUILD_DIR], (skipMinification = false) => {
-  const sources = SRC.scripts.toArray()
-  const build = resolveBuild(SRC.scripts)
-  sources.forEach((sp, i) => minify(sp, build[i], skipMinification))
+task('scripts', ['typescript', BUILD_DIR], (skipMinification = false) => {
+  SCRIPTS.toArray().forEach(file => minify(file, skipMinification))
 })
 
 namespace('scripts', () => {
-  desc('Remove scripts')
-  task('clean', () => resolveBuild(SRC.scripts).forEach(bp => rmRf(bp)))
+  desc(`Remove ${BUILD_DIR}`)
+  task('clean', () => rmRf(BUILD_DIR))
 })
 
-desc('Compile and minify templates')
-task('templates', [BUILD_DIR], (skipMinification = false) => {
-  const sources = SRC.templates.toArray()
+desc('Compile templates')
+task('templates', [BUILD_DIR], () => {
+  const sources = EJS.toArray()
   const compiled = sources.reduce((_, tp) => {
     const name = path.basename(tp).replace('.ejs', '')
     const { source } = template(fs.readFileSync(tp, utf), {
@@ -118,64 +124,48 @@ task('templates', [BUILD_DIR], (skipMinification = false) => {
     return _ + `export const ${name} = ${source}\n`
   }, '')
 
-  fs.writeFileSync(BUILD.templates, compiled)
+  fs.writeFileSync(TEMPLATES, compiled)
 
   log(
-    'Compiled %s templates %s',
+    `Compiled %s templates ${arrow} %s`,
     yellow(sources.length),
-    grey(size(BUILD.templates))
+    grey(size(TEMPLATES))
   )
-  minify(BUILD.templates, BUILD.templates, skipMinification)
 })
 
-namespace('templates', () => {
-  desc('Remove templates')
-  task('clean', () => rmRf(BUILD.templates))
-})
-
-const ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
+const API_ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
 const DOH_ENDPOINT = 'https://dns.google/resolve'
-desc('Produce src/config.js')
-task('config', () => {
+desc(`Produce ${CONFIG}`)
+task('config', [BUILD_DIR], () => {
   const config = {
-    apiUrl: ENDPOINT,
-    version: aManifest.version,
-    dohApiUrl: DOH_ENDPOINT
+    apiUrl: API_ENDPOINT,
+    dohApiUrl: DOH_ENDPOINT,
+    version: aManifest.version
   }
 
   fs.writeFileSync(
-    'src/config.js',
+    CONFIG,
     // TODO: use .json when importing json as a es6 module becomes possible
     `export default ${JSON.stringify(config, null, 2)}`
   )
 
-  log(`Created %s config`, DEV ? red('🔧 development') : green('🌍 production'))
-})
-namespace('config', () => {
-  desc('Remove src/config.js')
-  task('clean', () => rmRf('src/config.js'))
+  log('Created %s config', DEV ? red('🔧 development') : green('🌍 production'))
 })
 
 desc('Compile all')
 task('compile', (...args) => {
-  ;['config', 'scripts', `templates`].forEach(taskName => {
+  ;['config', 'templates', 'scripts'].forEach(taskName => {
     const task = Task[taskName]
     task.invoke.apply(task, args)
   })
 })
 
 desc('Remove all')
-task(
-  'clean',
-  [
-    'scripts:clean',
-    'templates:clean',
-    'manifest:clean',
-    'config:clean',
-    'clobber'
-  ],
-  () => rmRf(BUILD_DIR)
+task('clean', ['scripts:clean', 'manifest:clean', 'clobber'], () =>
+  rmRf(BUILD_DIR)
 )
+
+const manifest = require('./manifest.json.js')
 
 desc('Produce manifest.json')
 task('manifest', (forFirefox = false) => {
@@ -185,7 +175,7 @@ task('manifest', (forFirefox = false) => {
   if (!forFirefox) packageFiles.exclude('src/module.html')
 
   log(
-    `Created manifest version %s`,
+    'Created manifest version %s',
     yellow(aManifest.version),
     forFirefox ? 'for 🦊' : '🌍'
   )
@@ -225,11 +215,10 @@ const [manifestT, compileT, ...restT] = [
   'manifest',
   'compile',
   'package',
-  'manifest:clean',
-  'config:clean'
+  'manifest:clean'
 ]
 
-desc('Build & package for Firefox')
+desc('Build & package for 🦊')
 task('firefox', ['manifest[🦊]', 'compile[🦊]', ...restT, 'onlyzip'])
 
 desc('Build & package')

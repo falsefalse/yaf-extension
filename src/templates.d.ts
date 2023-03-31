@@ -1,0 +1,14 @@
+import { RenderData } from './types'
+
+type RenderKeys = keyof RenderData
+
+type Template<T extends RenderKeys | void = void> = (
+  locals: [T] extends [RenderKeys] ? { [K in T]: RenderData[K] } : void
+) => string
+
+export declare const toolbar: Template<'ip' | 'is_local'>
+export declare const local: Template<'domain' | 'ip'>
+export declare const not_found: Template<'domain' | 'error'>
+export declare const regular: Template<
+  'country_name' | 'domain' | 'city' | 'region' | 'postal_code' | 'ip'
+>

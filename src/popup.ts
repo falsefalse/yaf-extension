@@ -1,5 +1,6 @@
 /* eslint-env browser, webextensions */
 
+import { GeoData, ErrorData } from './types'
 import setFlag from './set_flag.js'
 import { storage, getDomain, isLocal } from './helpers.js'
 import { toolbar, local, not_found, regular } from './templates.js'
@@ -13,20 +14,13 @@ function unsetLoading() {
   document.body.classList.remove('is-loading')
 }
 
-function renderPopup(domain, data) {
+function renderPopup(domain: string, data: GeoData | ErrorData) {
   const toolbarEl = document.querySelector('.toolbar')
   const resultEl = document.querySelector('.result')
 
-  const {
-    error,
-    is_local,
-    ip,
-    country_code,
-    country_name,
-    city,
-    region,
-    postal_code
-  } = data
+  if (!toolbarEl || !resultEl) return
+
+  const { error, is_local, ip } = data
 
   // 'locahost' and alike domains don't need toolbar
   if (!isLocal(domain)) {
@@ -40,10 +34,12 @@ function renderPopup(domain, data) {
   }
 
   // error
-  if (error || !country_code) {
+  if (error || !('country_code' in data)) {
     resultEl.innerHTML = not_found({ domain, error })
     return
   }
+
+  const { country_name, city, region, postal_code } = data
 
   // regular case
   resultEl.innerHTML = regular({
@@ -53,6 +49,19 @@ function renderPopup(domain, data) {
     region,
     postal_code,
     ip
+  })
+}
+
+const delegateEvent = <K extends keyof WindowEventMap>(
+  eventName: K,
+  className: string,
+  listener: (event: WindowEventMap[K]) => unknown
+) => {
+  window.addEventListener(eventName, event => {
+    if (!(event.target instanceof Element)) return
+    if (!event.target.classList.contains(className)) return
+
+    return listener(event)
   })
 }
 
@@ -66,7 +75,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   let data = await setFlag(currentTab)
 
   // happens on extensions page
-  if (!data) {
+  if (!data || !domain) {
     await chrome.action.disable(currentTab.id)
     window.close()
     return
@@ -75,8 +84,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   renderPopup(domain, data)
 
   // mark
-  window.addEventListener('click', async ({ target }) => {
-    if (!target.classList.contains('marklocal')) return
+  delegateEvent('click', 'marklocal', async () => {
+    if (!data) return
 
     // flip, save and render
     data = { ...data, is_local: !data.is_local }
@@ -88,9 +97,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   // reload
-  window.addEventListener('click', async ({ target, metaKey }) => {
-    if (!target.classList.contains('reload')) return
-
+  delegateEvent('click', 'reload', async ({ metaKey }) => {
     if (metaKey) {
       window.open(DONATION, '_blank', 'noopener,noreferrer')
       window.close()
@@ -101,14 +108,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     const newData = await setFlag(currentTab, { refetch: true })
     unsetLoading()
 
-    renderPopup(domain, newData)
+    if (newData) renderPopup(domain, newData)
   })
 
-  // service link click
-  window.addEventListener('click', ({ target }) => {
-    if (!target.parentElement.classList.contains('service')) return
-    setTimeout(() => window.close(), 250)
-  })
+  // service link click, timeout somehow makes firefox open link in a new tab
+  delegateEvent('click', 'whois', () => setTimeout(() => window.close(), 50))
 
   // continue for 1/4 of all invocations
   if (Math.random() > 1 / 4) return

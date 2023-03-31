@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "module": "es2022",
+    "target": "es2021",
+
+    "esModuleInterop": true,
+
+    "rootDir": "src",
+    "outDir": "build",
+
+    "noEmitOnError": true
+  },
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Recommended"
+}
