@@ -1,13 +1,20 @@
 <li class="header"><%= locals.country_name || locals.domain  %></li>
 <%
-let area = [];
-locals.city && area.push(locals.city);
-locals.region && area.push(locals.region);
-locals.postal_code && area.push(locals.postal_code);
+let hinted = (val, hint) => `<i title='${hint}'>${val}</i>`
+let { city, region, postal_code } = locals
+
+let area = []
+city && area.push([city, 'City'])
+region && area.push([region, 'Region'])
+postal_code && area.push([postal_code, 'Postal Code'])
+
 if (area.length) { %>
-  <li><%= area.join(', ') %><i title="Located!">📍</i></li>
+  <li>
+    <%= area.map(a => hinted(...a)).join(', ') %>
+    <%= hinted('📍', 'Located!') %>
+  </li>
 <% } %>
-<li><%= locals.ip %></li>
+<li><%= hinted(locals.ip, 'IP address') %></li>
 <li class="separator" />
 <li class="service">
   <% let href = `http://whois.domaintools.com/${locals.domain}` %>
