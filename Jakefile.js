@@ -134,11 +134,13 @@ namespace('templates', () => {
 })
 
 const ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
+const DOH_ENDPOINT = 'https://dns.google/resolve'
 desc('Produce src/config.js')
 task('config', () => {
   const config = {
     apiUrl: ENDPOINT,
-    version: aManifest.version
+    version: aManifest.version,
+    dohApiUrl: DOH_ENDPOINT
   }
 
   fs.writeFileSync(

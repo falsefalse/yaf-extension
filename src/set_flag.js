@@ -106,8 +106,20 @@ function normalizeData(data) {
 async function request(domain) {
   let data = { error: null }
 
+  const dohUrl = new URL(config.dohApiUrl)
+  dohUrl.searchParams.set('type', '1')
+  dohUrl.searchParams.set('name', domain)
+
+  let dohResponse, ips
+  try {
+    dohResponse = await fetch(dohUrl)
+    ips = (await dohResponse.json()).Answer
+  } catch (dohError) {
+    // TODO: handle google error
+  }
+
   const url = new URL(config.apiUrl)
-  url.pathname = domain
+  url.pathname = ips[0].data
 
   const headers = new Headers({
     Accept: 'application/json',
