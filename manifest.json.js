@@ -3,9 +3,14 @@ const { version } = require('./package.json')
 const firefoxEventPage = {
   page: 'src/module.html'
 }
+
 const chromeServiceModule = {
   service_worker: 'build/service.js',
   type: 'module'
+}
+
+const firefoxSettings = {
+  browser_specific_settings: { gecko: { id: 'yaflags@furman.im' } }
 }
 
 module.exports = ({ forFirefox } = {}) => ({
@@ -15,11 +20,7 @@ module.exports = ({ forFirefox } = {}) => ({
   short_name: 'YAFlags',
   description: 'Shows flag for the website near the location bar',
 
-  ...(forFirefox
-    ? {
-        browser_specific_settings: { gecko: { id: 'yaflags@furman.im' } }
-      }
-    : {}),
+  ...(forFirefox ? firefoxSettings : {}),
 
   version,
 
