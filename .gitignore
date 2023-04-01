@@ -2,8 +2,11 @@
 .DS_Store
 node_modules
 
+# build artifacts
 build/
 pkg/
 pkg-source/
 
+# generated files
 src/config.js
+manifest.json
