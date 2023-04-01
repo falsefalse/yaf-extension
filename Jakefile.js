@@ -59,9 +59,9 @@ function minify(sourcepath, skip = false) {
   skip = skip || DEV
 
   let code = fs.readFileSync(sourcepath, utf)
-  code = skip ? code : uglify(code).code
+  code = skip ? code : uglify(code, { module: true }).code
 
-  !code && logAndThrow(`❌ Failed to minify ${red(sourcepath)}`)
+  if (!code) logAndThrow(`❌ Failed to minify ${red(sourcepath)}`)
 
   fs.writeFileSync(sourcepath, code)
 
@@ -98,8 +98,7 @@ task('typescript', [BUILD_DIR], () => {
   }
 
   log('🦜 Typecheck %s', !output ? cyan('passed') : red('failed'))
-
-  output && logAndThrow('❌ Typecheck failed', output)
+  if (output && !DEV) logAndThrow('❌ Typecheck failed', output)
 })
 
 desc('Minify scripts')
@@ -200,7 +199,7 @@ packageTask(pkgName, aManifest.version, [], function () {
   this.archiveNoBaseDir = true
 })
 
-// run after `yarn relase:firefox`, commenting above task out
+// run after `yarn release:firefox`, commenting above task out
 // desc('Package source')
 // packageTask(`${pkgName}-source`, aManifest.version, [], function () {
 //   const fileList = ['build/**', 'pkg/**', 'src/**', 'img/**', '*']

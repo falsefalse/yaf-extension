@@ -7,9 +7,7 @@
     "esModuleInterop": true,
 
     "rootDir": "src",
-    "outDir": "build",
-
-    "noEmitOnError": true
+    "outDir": "build"
   },
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Recommended"

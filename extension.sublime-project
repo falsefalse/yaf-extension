@@ -16,29 +16,55 @@
   },
   "build_systems": [
     {
-      "name": "lint",
+      "name": "lint 🕵",
       "shell_cmd": "yarn lint",
-      "working_dir": "$project_path",
+      // eslint and prettier errors
       "file_regex": "^(\\S+)$",
       "line_regex": "^\\s+(\\d+):(\\d+)\\s+(.*)$",
+
+      "working_dir": "$project_path",
       "target": "terminus_exec",
       "auto_close": true
     },
 
     {
-      "name": "build",
+      "name": "tc 🦜",
+      "shell_cmd": "yarn -s tc",
+      // tsc errors
+      "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
+
       "working_dir": "$project_path",
+      "target": "terminus_exec",
+      "auto_close": true
+    },
+
+    {
+      "name": "build 👷",
       "shell_cmd": "yarn -s ch",
+      // tsc errors
+      "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
+
+      "working_dir": "$project_path",
       "target": "terminus_exec",
       "auto_close": true
     },
 
     {
-      "name": "build:ff",
-      "working_dir": "$project_path",
+      "name": "build:ff 🦊",
       "shell_cmd": "yarn -s ff",
+
+      "working_dir": "$project_path",
       "target": "terminus_exec",
       "auto_close": true
     },
+
+    {
+      "name": "clean 🧹",
+      "shell_cmd": "jake -q clean",
+
+      "working_dir": "$project_path",
+      "target": "terminus_exec",
+      "auto_close": true
+    }
   ]
 }
