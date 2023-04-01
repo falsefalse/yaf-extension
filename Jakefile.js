@@ -199,8 +199,7 @@ packageTask(pkgName, aManifest.version, [], function () {
   this.archiveNoBaseDir = true
 })
 
-// run after `yarn release:firefox`, commenting above task out
-// desc('Package source')
+// run `jake package` after `yarn release:firefox`, commenting above task out
 // packageTask(`${pkgName}-source`, aManifest.version, [], function () {
 //   const fileList = ['build/**', 'pkg/**', 'src/**', 'img/**', '*']
 //   this.packageFiles.include(fileList)
