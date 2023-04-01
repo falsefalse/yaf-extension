@@ -1,3 +1,9 @@
+### 1.1.4
+
+- Support local DNS resolution (https://dns.google in Chrome, `browser.dns.resolve` in Firefox): new `dns` permission is required for Firefox.
+- Migrate to TypeScript.
+- More robust handling of browser tab events — faster flag updates when new tab is opened or URL changes.
+
 ### 1.1.3
 
 - Cleanup styles, more legibility, use vector icon for whois service.
