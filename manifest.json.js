@@ -13,6 +13,8 @@ const firefoxSettings = {
   browser_specific_settings: { gecko: { id: 'yaflags@furman.im' } }
 }
 
+const permissions = ['tabs', 'storage']
+
 module.exports = ({ forFirefox } = {}) => ({
   manifest_version: 3,
 
@@ -28,7 +30,7 @@ module.exports = ({ forFirefox } = {}) => ({
     ...(forFirefox ? firefoxEventPage : chromeServiceModule)
   },
 
-  permissions: ['tabs', 'storage'],
+  permissions: forFirefox ? ['dns', ...permissions] : permissions,
 
   icons: {
     128: 'img/icon/128.png',

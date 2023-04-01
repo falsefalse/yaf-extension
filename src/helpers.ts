@@ -96,6 +96,17 @@ async function setAction(
 }
 
 async function domainToIp(domain: string) {
+  if ('dns' in chrome) {
+    try {
+      const {
+        addresses: [ip]
+      } = await browser.dns.resolve(domain, ['disable_ipv6'])
+      return ip
+    } catch (e) {
+      // continue if firefox couldn't resolve domain
+    }
+  }
+
   const url = new URL(config.dohApiUrl)
   url.searchParams.set('type', '1')
   url.searchParams.set('name', domain)
