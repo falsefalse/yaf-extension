@@ -80,7 +80,11 @@ a:hover {
 
 /* lessgo */
 .located::after {
-  content: '📍';
+  content: ' 📍';
+}
+
+.resolved::after {
+  content: ' ✔';
 }
 
 html {
@@ -157,6 +161,7 @@ ul.result li.separator {
 }
 ul.result li.service {
   padding: 0;
+  user-select: none;
 }
 ul.result li.service a {
   display: block;
