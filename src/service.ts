@@ -5,15 +5,11 @@ import setFlag from './set_flag.js'
 async function getTabById(tabId: number | undefined) {
   if (!tabId) return
 
-  let tab
-
   try {
-    tab = await chrome.tabs.get(tabId)
+    return await chrome.tabs.get(tabId)
   } catch (error) {
-    return
+    // we got neither tab nor exception
   }
-
-  return tab
 }
 
 // update icon when tab is updated
