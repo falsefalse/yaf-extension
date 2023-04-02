@@ -1,10 +1,8 @@
 import { RenderData } from './types'
 
-type RenderKeys = keyof RenderData
-
-type Template<T extends RenderKeys | void = void> = (
-  locals: [T] extends [RenderKeys] ? { [K in T]: RenderData[K] } : void
-) => string
+type Template<T extends keyof RenderData> = (locals: {
+  [K in T]: RenderData[K]
+}) => string
 
 export declare const toolbar: Template<'ip' | 'is_local'>
 export declare const local: Template<'domain' | 'ip'>
