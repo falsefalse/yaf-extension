@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "noErrorTruncation": true,
+
     "strict": true,
     "module": "es2022",
     "target": "es2021",
