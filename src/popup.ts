@@ -72,7 +72,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   })
 
   const domain = getDomain(currentTab.url)
-  let data = await setFlag(currentTab)
+  const data = await setFlag(currentTab)
 
   // happens on extensions page
   if (!data || !domain) {
@@ -85,15 +85,26 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // mark
   delegateEvent('click', 'marklocal', async () => {
+    let data = await storage.get(domain)
     if (!data) return
 
-    // flip, save and render
+    // flip and save
     data = { ...data, is_local: !data.is_local }
     await storage.set(domain, data)
-    renderPopup(domain, data)
 
-    // update page action
-    await setFlag(currentTab)
+    // re-render when marked as local
+    if (data.is_local) {
+      await setFlag(currentTab)
+      renderPopup(domain, data)
+
+      return
+    }
+
+    // otherwise, when unmarked as local — refetch
+    setLoading()
+    const freshData = await setFlag(currentTab, { refetch: true })
+    unsetLoading()
+    if (freshData) renderPopup(domain, freshData)
   })
 
   // reload
