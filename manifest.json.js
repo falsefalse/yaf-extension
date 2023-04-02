@@ -1,3 +1,5 @@
+/* eslint-env node */
+
 const { version } = require('./package.json')
 
 const firefoxEventPage = {
