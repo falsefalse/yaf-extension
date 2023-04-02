@@ -36,10 +36,11 @@ function logAndThrow(error, output = null) {
   if (error) throw error
 }
 
-function size(fpath) {
-  if (!fs.existsSync(fpath)) return 'N/A'
-  const fsize = fs.statSync(fpath).size
-  return fsize < 1024 ? fsize + 'B' : ~~(fsize / 1024) + 'KB'
+function size(path) {
+  if (!fs.existsSync(path)) return 'N/A'
+  const size = fs.statSync(path).size,
+    kilo = 1024
+  return size < kilo ? size + 'B' : (size / kilo).toFixed(1) + 'KB'
 }
 
 /* eslint-disable no-unused-vars */
