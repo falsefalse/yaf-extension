@@ -22,18 +22,12 @@ const { execSync: exec } = require('child_process')
 const DEV = Boolean(process.env.DEV)
 
 const replacers = ['%s', '%d', '%i', '%f', '%j', '%o', '%O', '%c', '%%']
-const arrow = '→'
 function log(...[first, ...rest]) {
   if (replacers.find(r => first.toString().includes(r))) {
-    console.log(...[`${arrow} ${first}`, ...rest])
+    console.log(...[`→ ${first}`, ...rest])
   } else {
-    console.log(...[arrow, first, ...rest])
+    console.log(...['→', first, ...rest])
   }
-}
-
-function logAndThrow(error, output = null) {
-  log(output || error)
-  if (error) throw error
 }
 
 function size(path) {
@@ -61,8 +55,6 @@ function minify(sourcepath, skip = false) {
 
   let code = fs.readFileSync(sourcepath, utf)
   code = skip ? code : uglify(code, { module: true }).code
-
-  if (!code) logAndThrow(`❌ Failed to minify ${red(sourcepath)}`)
 
   fs.writeFileSync(sourcepath, code)
 
@@ -92,14 +84,22 @@ desc('Typecheck & emit sources')
 task('typescript', [BUILD_DIR], () => {
   let output
 
+  log('🦜 Typechecking...')
+
   try {
-    exec('yarn tsc --pretty', { encoding: utf })
+    exec('yarn -s tsc --pretty', { encoding: utf })
   } catch (error) {
     output = error.stdout.toString()
   }
 
-  log('🦜 Typecheck %s', !output ? cyan('passed') : red('failed'))
-  if (output && !DEV) logAndThrow('❌ Typecheck failed', output)
+  if (!output) return
+
+  if (DEV) {
+    log('❌ Failed!')
+  } else {
+    log(output)
+    throw new Error()
+  }
 })
 
 desc('Minify scripts')
@@ -127,7 +127,7 @@ task('templates', [BUILD_DIR], () => {
   fs.writeFileSync(TEMPLATES, compiled)
 
   log(
-    `Compiled %s templates ${arrow} %s`,
+    `Compiled %s templates → %s`,
     yellow(sources.length),
     grey(size(TEMPLATES))
   )

@@ -24,6 +24,7 @@
 
       "working_dir": "$project_path",
       "target": "terminus_exec",
+      "focus": true,
       "auto_close": true
     },
 
@@ -35,14 +36,13 @@
 
       "working_dir": "$project_path",
       "target": "terminus_exec",
+      "focus": true,
       "auto_close": true
     },
 
     {
       "name": "build 👷",
       "cmd": ["yarn", "-s", "ch"],
-      // tsc errors
-      "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
 
       "working_dir": "$project_path",
       "target": "terminus_exec",

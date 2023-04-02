@@ -7,9 +7,9 @@
   "version": "1.1.4",
   "private": true,
   "scripts": {
-    "_stash_lint_clean": "git stash && yarn lint && jake -q clean",
-    "release:chrome": "yarn _stash_lint_clean && jake -q && open ./pkg",
-    "release:firefox": "yarn _stash_lint_clean && jake -q firefox && open ./pkg",
+    "_stash_lint_clean": "git stash -q && yarn -s lint && jake -q clean",
+    "release:chrome": "yarn -s _stash_lint_clean && jake -q && open ./pkg",
+    "release:firefox": "yarn -s _stash_lint_clean && jake -q firefox && open ./pkg",
     "ch": "DEV=1 jake -q",
     "ff": "DEV=1 jake -q firefox",
     "tc": "tsc --noEmit",
