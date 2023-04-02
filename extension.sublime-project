@@ -17,7 +17,7 @@
   "build_systems": [
     {
       "name": "lint 🕵",
-      "shell_cmd": "yarn lint",
+      "cmd": ["yarn", "-s", "lint"],
       // eslint and prettier errors
       "file_regex": "^(\\S+)$",
       "line_regex": "^\\s+(\\d+):(\\d+)\\s+(.*)$",
@@ -29,7 +29,7 @@
 
     {
       "name": "tc 🦜",
-      "shell_cmd": "yarn -s tc",
+      "cmd": ["yarn", "-s", "tc"],
       // tsc errors
       "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
 
@@ -40,7 +40,7 @@
 
     {
       "name": "build 👷",
-      "shell_cmd": "yarn -s ch",
+      "cmd": ["yarn", "-s", "ch"],
       // tsc errors
       "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
 
@@ -51,7 +51,7 @@
 
     {
       "name": "build:ff 🦊",
-      "shell_cmd": "yarn -s ff",
+      "cmd": ["yarn", "-s", "ff"],
 
       "working_dir": "$project_path",
       "target": "terminus_exec",
@@ -60,7 +60,7 @@
 
     {
       "name": "clean 🧹",
-      "shell_cmd": "jake -q clean",
+      "cmd": ["jake", "-q", "clean"],
 
       "working_dir": "$project_path",
       "target": "terminus_exec",
