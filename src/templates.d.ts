@@ -2,8 +2,8 @@ import { GeoData, ErrorData } from './types'
 
 type RenderData = GeoData & ErrorData & { domain: string }
 
-type Template<T extends keyof RenderData> = (locals: {
-  [K in T]: RenderData[K]
+type Template<K extends keyof D, D = RenderData> = (locals: {
+  [key in K]: D[key]
 }) => string
 
 export declare const toolbar: Template<'ip' | 'is_local'>

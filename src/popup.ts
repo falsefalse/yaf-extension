@@ -52,11 +52,18 @@ function renderPopup(domain: string, data: Data) {
   })
 }
 
-const delegateEvent = <K extends keyof WindowEventMap>(
+async function fetchAndRender(domain: string, tab: chrome.tabs.Tab) {
+  setLoading()
+  const data = await setFlag(tab, { refetch: true })
+  unsetLoading()
+  if (data) renderPopup(domain, data)
+}
+
+function delegateEvent<K extends keyof WindowEventMap>(
   eventName: K,
   className: string,
   listener: (event: WindowEventMap[K]) => unknown
-) => {
+) {
   window.addEventListener(eventName, event => {
     if (!(event.target instanceof Element)) return
     if (!event.target.classList.contains(className)) return
@@ -85,26 +92,20 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // mark
   delegateEvent('click', 'marklocal', async () => {
-    let data = await storage.get(domain)
+    let data = await setFlag(currentTab)
     if (!data) return
 
     // flip and save
     data = { ...data, is_local: !data.is_local }
     await storage.set(domain, data)
 
-    // re-render when marked as local
+    // when marked as local – re-render, otherwise refetch
     if (data.is_local) {
       await setFlag(currentTab)
       renderPopup(domain, data)
-
-      return
+    } else {
+      await fetchAndRender(domain, currentTab)
     }
-
-    // otherwise, when unmarked as local — refetch
-    setLoading()
-    const freshData = await setFlag(currentTab, { refetch: true })
-    unsetLoading()
-    if (freshData) renderPopup(domain, freshData)
   })
 
   // reload
@@ -115,11 +116,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       return
     }
 
-    setLoading()
-    const newData = await setFlag(currentTab, { refetch: true })
-    unsetLoading()
-
-    if (newData) renderPopup(domain, newData)
+    fetchAndRender(domain, currentTab)
   })
 
   // service link click, timeout somehow makes firefox open link in a new tab
