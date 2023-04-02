@@ -193,7 +193,13 @@ let packageFiles
 packageTask(pkgName, aManifest.version, [], function () {
   packageFiles = this.packageFiles
 
-  const fileList = ['manifest.json', 'build/*', 'img/**', 'src/*.html']
+  const fileList = [
+    'manifest.json',
+    'build/*',
+    'img/**',
+    'src/*.html',
+    'src/*.css'
+  ]
   this.packageFiles.include(fileList)
   this.needZip = true
   // otherwise firefox just can't
