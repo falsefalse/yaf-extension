@@ -1,4 +1,6 @@
-import { RenderData } from './types'
+import { GeoData, ErrorData } from './types'
+
+type RenderData = GeoData & ErrorData & { domain: string }
 
 type Template<T extends keyof RenderData> = (locals: {
   [K in T]: RenderData[K]

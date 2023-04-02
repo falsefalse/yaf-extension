@@ -1,6 +1,6 @@
 /* eslint-env browser, webextensions */
 
-import { GeoData, ErrorData } from './types'
+import { Data } from './types'
 import setFlag from './set_flag.js'
 import { storage, getDomain, isLocal } from './helpers.js'
 import { toolbar, local, not_found, regular } from './templates.js'
@@ -14,13 +14,13 @@ function unsetLoading() {
   document.body.classList.remove('is-loading')
 }
 
-function renderPopup(domain: string, data: GeoData | ErrorData) {
+function renderPopup(domain: string, data: Data) {
   const toolbarEl = document.querySelector('.toolbar')
   const resultEl = document.querySelector('.result')
 
   if (!toolbarEl || !resultEl) return
 
-  const { error, is_local, ip } = data
+  const { is_local, ip } = data
 
   // 'locahost' and alike domains don't need toolbar
   if (!isLocal(domain)) {
@@ -34,8 +34,8 @@ function renderPopup(domain: string, data: GeoData | ErrorData) {
   }
 
   // error
-  if (error || !('country_code' in data)) {
-    resultEl.innerHTML = not_found({ domain, error })
+  if ('error' in data || !('country_code' in data)) {
+    resultEl.innerHTML = not_found({ domain, error: data.error })
     return
   }
 

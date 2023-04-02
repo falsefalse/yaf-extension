@@ -9,7 +9,7 @@ export type DoHData = {
   }[]
 }
 
-export interface BaseData {
+interface BaseData {
   fetched_at: number
   is_local: boolean
 }
@@ -19,14 +19,13 @@ export interface LocalResponse {
   is_local: boolean
 }
 
-export interface HttpErrorResponse {
+export interface ErrorResponse {
   status?: number
   error?: string
   ip?: string
 }
 
-// we want to be able to destructure `status` and `error` hence extends
-export interface GeoResponse extends HttpErrorResponse {
+export interface GeoResponse {
   country_code: string
   country_name: string
   ip?: string
@@ -35,9 +34,7 @@ export interface GeoResponse extends HttpErrorResponse {
   region?: string
 }
 
-export interface GeoData extends BaseData, GeoResponse {}
-export interface ErrorData extends BaseData, HttpErrorResponse {}
+interface GeoData extends BaseData, GeoResponse {}
+interface ErrorData extends BaseData, ErrorResponse {}
 
-export interface RenderData extends GeoData {
-  domain: string
-}
+export type Data = GeoData | ErrorData

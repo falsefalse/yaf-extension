@@ -1,6 +1,6 @@
 /* eslint-env browser, webextensions */
 
-import { GeoData, ErrorData, DoHData } from './types'
+import { Data, DoHData } from './types'
 import config from './config.js'
 
 function getDomain(url: string | undefined) {
@@ -37,7 +37,7 @@ const storage = {
       chrome.storage.local.clear()
     }
   },
-  get: async (key: string): Promise<GeoData | ErrorData | undefined> => {
+  get: async (key: string): Promise<Data | undefined> => {
     return (await chrome.storage.local.get(key))[key]
   }
 }

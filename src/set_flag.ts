@@ -1,12 +1,6 @@
 /* eslint-env browser, webextensions */
 
-import {
-  LocalResponse,
-  HttpErrorResponse,
-  GeoResponse,
-  GeoData,
-  ErrorData
-} from './types'
+import { LocalResponse, ErrorResponse, GeoResponse, Data } from './types'
 import {
   getDomain,
   isLocal,
@@ -19,7 +13,7 @@ import config from './config.js'
 async function updatePageAction(
   tabId: number | undefined,
   domain: string,
-  data: GeoData | ErrorData
+  data: Data
 ) {
   // marked local or is 'localhost'
   if (data.is_local || isLocal(domain)) {
@@ -61,7 +55,7 @@ async function updatePageAction(
 
 async function request(
   domain: string
-): Promise<GeoResponse | HttpErrorResponse | LocalResponse> {
+): Promise<GeoResponse | ErrorResponse | LocalResponse> {
   const ip = await domainToIp(domain)
 
   // domain resolves to local IP
@@ -96,7 +90,7 @@ async function request(
 
   // handle http errors
   if (!response.ok) {
-    const httpError: HttpErrorResponse = {
+    const httpError: ErrorResponse = {
       status: response.status
     }
     let serverError: { error: string; ip?: string }
@@ -126,20 +120,17 @@ const week = 7 * day
 async function getCachedResponse(
   domain: string,
   refetch: boolean
-): Promise<GeoData | ErrorData> {
+): Promise<Data> {
   const baseData = {
     fetched_at: new Date().getTime(),
     is_local: isLocal(domain)
   }
 
-  // is the domain itself local? 'localhost' or local range IP
-  // use forever-local mode
+  // use forever-local mode for 'localhost' or local range IP domains
   if (baseData.is_local) return baseData
 
-  // do we already have data for this domain?
   const storedData = await storage.get(domain)
 
-  // if we don't – fire a request
   if (!storedData?.fetched_at) {
     return { ...baseData, ...(await request(domain)) }
   }
@@ -147,20 +138,25 @@ async function getCachedResponse(
   // skip network for local and 'marked as local' domains
   if (storedData.is_local) return storedData
 
-  // do we need to refetch due to errors or stale cache?
-  const { fetched_at, error, status } = storedData
+  // handle stale data and refetch=true
+  const { fetched_at } = storedData
 
-  if (
-    // refetch if asked to
-    refetch ||
-    // refetch data older than a week
-    passedMoreThan(week, fetched_at) ||
-    // refetch not founds once a day
-    (status === 404 && passedMoreThan(day, fetched_at)) ||
-    // refetch non-http errors often, maybe network is back
-    (error && !status && passedMoreThan(aMin, fetched_at))
-  ) {
+  if (refetch || passedMoreThan(week, fetched_at)) {
     return { ...baseData, ...(await request(domain)) }
+  }
+
+  // handle http and netwok errors
+  if ('error' in storedData) {
+    const { error, status } = storedData
+
+    if (
+      // refetch not founds once a day
+      (status === 404 && passedMoreThan(day, fetched_at)) ||
+      // refetch non-http errors often, maybe network is back
+      (error && !status && passedMoreThan(aMin, fetched_at))
+    ) {
+      return { ...baseData, ...(await request(domain)) }
+    }
   }
 
   return storedData
@@ -169,7 +165,7 @@ async function getCachedResponse(
 export default async function setFlag(
   { id: tabId, url }: chrome.tabs.Tab,
   { refetch = false } = {}
-): Promise<GeoData | ErrorData | undefined> {
+): Promise<Data | undefined> {
   const domain = getDomain(url)
 
   if (!domain) {
