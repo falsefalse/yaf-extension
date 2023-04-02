@@ -7,14 +7,15 @@
   "version": "1.1.4",
   "private": true,
   "scripts": {
-    "release:chrome": "git stash && jake -q clean && jake -q && open ./pkg",
-    "release:firefox": "git stash && jake -q clean && jake -q firefox && open ./pkg",
+    "_stash_lint_clean": "git stash && yarn lint && jake -q clean",
+    "release:chrome": "yarn _stash_lint_clean && jake -q && open ./pkg",
+    "release:firefox": "yarn _stash_lint_clean && jake -q firefox && open ./pkg",
     "ch": "DEV=1 jake -q",
     "ff": "DEV=1 jake -q firefox",
+    "tc": "tsc --noEmit",
     "lint": "npm-run-all -pc --aggregate-output --silent format eslint",
     "eslint": "eslint --color src/*.ts Jakefile.js",
-    "format": "prettier --list-different *.js *.md *.json src/*.ts src/*.html",
-    "tc": "tsc --noEmit"
+    "format": "prettier --list-different *.js *.md *.json src/*.ts src/*.html"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.227",
