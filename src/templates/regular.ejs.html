@@ -1,27 +1,36 @@
 <%
   let hinted = (val, hint) => `<span title='${hint}'>${val}</span>`
+
   let { country_name, domain, ip, city, region, postal_code } = locals
-  let area = []
-  if (city) area.push([city, 'City'])
-  if (region) area.push([region, 'Region'])
-  if (postal_code) area.push([postal_code, 'Postal Code'])
+
+  let area = [
+    [city, 'City'],
+    [region, 'Region'],
+    [postal_code, 'Postal Code']
+  ].filter(([v]) => Boolean(v)), located = area.length == 3
+
+  area = area.map(_ => hinted(..._)).join(', ')
 %>
+
 <li class="header"><%= hinted(country_name, 'Country') %></li>
-<% if (area.length) { %>
+
+<% if (area) { %>
+  <% /*
+    no white space between area, marker, and </li>
+    makes text selected _exactly_ when double clicked, without extra space
+  */ %>
   <li>
-    <%= area.map(a => hinted(...a)).join(', ') %>
-    <% if (area.length == 3) { %>
-      <span class="located" title="Located!" />
-    <% } %>
-  </li>
+    <%= area %><% if (located) { %><span class="located" title="Located!" /><% } %></li>
 <% } %>
+
 <li><%= hinted(ip, 'Resolved IP address') %></li>
+
 <li class="separator" />
+
 <li class="service">
-  <% let href = `http://whois.domaintools.com/${domain}` %>
-  <% let title = `Open link in a new tab` %>
-  <a class="whois" target="_blank" 
-    href="<%= href %>" title="<%= title %>">
+  <% let href = `https://whois.domaintools.com/${domain}` %>
+  <a class="whois" href="<%= href %>"
+    title="Open link in a new tab" target="_blank">
     Whois
   </a>
 </li>
