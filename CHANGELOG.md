@@ -1,3 +1,11 @@
+### 1.1.5
+
+- Popup: add hints to data in popup.
+- Popup: convenient text selection when text gets double clicked.
+- Popup: don't show stale data when un-marking domain as local.
+- Nicer hint for page action.
+- More robust errors handling and rendering.
+
 ### 1.1.4
 
 - Support local DNS resolution (https://dns.google in Chrome, `browser.dns.resolve` in Firefox): new `dns` permission is required for Firefox.

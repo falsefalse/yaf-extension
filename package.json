@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/falsefalse/yaf-extension.git"
   },
-  "version": "1.1.4",
+  "version": "1.1.5",
   "private": true,
   "scripts": {
     "_stash_lint_clean": "git stash -q && yarn -s lint && jake -q clean",
