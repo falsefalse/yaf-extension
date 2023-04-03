@@ -1,6 +1,5 @@
 {
   "root": true,
-  // order matters!
   "extends": ["eslint:recommended", "prettier"],
   "parserOptions": {
     "ecmaVersion": 2018,
@@ -14,11 +13,24 @@
       "files": "*.ts",
       "plugins": ["@typescript-eslint"],
       "parser": "@typescript-eslint/parser",
-      // order matters!
       "extends": ["plugin:@typescript-eslint/recommended", "prettier"],
       "rules": {
         "@typescript-eslint/no-unused-vars": "error",
         "@typescript-eslint/no-non-null-assertion": "warn"
+      }
+    },
+    {
+      "files": "*.ejs.html",
+      "extends": [
+        "eslint:recommended",
+        "plugin:lodash-template/recommended-with-html"
+      ],
+      "globals": { "locals": "readonly" },
+      "rules": {
+        "lodash-template/max-attributes-per-line": [
+          "error",
+          { "singleline": 2, "multiline": { "max": 2, "allowFirstLine": true } }
+        ]
       }
     }
   ]

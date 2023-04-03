@@ -132,16 +132,16 @@ ul.toolbar {
   display: flex;
   gap: 0.25rem;
 }
-ul.toolbar li.marked {
-  background-color: var(--hover-color);
-  filter: brightness(90%);
-}
 
 ul.toolbar li.reload {
   background-image: url(/img/refresh.png);
 }
 ul.toolbar li.marklocal {
   background-image: url(/img/local_resource.png);
+}
+ul.toolbar li.marked {
+  background-color: var(--hover-color);
+  filter: brightness(90%);
 }
 
 ul.result li {

@@ -1,17 +1,17 @@
 <%
-let hinted = (val, hint) => `<span title='${hint}'>${val}</span>`
-let { country_name, domain, ip, city, region, postal_code } = locals
-let area = []
-if (city) area.push([city, 'City'])
-if (region) area.push([region, 'Region'])
-if (postal_code) area.push([postal_code, 'Postal Code'])
+  let hinted = (val, hint) => `<span title='${hint}'>${val}</span>`
+  let { country_name, domain, ip, city, region, postal_code } = locals
+  let area = []
+  if (city) area.push([city, 'City'])
+  if (region) area.push([region, 'Region'])
+  if (postal_code) area.push([postal_code, 'Postal Code'])
 %>
 <li class="header"><%= hinted(country_name, 'Country') %></li>
 <% if (area.length) { %>
   <li>
     <%= area.map(a => hinted(...a)).join(', ') %>
     <% if (area.length == 3) { %>
-      <span class='located' title='Located!' />
+      <span class="located" title="Located!" />
     <% } %>
   </li>
 <% } %>
@@ -20,5 +20,8 @@ if (postal_code) area.push([postal_code, 'Postal Code'])
 <li class="service">
   <% let href = `http://whois.domaintools.com/${domain}` %>
   <% let title = `Open link in a new tab` %>
-  <a class="whois" target="_blank" href="<%= href %>" title="<%= title %>">Whois</a>
+  <a class="whois" target="_blank" 
+    href="<%= href %>" title="<%= title %>">
+    Whois
+  </a>
 </li>
