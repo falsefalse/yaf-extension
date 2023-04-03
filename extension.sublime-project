@@ -17,7 +17,7 @@
   "build_systems": [
     {
       "name": "lint 🕵",
-      "cmd": ["yarn", "-s", "lint"],
+      "cmd": ["yarn", "lint"],
       // eslint and prettier errors
       "file_regex": "^(\\S+)$",
       "line_regex": "^\\s+(\\d+):(\\d+)\\s+(.*)$",
@@ -30,7 +30,7 @@
 
     {
       "name": "tc 🦜",
-      "cmd": ["yarn", "-s", "tc"],
+      "cmd": ["yarn", "tc"],
       // tsc errors
       "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
 

@@ -15,7 +15,7 @@
     "tc": "tsc --noEmit",
     "lint": "npm-run-all -pc --aggregate-output --silent format eslint",
     "eslint": "eslint --color src/*.ts *.js",
-    "format": "prettier -u --ignore-path .gitignore --list-different ."
+    "format": "cat .gitignore >> .prettierignore && prettier -u --list-different . || s=1 ; git checkout -q .prettierignore; exit $s"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.227",
