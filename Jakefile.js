@@ -70,7 +70,7 @@ function minify(sourcepath, skip = false) {
 const BUILD_DIR = './build'
 
 // templates sources
-const EJS = new FileList().include('src/templates/*.ejs')
+const EJS = new FileList().include('src/templates/*.ejs.html')
 // compiled templates
 const TEMPLATES = path.join(BUILD_DIR, 'templates.js')
 // generated config
@@ -116,7 +116,7 @@ desc('Compile templates')
 task('templates', [BUILD_DIR], () => {
   const sources = EJS.toArray()
   const compiled = sources.reduce((_, tp) => {
-    const name = path.basename(tp).replace('.ejs', '')
+    const name = path.basename(tp).replace('.ejs.html', '')
     const { source } = template(fs.readFileSync(tp, utf), {
       variable: 'locals'
     })
