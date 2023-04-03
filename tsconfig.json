@@ -10,7 +10,5 @@
 
     "rootDir": "src",
     "outDir": "build"
-  },
-  "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Recommended"
+  }
 }

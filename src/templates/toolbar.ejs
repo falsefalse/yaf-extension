@@ -5,8 +5,8 @@
     title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click." />
 <% } %>
 
-<% if (!locals.ip) { %>
   <% // mark as local  %>
+<% if (locals.has_mark_button) { %>
   <% if (locals.is_local) { %>
     <li class="button marklocal marked"
       title="Unmark domain as local" />

@@ -12,19 +12,19 @@ function getDomain(url: string | undefined) {
   return urlObj.hostname
 }
 
-function isLocal(ip: string | undefined) {
+function isLocal(ip: string | undefined): ip is string {
   if (!ip) return false
   if (ip === 'localhost') return true
 
-  const parsed = ip.split('.').map(oct => parseInt(oct, 10))
+  const [first, second] = ip.split('.').map(oct => parseInt(oct, 10))
   // 127.0.0.1 - 127.255.255.255
-  if (parsed[0] === 127) return true
+  if (first === 127) return true
   // 10.0.0.0 - 10.255.255.255
-  if (parsed[0] === 10) return true
+  if (first === 10) return true
   // 172.16.0.0 - 172.31.255.255
-  if (parsed[0] === 172 && parsed[1] >= 16 && parsed[1] <= 31) return true
+  if (first === 172 && second >= 16 && second <= 31) return true
   // 192.168.0.0 - 192.168.255.255
-  if (parsed[0] === 192 && parsed[1] === 168) return true
+  if (first === 192 && second === 168) return true
 
   return false
 }
@@ -57,10 +57,7 @@ const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
 async function setIcon(tabId: number | undefined, path: string) {
   if (!ctx) throw 'Failed to get 2d canvas context'
 
-  const isFlag = path.startsWith('/img/flags/')
-  path = '..' + path
-
-  if (!isFlag) {
+  if (!path.startsWith('/img/flags/')) {
     await chrome.action.setIcon({ tabId, path })
     return
   }

@@ -6,7 +6,7 @@ if (city) area.push([city, 'City'])
 if (region) area.push([region, 'Region'])
 if (postal_code) area.push([postal_code, 'Postal Code'])
 %>
-<li class="header"><%= country_name || domain %></li>
+<li class="header"><%= hinted(country_name, 'Country') %></li>
 <% if (area.length) { %>
   <li>
     <%= area.map(a => hinted(...a)).join(', ') %>

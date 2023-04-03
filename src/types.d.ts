@@ -20,15 +20,15 @@ export interface LocalResponse {
 }
 
 export interface ErrorResponse {
-  status?: number
-  error?: string
-  ip?: string
+  error: string // either server returned error or 'failed to fetch'
+  status?: number // not there when no network
+  ip?: string // could be returned from server but not necessarily
 }
 
 export interface GeoResponse {
   country_code: string
   country_name: string
-  ip?: string
+  ip: string
   city?: string
   postal_code?: string
   region?: string
@@ -37,4 +37,4 @@ export interface GeoResponse {
 interface GeoData extends BaseData, GeoResponse {}
 interface ErrorData extends BaseData, ErrorResponse {}
 
-export type Data = GeoData | ErrorData
+export type Data = BaseData | GeoData | ErrorData

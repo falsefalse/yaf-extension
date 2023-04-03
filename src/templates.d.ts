@@ -1,14 +1,15 @@
 import { GeoData, ErrorData } from './types'
 
-type RenderData = GeoData & ErrorData & { domain: string }
+type RenderData = GeoData & ErrorData
 
-type Template<K extends keyof D, D = RenderData> = (locals: {
-  [key in K]: D[key]
-}) => string
+type Template<L, K extends keyof D = never, D = RenderData> = (
+  locals: L & { [key in K]: D[key] }
+) => string
 
-export declare const toolbar: Template<'ip' | 'is_local'>
-export declare const local: Template<'domain' | 'ip'>
-export declare const not_found: Template<'domain' | 'error'>
+export declare const toolbar: Template<{ has_mark_button: boolean }, 'is_local'>
+export declare const local: Template<{ domain: string; ip?: string }>
+export declare const not_found: Template<{ domain: string }, 'error'>
 export declare const regular: Template<
-  'country_name' | 'domain' | 'city' | 'region' | 'postal_code' | 'ip'
+  { domain: string },
+  'country_name' | 'city' | 'region' | 'postal_code' | 'ip'
 >

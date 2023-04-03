@@ -27,30 +27,21 @@ async function updatePageAction(
   }
 
   // not found
-  if (!('country_code' in data)) {
-    const { error } = data
-
-    await setAction(
-      tabId,
-      error ? `Error: ${error}` : 'Country code was not found',
-      '/img/icon/32.png'
-    )
+  if ('error' in data) {
+    await setAction(tabId, `Error: ${data.error}`, '/img/icon/32.png')
 
     return
   }
 
-  const { country_code, country_name, city, region } = data
-
   // we have the data
-  const title = [country_name]
-  if (city) title.splice(0, 0, city)
-  if (region) title.splice(1, 0, region)
+  if ('country_code' in data) {
+    const { country_code, country_name, city, region } = data
 
-  await setAction(
-    tabId,
-    title.join(', '),
-    `/img/flags/${country_code.toLowerCase()}.png`
-  )
+    const title = [country_name, region, city].filter(Boolean).join(' → ')
+    const iconPath = `/img/flags/${country_code.toLowerCase()}.png`
+
+    await setAction(tabId, title, iconPath)
+  }
 }
 
 async function request(
@@ -89,25 +80,22 @@ async function request(
   }
 
   // handle http errors
-  if (!response.ok) {
-    const httpError: ErrorResponse = {
-      status: response.status
-    }
-    let serverError: { error: string; ip?: string }
-
+  const { ok, status } = response
+  if (!ok) {
     const errorText = await response.text()
+
+    let serverError
     try {
-      serverError = JSON.parse(errorText)
+      serverError = JSON.parse(errorText) as { error: string; ip?: string }
     } catch (parseError) {
       // error is not valid json therefore string
-      httpError.error = errorText
-
-      return httpError
+      serverError = { error: errorText }
     }
 
-    return { ...httpError, ...serverError }
+    return { status, ...serverError }
   }
 
+  // got data
   return (await response.json()) as GeoResponse
 }
 

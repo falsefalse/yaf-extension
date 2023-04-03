@@ -20,36 +20,44 @@ function renderPopup(domain: string, data: Data) {
 
   if (!toolbarEl || !resultEl) return
 
-  const { is_local, ip } = data
+  const { is_local } = data
 
   // 'locahost' and alike domains don't need toolbar
   if (!isLocal(domain)) {
-    toolbarEl.innerHTML = toolbar({ ip, is_local })
+    toolbarEl.innerHTML = toolbar({
+      is_local,
+      has_mark_button: !('ip' in data)
+    })
   }
 
   // 'marked as local' overrides error
   if (isLocal(domain) || is_local) {
-    resultEl.innerHTML = local({ domain, ip })
+    resultEl.innerHTML = local({
+      domain,
+      ip: 'ip' in data ? data.ip : ''
+    })
     return
   }
 
   // error
-  if ('error' in data || !('country_code' in data)) {
+  if ('error' in data) {
     resultEl.innerHTML = not_found({ domain, error: data.error })
     return
   }
 
-  const { country_name, city, region, postal_code } = data
+  // got data
+  if ('country_code' in data) {
+    const { country_name, ip, city, region, postal_code } = data
 
-  // regular case
-  resultEl.innerHTML = regular({
-    country_name,
-    domain,
-    city,
-    region,
-    postal_code,
-    ip
-  })
+    resultEl.innerHTML = regular({
+      country_name,
+      domain,
+      city,
+      region,
+      postal_code,
+      ip
+    })
+  }
 }
 
 async function fetchAndRender(domain: string, tab: chrome.tabs.Tab) {
