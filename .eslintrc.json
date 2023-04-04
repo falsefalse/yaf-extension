@@ -8,15 +8,24 @@
   "env": {
     "es2018": true
   },
+  "rules": {
+    "object-shorthand": "error"
+  },
   "overrides": [
     {
       "files": "*.ts",
-      "plugins": ["@typescript-eslint"],
       "parser": "@typescript-eslint/parser",
-      "extends": ["plugin:@typescript-eslint/recommended", "prettier"],
+      "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "prettier"
+      ],
       "rules": {
+        // https://typescript-eslint.io/rules/no-unused-vars/#options
+        "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": "error",
-        "@typescript-eslint/no-non-null-assertion": "warn"
+        // somehow it's "warn" by default
+        "@typescript-eslint/no-non-null-assertion": "error"
       }
     },
     {

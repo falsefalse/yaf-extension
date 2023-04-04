@@ -158,7 +158,7 @@ export default async function setFlag(
 
   if (!domain) {
     await chrome.action.disable(tabId)
-    chrome.action.setTitle({ tabId: tabId, title: '😴' })
+    chrome.action.setTitle({ tabId, title: '😴' })
 
     return
   } else {
