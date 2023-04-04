@@ -1,3 +1,7 @@
+### 1.1.6
+
+- Build improvs, no user visible changes.
+
 ### 1.1.5
 
 - Popup: add hints to data in popup.
