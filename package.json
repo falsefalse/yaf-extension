@@ -13,9 +13,9 @@
     "ch": "DEV=1 jake -q",
     "ff": "DEV=1 jake -q firefox",
     "tc": "tsc --noEmit",
-    "lint": "npm-run-all -pc --aggregate-output --silent format eslint",
+    "lint": "yarn -s eslint & p+=($!) ; yarn -s format & p+=($!) ; for p in ${p[@]}; do wait $p; ((s|=$?)); done; exit $s",
     "eslint": "eslint --color --fix *.js **/*.ts **/*.ejs.html",
-    "format": "cat .gitignore >> .prettierignore && prettier -u --list-different . || s=1 ; git checkout -q .prettierignore; exit $s"
+    "format": "g=.gitignore p=.prettierignore c=$(<$p) ; cat $g >> $p ; prettier -u --list-different . ; s=$? ; echo \"$c\" > $p; exit $s"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.227",
@@ -27,7 +27,6 @@
     "eslint-config-prettier": "^8.6.0",
     "eslint-plugin-lodash-template": "^0.21.0",
     "lodash.template": "^4.5.0",
-    "npm-run-all": "^4.1.5",
     "prettier": "^2.8.3",
     "typescript": "^5.0.3",
     "uglify-js": "^3.17.4"
