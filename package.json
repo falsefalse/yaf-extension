@@ -13,9 +13,12 @@
     "ch": "DEV=1 jake -q",
     "ff": "DEV=1 jake -q firefox",
     "tc": "tsc --noEmit",
-    "lint": "yarn -s format & p=$! ; yarn -s eslint ||s=1 ; wait $p||s=1 ; exit $s",
+    "lint": "yarn -s format:check & p=$! ; yarn -s eslint ||s=1 ; wait $p||s=1 ; exit $s",
     "eslint": "eslint --fix *.js **/*.ts **/*.ejs.html",
-    "format": "p=.prettierignore c=$(<$p) ; cat .gitignore >> $p ; prettier -u --list-different . ||s=1 ; echo \"$c\" > $p ; exit $s",
+    "format:check": "yarn -s _prettier --check . ||s=1 ; yarn -s _restore ; exit $s",
+    "format": "yarn -s _prettier -w . ; yarn -s _restore",
+    "_prettier": "p=.prettierignore ; cat $p > .tmp ; cat .gitignore >> $p ; yarn -s prettier -u --loglevel warn",
+    "_restore": "cat .tmp > .prettierignore ; rm .tmp"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.227",

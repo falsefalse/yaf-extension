@@ -19,7 +19,7 @@
       "name": "lint 🕵",
       "cmd": ["yarn", "lint"],
       // eslint and prettier errors
-      "file_regex": "^(\\S+)$",
+      "file_regex": "^(?:\\[.*\\] )?(\\S+)\\s*?$",
       "line_regex": "^\\s+(\\d+):(\\d+)\\s+(.*)$",
 
       "working_dir": "$project_path",
