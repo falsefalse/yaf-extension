@@ -13,9 +13,9 @@
     "ch": "DEV=1 jake -q",
     "ff": "DEV=1 jake -q firefox",
     "tc": "tsc --noEmit",
-    "lint": "yarn -s eslint & p+=($!) ; yarn -s format & p+=($!) ; for p in ${p[@]}; do wait $p; ((s|=$?)); done; exit $s",
-    "eslint": "eslint --color --fix *.js **/*.ts **/*.ejs.html",
-    "format": "g=.gitignore p=.prettierignore c=$(<$p) ; cat $g >> $p ; prettier -u --list-different . ; s=$? ; echo \"$c\" > $p; exit $s"
+    "lint": "yarn -s format & p=$! ; yarn -s eslint ||s=1 ; wait $p||s=1 ; exit $s",
+    "eslint": "eslint --fix *.js **/*.ts **/*.ejs.html",
+    "format": "p=.prettierignore c=$(<$p) ; cat .gitignore >> $p ; prettier -u --list-different . ||s=1 ; echo \"$c\" > $p ; exit $s",
   },
   "devDependencies": {
     "@types/chrome": "^0.0.227",
