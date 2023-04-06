@@ -14,11 +14,16 @@ function getDomain(url: string | undefined) {
 
 function isLocal(ip: string | undefined): ip is string {
   if (!ip) return false
-  if (ip === 'localhost') return true
 
-  const [first, second] = ip.split('.').map(oct => parseInt(oct, 10))
-  if (typeof first !== 'number' || typeof second !== 'number') return false
+  if (ip == 'localhost') return true
 
+  const octets = ip.split('.').map(oct => parseInt(oct, 10))
+  if (octets.some(isNaN) || octets.length != 4) return false
+
+  // 0.0.0.0
+  if (octets.every(o => o === 0)) return true
+
+  const [first = 0, second = 0] = octets
   // 127.0.0.1 - 127.255.255.255
   if (first === 127) return true
   // 10.0.0.0 - 10.255.255.255
