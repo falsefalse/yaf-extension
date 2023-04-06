@@ -46,8 +46,11 @@
     var(--yellow) 50%,
     var(--blue) 0
   );
-  animation: rot 2s cubic-bezier(0.68, -0.57, 0.26, 1.65) 0s 1,
-    fade_out 1s ease-out 1s 1;
+  --fade-delay: calc(var(--js-rotator-duration) / 2);
+  --fade-duration: calc(var(--js-rotator-duration) - var(--fade-delay));
+  animation: rot var(--js-rotator-duration)
+      cubic-bezier(0.68, -0.57, 0.26, 1.65) 0s 1,
+    fade_out var(--fade-duration) ease-out var(--fade-delay) 1;
 }
 
 /* variables */

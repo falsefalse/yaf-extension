@@ -14,6 +14,27 @@ function unsetLoading() {
   document.body.classList.remove('is-loading')
 }
 
+function animateRotator(duration = 2000, frequency = 4) {
+  if (Math.random() > 1 / frequency) return
+
+  document.documentElement.style.setProperty(
+    '--js-rotator-duration',
+    `${duration}ms`
+  )
+
+  document
+    .querySelectorAll('.animate')
+    .forEach(({ classList }) => classList.add('rotator'))
+
+  setTimeout(
+    () =>
+      document
+        .querySelectorAll('.rotator')
+        .forEach(({ classList }) => classList.remove('rotator')),
+    duration
+  )
+}
+
 function renderPopup(domain: string, data: Data) {
   const toolbarEl = document.querySelector('.toolbar')
   const resultEl = document.querySelector('.result')
@@ -103,6 +124,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   }
 
   renderPopup(domain, data)
+  animateRotator()
 
   // mark
   delegateEvent('click', 'marklocal', async () => {
@@ -135,19 +157,4 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // service link click, timeout somehow makes firefox open link in a new tab
   delegateEvent('click', 'whois', () => setTimeout(() => window.close(), 50))
-
-  // continue for 1/4 of all invocations
-  if (Math.random() > 1 / 4) return
-
-  document
-    .querySelectorAll('.animate')
-    .forEach(({ classList }) => classList.add('rotator'))
-
-  setTimeout(
-    () =>
-      document
-        .querySelectorAll('.rotator')
-        .forEach(({ classList }) => classList.remove('rotator')),
-    2 * 1000
-  )
 })
