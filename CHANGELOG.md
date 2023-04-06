@@ -1,3 +1,15 @@
+### 1.1.7
+
+- Fixes for local IPs
+  - `0.0.0.0` is local
+  - `127.0.0.1.boop.com` and friends are not
+- Stricter typecheck, fix for non-present current tab
+- Smaller build size for 🦊
+- Tech
+  - refactor Jakefile
+  - DRY rotator animation code
+  - parallel linting and format check
+
 ### 1.1.6
 
 - Build improvs, no user visible changes.
