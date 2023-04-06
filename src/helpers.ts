@@ -17,6 +17,8 @@ function isLocal(ip: string | undefined): ip is string {
   if (ip === 'localhost') return true
 
   const [first, second] = ip.split('.').map(oct => parseInt(oct, 10))
+  if (typeof first !== 'number' || typeof second !== 'number') return false
+
   // 127.0.0.1 - 127.255.255.255
   if (first === 127) return true
   // 10.0.0.0 - 10.255.255.255

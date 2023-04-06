@@ -86,6 +86,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     currentWindow: true
   })
 
+  // no idea how this could happen, but lets make 🦜 happy
+  if (!currentTab) {
+    window.close()
+    return
+  }
+
   const domain = getDomain(currentTab.url)
   const data = await setFlag(currentTab)
 

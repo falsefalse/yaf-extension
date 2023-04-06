@@ -8,7 +8,7 @@ async function getTabById(tabId: number | undefined) {
   try {
     return await chrome.tabs.get(tabId)
   } catch (error) {
-    // we got neither tab nor exception
+    return
   }
 }
 
