@@ -22,9 +22,9 @@ module.exports = ({ forFirefox } = {}) => ({
 
   name: 'Yet another flags',
   short_name: 'YAFlags',
-  description: 'Shows flag for the website near the location bar',
+  description: 'Shows country flag for the website near the location bar',
 
-  ...(forFirefox ? firefoxSettings : {}),
+  ...(forFirefox && firefoxSettings),
 
   version,
 
