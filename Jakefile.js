@@ -12,29 +12,30 @@ const {
   FileList,
   Task
 } = require('jake')
-
-const fs = require('fs')
-const path = require('path')
 const template = require('lodash.template')
 const { minify: uglify } = require('uglify-js')
+
+const {
+  existsSync: exists,
+  readFileSync: readFile,
+  statSync: stat,
+  writeFileSync: writeFile
+} = require('fs')
+const { basename, join } = require('path')
 const { execSync: exec } = require('child_process')
 
 const DEV = Boolean(process.env.DEV)
 
-const replacers = ['%s', '%d', '%i', '%f', '%j', '%o', '%O', '%c', '%%']
-function log(...[first, ...rest]) {
-  if (replacers.find(r => first.toString().includes(r))) {
-    console.log(...[`→ ${first}`, ...rest])
-  } else {
-    console.log(...['→', first, ...rest])
-  }
-}
+const utf = 'utf-8'
+
+const log = (...[first, ...rest]) => console.log(...[`→ ${first}`, ...rest])
+
+const stringify = json => JSON.stringify(json, null, 2)
 
 function size(path) {
-  if (!fs.existsSync(path)) return 'N/A'
-  const size = fs.statSync(path).size,
-    kilo = 1024
-  return size < kilo ? size + 'B' : (size / kilo).toFixed(1) + 'KB'
+  if (!exists(path)) return 'N/A'
+  const { size } = stat(path)
+  return size < 1024 ? size + 'B' : (size / 1024).toFixed(1) + 'KB'
 }
 
 /* eslint-disable no-unused-vars */
@@ -47,22 +48,27 @@ const blue = s => `\x1b[34m${s}\x1b[0m`
 const grey = s => `\x1b[90m${s}\x1b[0m`
 /* eslint-enable no-unused-vars */
 
-const utf = 'utf-8'
+function minify(srcPath, forFirefox = false) {
+  const srcSize = size(srcPath)
 
-function minify(sourcepath, skip = false) {
-  const sourceSize = size(sourcepath)
-  skip = skip || DEV
-
-  let code = fs.readFileSync(sourcepath, utf)
-  code = skip ? code : uglify(code, { module: true }).code
-
-  fs.writeFileSync(sourcepath, code)
-
-  if (skip) {
-    log(yellow('Copied'), sourcepath, grey(sourceSize))
-  } else {
-    log('Minified', sourcepath, grey(sourceSize), '→', blue(size(sourcepath)))
+  let config = {
+    module: true,
+    ...(forFirefox && {
+      compress: false,
+      mangle: false,
+      output: {
+        beautify: true,
+        indent_level: 1,
+        quote_style: 3,
+        comments: false
+      }
+    })
   }
+
+  const { code } = uglify(readFile(srcPath, utf), config)
+  writeFile(srcPath, code)
+
+  log('Minified', srcPath, grey(srcSize), '→', blue(size(srcPath)))
 }
 
 // lesssgoo!
@@ -72,59 +78,74 @@ const BUILD_DIR = './build'
 // templates sources
 const EJS = new FileList().include('src/templates/*.ejs.html')
 // compiled templates
-const TEMPLATES = path.join(BUILD_DIR, 'templates.js')
+const TEMPLATES = join(BUILD_DIR, 'templates.js')
 // generated config
-const CONFIG = path.join(BUILD_DIR, 'config.js')
+const CONFIG = join(BUILD_DIR, 'config.js')
+// generated manifest
+const MANIFEST = 'manifest.json'
 // generated and emitted scripts
-const SCRIPTS = new FileList().include('build/*.js')
+const SCRIPTS = new FileList().include(`${BUILD_DIR}/*.js`)
 
 directory(BUILD_DIR)
 
+const manifest = require('./manifest.json.js')
+let { version, name: pkgName } = manifest()
+pkgName = pkgName.toLowerCase().replace(/ /g, '-')
+pkgName = DEV ? `DEV-${pkgName}` : pkgName
+
+desc(`Generate ${MANIFEST}`)
+task('manifest', (forFirefox = false) => {
+  const monefest = stringify(manifest({ forFirefox }))
+  writeFile(MANIFEST, monefest)
+
+  if (!forFirefox) packageFiles.exclude('src/module.html')
+
+  log('Created manifest', yellow(version), forFirefox ? 'for 🦊' : '')
+})
+namespace('manifest', () => {
+  desc(`Remove ${MANIFEST}`)
+  task('clean', () => rmRf('manifest.json'))
+})
+
 desc('Typecheck & emit sources')
 task('typescript', [BUILD_DIR], () => {
-  let output
-
-  log('🦜 Typechecking...')
+  log('🦜 Typechecking & emitting...')
 
   try {
-    exec('yarn -s tsc --pretty', { encoding: utf })
+    exec('yarn -s tsc', { stdio: [0, DEV ? null : 1] })
   } catch (error) {
-    output = error.stdout.toString()
-  }
-
-  if (!output) return
-
-  if (DEV) {
+    if (!DEV) throw error
     log('❌ Failed!')
-  } else {
-    log(output)
-    throw new Error()
   }
 })
 
-desc('Minify scripts')
-task('scripts', ['typescript', BUILD_DIR], (skipMinification = false) => {
-  SCRIPTS.toArray().forEach(file => minify(file, skipMinification))
-})
+const API_ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
+const DOH_ENDPOINT = 'https://dns.google/resolve'
+desc(`Generate ${CONFIG}`)
+task('config', [BUILD_DIR], () => {
+  const config = {
+    apiUrl: API_ENDPOINT,
+    dohApiUrl: DOH_ENDPOINT,
+    version
+  }
+  writeFile(CONFIG, `export default ${stringify(config)}`)
 
-namespace('scripts', () => {
-  desc(`Remove ${BUILD_DIR}`)
-  task('clean', () => rmRf(BUILD_DIR))
+  log('Created %s config', DEV ? red('🔧 development') : green('🌍 production'))
 })
 
 desc('Compile templates')
 task('templates', [BUILD_DIR], () => {
   const sources = EJS.toArray()
   const compiled = sources.reduce((_, tp) => {
-    const name = path.basename(tp).replace('.ejs.html', '')
-    const { source } = template(fs.readFileSync(tp, utf), {
+    const name = basename(tp).replace('.ejs.html', '')
+    const { source } = template(readFile(tp, utf), {
       variable: 'locals'
     })
 
     return _ + `export const ${name} = ${source}\n`
   }, '')
 
-  fs.writeFileSync(TEMPLATES, compiled)
+  writeFile(TEMPLATES, compiled)
 
   log(
     `Compiled %s templates → %s`,
@@ -133,64 +154,25 @@ task('templates', [BUILD_DIR], () => {
   )
 })
 
-const API_ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
-const DOH_ENDPOINT = 'https://dns.google/resolve'
-desc(`Produce ${CONFIG}`)
-task('config', [BUILD_DIR], () => {
-  const config = {
-    apiUrl: API_ENDPOINT,
-    dohApiUrl: DOH_ENDPOINT,
-    version: aManifest.version
-  }
-
-  fs.writeFileSync(
-    CONFIG,
-    // TODO: use .json when importing json as a es6 module becomes possible
-    `export default ${JSON.stringify(config, null, 2)}`
-  )
-
-  log('Created %s config', DEV ? red('🔧 development') : green('🌍 production'))
+desc('Minify')
+task('minify', ['typescript', 'config', 'templates'], (forFirefox = false) => {
+  if (DEV) return
+  SCRIPTS.toArray().forEach(file => minify(file, forFirefox))
 })
 
-desc('Compile all')
-task('compile', (...args) => {
-  ;['config', 'templates', 'scripts'].forEach(taskName => {
+desc('Build all')
+task('build', (...args) =>
+  ['manifest', 'minify'].forEach(taskName => {
     const task = Task[taskName]
     task.invoke.apply(task, args)
   })
-})
-
-desc('Remove all')
-task('clean', ['scripts:clean', 'manifest:clean', 'clobber'], () =>
-  rmRf(BUILD_DIR)
 )
 
-const manifest = require('./manifest.json.js')
-
-desc('Produce manifest.json')
-task('manifest', (forFirefox = false) => {
-  const monefest = JSON.stringify(manifest({ forFirefox }), null, 2)
-  fs.writeFileSync('manifest.json', monefest)
-
-  if (!forFirefox) packageFiles.exclude('src/module.html')
-
-  log(
-    'Created manifest version %s',
-    yellow(aManifest.version),
-    forFirefox ? 'for 🦊' : '🌍'
-  )
-})
-namespace('manifest', () => {
-  desc('Remove manifest.json')
-  task('clean', () => rmRf('manifest.json'))
-})
-
-const aManifest = manifest()
-let pkgName = aManifest.name.toLowerCase().replace(/ /g, '-')
-pkgName = DEV ? `DEV-${pkgName}` : pkgName
+desc('Remove all')
+task('clean', ['manifest:clean', 'clobber'], () => rmRf(BUILD_DIR))
 
 let packageFiles
-packageTask(pkgName, aManifest.version, [], function () {
+packageTask(pkgName, version, [], function () {
   packageFiles = this.packageFiles
 
   const fileList = [
@@ -207,24 +189,19 @@ packageTask(pkgName, aManifest.version, [], function () {
 })
 
 // run `jake package` after `yarn release:firefox`, commenting above task out
-// packageTask(`${pkgName}-source`, aManifest.version, [], function () {
+// packageTask(`${pkgName}-source`, version, [], function () {
 //   const fileList = ['build/**', 'pkg/**', 'src/**', 'img/**', '*']
 //   this.packageFiles.include(fileList)
 //   this.needZip = true
 //   this.packageDir = './pkg-source'
 // })
 
-task('onlyzip', () => rmRf(`pkg/${pkgName}-${aManifest.version}`))
+const tasks = ['build', 'package', 'manifest:clean']
+task('onlyzip', () => rmRf(`pkg/${pkgName}-${version}`))
 
-const [manifestT, compileT, ...restT] = [
-  'manifest',
-  'compile',
-  'package',
-  'manifest:clean'
-]
-
+const [, ...rest] = tasks
 desc('Build & package for 🦊')
-task('firefox', ['manifest[🦊]', 'compile[🦊]', ...restT, 'onlyzip'])
+task('firefox', ['build[🦊]', ...rest, 'onlyzip'])
 
 desc('Build & package')
-task('default', [manifestT, compileT, ...restT])
+task('default', tasks)
