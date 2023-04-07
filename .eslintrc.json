@@ -9,7 +9,8 @@
     "es2018": true
   },
   "rules": {
-    "object-shorthand": "error"
+    "object-shorthand": "error",
+    "prefer-const": "error"
   },
   "overrides": [
     {

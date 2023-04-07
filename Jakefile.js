@@ -17,16 +17,15 @@ const { minify: uglify } = require('uglify-js')
 
 const {
   existsSync: exists,
-  readFileSync: readFile,
   statSync: stat,
-  writeFileSync: writeFile
+  writeFileSync: writeFile,
+  readFileSync
 } = require('fs')
+const readFile = path => readFileSync(path, 'utf-8')
 const { basename, join } = require('path')
 const { execSync: exec } = require('child_process')
 
 const DEV = Boolean(process.env.DEV)
-
-const utf = 'utf-8'
 
 const log = (...[first, ...rest]) => console.log(...[`→ ${first}`, ...rest])
 
@@ -51,7 +50,7 @@ const grey = s => `\x1b[90m${s}\x1b[0m`
 function minify(srcPath, forFirefox = false) {
   const srcSize = size(srcPath)
 
-  let config = {
+  const config = {
     module: true,
     ...(forFirefox && {
       compress: false,
@@ -65,7 +64,7 @@ function minify(srcPath, forFirefox = false) {
     })
   }
 
-  const { code } = uglify(readFile(srcPath, utf), config)
+  const { code } = uglify(readFile(srcPath), config)
   writeFile(srcPath, code)
 
   log('Minified', srcPath, grey(srcSize), '→', blue(size(srcPath)))
@@ -89,8 +88,8 @@ const SCRIPTS = new FileList().include(`${BUILD_DIR}/*.js`)
 directory(BUILD_DIR)
 
 const manifest = require('./manifest.json.js')
-let { version, name: pkgName } = manifest()
-pkgName = pkgName.toLowerCase().replace(/ /g, '-')
+const { version, name } = manifest()
+let pkgName = name.toLowerCase().replace(/ /g, '-')
 pkgName = DEV ? `DEV-${pkgName}` : pkgName
 
 desc(`Generate ${MANIFEST}`)
@@ -138,7 +137,7 @@ task('templates', [BUILD_DIR], () => {
   const sources = EJS.toArray()
   const compiled = sources.reduce((_, tp) => {
     const name = basename(tp).replace('.ejs.html', '')
-    const { source } = template(readFile(tp, utf), {
+    const { source } = template(readFile(tp), {
       variable: 'locals'
     })
 

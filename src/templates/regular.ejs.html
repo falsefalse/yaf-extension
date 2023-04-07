@@ -1,13 +1,14 @@
 <%
-  let hinted = (val, hint) => `<span title='${hint}'>${val}</span>`
+  const hinted = (val, hint) => `<span title='${hint}'>${val}</span>`
 
-  let { country_name, domain, ip, city, region, postal_code } = locals
+  const { country_name, domain, ip, city, region, postal_code } = locals
 
   let area = [
     [city, 'City'],
     [region, 'Region'],
     [postal_code, 'Postal Code']
-  ].filter(([v]) => Boolean(v)), located = area.length == 3
+  ].filter(([v]) => Boolean(v))
+  const located = area.length == 3
 
   area = area.map(_ => hinted(..._)).join(', ')
 %>
@@ -28,7 +29,7 @@
 <li class="separator" />
 
 <li class="service">
-  <% let href = `https://whois.domaintools.com/${domain}` %>
+  <% const href = `https://whois.domaintools.com/${domain}` %>
   <a class="whois" href="<%= href %>"
     title="Open link in a new tab" target="_blank">
     Whois
