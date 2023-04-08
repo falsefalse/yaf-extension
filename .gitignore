@@ -5,7 +5,7 @@ node_modules
 # build artifacts
 build/
 pkg/
-pkg-source/
+pkg-src/
 
 # generated files
 src/config.js

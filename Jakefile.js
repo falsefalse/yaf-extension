@@ -97,8 +97,6 @@ task('manifest', (forFirefox = false) => {
   const monefest = stringify(manifest({ forFirefox }))
   writeFile(MANIFEST, monefest)
 
-  if (!forFirefox) packageFiles.exclude('src/module.html')
-
   log('Created manifest', yellow(version), forFirefox ? 'for 🦊' : '')
 })
 namespace('manifest', () => {
@@ -160,42 +158,48 @@ task('minify', ['typescript', 'config', 'templates'], (forFirefox = false) => {
 })
 
 desc('Build all')
-task('build', (...args) =>
-  ['manifest', 'minify'].forEach(taskName => {
-    const task = Task[taskName]
-    task.invoke.apply(task, args)
-  })
-)
-
-desc('Remove all')
-task('clean', ['manifest:clean', 'clobber'], () => rmRf(BUILD_DIR))
-
-let packageFiles
-packageTask(pkgName, version, [], function () {
-  packageFiles = this.packageFiles
-
-  const fileList = [
-    'manifest.json',
-    'build/*',
-    'img/**',
-    'src/*.html',
-    'src/*.css'
-  ]
-  this.packageFiles.include(fileList)
-  this.needZip = true
-  // otherwise firefox just can't
-  this.archiveNoBaseDir = true
+task('build', (...args) => {
+  const [forFirefox] = args
+  if (!forFirefox) packageFiles.exclude('src/module.html')
+  ;['manifest', 'minify'].forEach(name => Task[name].invoke(...args))
 })
 
-// run `jake package` after `yarn release:firefox`, commenting above task out
-// packageTask(`${pkgName}-source`, version, [], function () {
-//   const fileList = ['build/**', 'pkg/**', 'src/**', 'img/**', '*']
-//   this.packageFiles.include(fileList)
-//   this.needZip = true
-//   this.packageDir = './pkg-source'
-// })
+desc('Remove all')
+task('clean', ['manifest:clean', 'build:clobber', 'src:clobber'], () =>
+  rmRf(BUILD_DIR)
+)
 
-const tasks = ['build', 'package', 'manifest:clean']
+let packageFiles
+namespace('build', () => {
+  function define() {
+    packageFiles = this.packageFiles
+
+    this.packageFiles.include([
+      'manifest.json',
+      'build/**',
+      'img/**',
+      'src/*.html',
+      'src/*.css'
+    ])
+    this.needZip = true
+    // otherwise firefox just can't
+    this.archiveNoBaseDir = true
+  }
+
+  packageTask(pkgName, version, [], define)
+})
+
+namespace('src', () => {
+  function define() {
+    this.packageFiles.include(['src/**', 'img/**', 'pkg/**', '*.*'])
+    this.packageDir = './pkg-src'
+    this.needZip = true
+  }
+
+  packageTask(`${pkgName}-src`, version, ['build[🦊]', 'build:package'], define)
+})
+
+const tasks = ['build', 'build:package', 'manifest:clean']
 task('onlyzip', () => rmRf(`pkg/${pkgName}-${version}`))
 
 const [, ...rest] = tasks
