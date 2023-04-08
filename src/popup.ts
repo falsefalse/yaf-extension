@@ -1,5 +1,5 @@
+import type { Data } from './lib/types.js'
 
-import { Data } from './types'
 import setFlag from './set_flag.js'
 import { storage, getDomain, isLocal } from './helpers.js'
 import { toolbar, local, not_found, regular } from './templates.js'

@@ -1,5 +1,10 @@
+import type {
+  LocalResponse,
+  ErrorResponse,
+  GeoResponse,
+  Data
+} from './lib/types.js'
 
-import { LocalResponse, ErrorResponse, GeoResponse, Data } from './types'
 import config from './config.js'
 import { getDomain, isLocal, storage, setAction, resolve } from './helpers.js'
 

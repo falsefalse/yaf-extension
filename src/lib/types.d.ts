@@ -1,11 +1,12 @@
+// prettier-ignore
 // https://developers.google.com/speed/public-dns/docs/doh/json#dns_response_in_json
 export type DoHData = {
-  Status: number // Standard DNS response code (32 bit integer).
+  Status: number  // Standard DNS response code (32 bit integer).
   Answer?: {
-    name: string // Always matches name in the Question section
-    type: number // A - Standard DNS RR type
-    TTL: number // Record's time-to-live in seconds
-    data: string // Data for A - IP address as text
+    name: string  // Always matches name in the Question section
+    type: number  // A - Standard DNS RR type
+    TTL:  number  // Record's time-to-live in seconds
+    data: string  // Data for A - IP address as text
   }[]
 }
 
@@ -19,10 +20,11 @@ export interface LocalResponse {
   is_local: boolean
 }
 
+// prettier-ignore
 export interface ErrorResponse {
-  error: string // either server returned error or 'failed to fetch'
-  status?: number // not there when no network
-  ip?: string // could be returned from server but not necessarily
+  error:   string  // either server returned error or 'failed to fetch'
+  status?: number  // not there when no network
+  ip?:     string  // could be returned from server but not necessarily
 }
 
 export interface GeoResponse {

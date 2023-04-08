@@ -10,6 +10,9 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
+
+    // modules
+    "esModuleInterop": true,
     "module": "es2022",
     "target": "es2021",
     "esModuleInterop": true

@@ -1,5 +1,5 @@
+import type { Data, DoHData } from './lib/types.js'
 
-import { Data, DoHData } from './types'
 import config from './config.js'
 
 function getDomain(url: string | undefined) {
