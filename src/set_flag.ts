@@ -1,14 +1,8 @@
 /* eslint-env browser, webextensions */
 
 import { LocalResponse, ErrorResponse, GeoResponse, Data } from './types'
-import {
-  getDomain,
-  isLocal,
-  storage,
-  setAction,
-  domainToIp
-} from './helpers.js'
 import config from './config.js'
+import { getDomain, isLocal, storage, setAction, resolve } from './helpers.js'
 
 async function updatePageAction(
   tabId: number | undefined,
@@ -47,7 +41,7 @@ async function updatePageAction(
 async function request(
   domain: string
 ): Promise<GeoResponse | ErrorResponse | LocalResponse> {
-  const ip = await domainToIp(domain)
+  const ip = await resolve(domain)
 
   // domain resolves to local IP
   if (isLocal(ip)) return { ip, is_local: true }

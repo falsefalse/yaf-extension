@@ -99,7 +99,7 @@ async function setAction(
   await setIcon(tabId, iconPath)
 }
 
-async function domainToIp(domain: string) {
+async function resolve(domain: string) {
   if ('dns' in chrome) {
     try {
       const {
@@ -130,4 +130,4 @@ async function domainToIp(domain: string) {
   return answer.find(({ type }) => type == 1)?.data
 }
 
-export { getDomain, isLocal, storage, setAction, domainToIp }
+export { getDomain, isLocal, storage, setAction, resolve }

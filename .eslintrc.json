@@ -30,6 +30,7 @@
       }
     },
     {
+      // has to be .html, plugin has a hardcoded check for it
       "files": "*.ejs.html",
       "extends": [
         "eslint:recommended",

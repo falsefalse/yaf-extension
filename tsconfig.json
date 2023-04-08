@@ -1,5 +1,10 @@
 {
+  "include": ["src/**/*"],
+
   "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "build",
+
     "noErrorTruncation": true,
 
     "strict": true,
@@ -7,10 +12,6 @@
     "noImplicitReturns": true,
     "module": "es2022",
     "target": "es2021",
-
-    "esModuleInterop": true,
-
-    "rootDir": "src",
-    "outDir": "build"
+    "esModuleInterop": true
   }
 }
