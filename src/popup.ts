@@ -1,4 +1,3 @@
-/* eslint-env browser, webextensions */
 
 import { Data } from './types'
 import setFlag from './set_flag.js'

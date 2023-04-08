@@ -1,5 +1,3 @@
-/* eslint-env webextensions */
-
 import setFlag from './set_flag.js'
 
 async function getTabById(tabId: number | undefined) {

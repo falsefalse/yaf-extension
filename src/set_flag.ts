@@ -1,4 +1,3 @@
-/* eslint-env browser, webextensions */
 
 import { LocalResponse, ErrorResponse, GeoResponse, Data } from './types'
 import config from './config.js'

@@ -10,7 +10,8 @@
   },
   "rules": {
     "object-shorthand": "error",
-    "prefer-const": "error"
+    "prefer-const": "error",
+    "arrow-body-style": "error"
   },
   "overrides": [
     {

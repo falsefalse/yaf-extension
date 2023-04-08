@@ -1,4 +1,3 @@
-/* eslint-env browser, webextensions */
 
 import { Data, DoHData } from './types'
 import config from './config.js'
@@ -44,9 +43,8 @@ const storage = {
       chrome.storage.local.clear()
     }
   },
-  get: async (key: string): Promise<Data | undefined> => {
-    return (await chrome.storage.local.get(key))[key]
-  }
+  get: async (key: string): Promise<Data | undefined> =>
+    (await chrome.storage.local.get(key))[key]
 }
 
 /* Upscale flag icons */
