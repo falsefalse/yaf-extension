@@ -2,11 +2,13 @@
 
 const { version } = require('./package.json')
 
-const firefoxEventPage = {
+const name = 'Yet another flags'
+
+const eventPage = {
   page: 'src/module.html'
 }
 
-const chromeServiceModule = {
+const serviceModule = {
   service_worker: 'build/service.js',
   type: 'module'
 }
@@ -17,10 +19,10 @@ const firefoxSettings = {
 
 const permissions = ['tabs', 'storage']
 
-module.exports = ({ forFirefox } = {}) => ({
+module.exports = ({ forFirefox, DEV } = {}) => ({
   manifest_version: 3,
 
-  name: 'Yet another flags',
+  name: DEV ? `${name} 🚧` : name,
   short_name: 'YAFlags',
   description: 'Shows country flag for the website near the location bar',
 
@@ -29,7 +31,7 @@ module.exports = ({ forFirefox } = {}) => ({
   version,
 
   background: {
-    ...(forFirefox ? firefoxEventPage : chromeServiceModule)
+    ...(forFirefox ? eventPage : serviceModule)
   },
 
   permissions: forFirefox ? ['dns', ...permissions] : permissions,

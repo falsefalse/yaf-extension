@@ -89,16 +89,19 @@ const SCRIPTS = new FileList().include(`${BUILD_DIR}/*.js`)
 directory(BUILD_DIR)
 
 const manifest = require('./manifest.json.js')
-const { version, name } = manifest()
-let pkgName = name.toLowerCase().replace(/ /g, '-')
-pkgName = DEV ? `DEV-${pkgName}` : pkgName
+const { version, name } = manifest({ DEV })
+const pkgName = name.toLowerCase().replaceAll(' ', '-')
 
 desc(`Generate ${MANIFEST}`)
 task('manifest', (forFirefox = false) => {
-  const monefest = stringify(manifest({ forFirefox }))
+  const monefest = stringify(manifest({ DEV, forFirefox }))
   writeFile(MANIFEST, monefest)
 
-  log('Created manifest', yellow(version), forFirefox ? 'for 🦊' : '')
+  log(
+    'Created manifest %s %s',
+    DEV ? yellow(version) + ' 🚧' : blue(version),
+    forFirefox ? '🦊' : ''
+  )
 })
 namespace('manifest', () => {
   desc(`Remove ${MANIFEST}`)
@@ -107,13 +110,13 @@ namespace('manifest', () => {
 
 desc('Typecheck & emit sources')
 task('typescript', [BUILD_DIR], () => {
-  log('🦜 Typechecking & emitting...')
+  log('🦜 Typechecking, emitting...')
 
   try {
     exec('yarn -s tsc', { stdio: [0, DEV ? null : 1] })
   } catch (error) {
     if (!DEV) throw error
-    log('❌ Failed!')
+    log('❌ Typecheck %s!', red('failed'))
   }
 })
 
@@ -126,10 +129,14 @@ task('config', [BUILD_DIR], (forSpecs = false) => {
     dohApiUrl: DOH_ENDPOINT,
     version
   })}`
+  const path = forSpecs ? SPEC_CONFIG : CONFIG
 
-  writeFile(forSpecs ? SPEC_CONFIG : CONFIG, config)
+  writeFile(path, config)
 
-  log('Created %s config', DEV ? red('🔧 development') : green('🌍 production'))
+  log(
+    'Created %s config',
+    DEV ? yellow('development 🚧') : blue('production 🌍')
+  )
 })
 
 desc('Compile templates')
