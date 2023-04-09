@@ -30,7 +30,7 @@
 
     {
       "name": "tc 🦜",
-      "cmd": ["yarn", "tc"],
+      "cmd": ["yarn", "typecheck"],
       // tsc errors
       "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
 
@@ -42,7 +42,7 @@
 
     {
       "name": "build 👷",
-      "cmd": ["yarn", "-s", "ch"],
+      "cmd": ["yarn", "-s", "build"],
 
       "working_dir": "$project_path",
       "target": "terminus_exec",
@@ -51,7 +51,7 @@
 
     {
       "name": "build:ff 🦊",
-      "cmd": ["yarn", "-s", "ff"],
+      "cmd": ["yarn", "-s", "build:firefox"],
 
       "working_dir": "$project_path",
       "target": "terminus_exec",

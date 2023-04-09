@@ -21,8 +21,8 @@ Why not `npm`? `yarn.lock` is ~3.1x smaller than `package-lock.json` (see 037b18
 
 ```bash
 # dev build: un-minified, points to http://localhost:8080
-yarn ch # [ch]rome
-yarn ff
+yarn build
+yarn build:firefox
 
 # production build: minified, points to https://geoip.furman.im
 jake -q
@@ -72,7 +72,7 @@ press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>. `tc` and `lint` tasks parse 
 Prepare `pkg/yet-another-flags-<version>.zip`.
 
 ```bash
-yarn release:chrome
+yarn release
 yarn release:firefox
 ```
 
