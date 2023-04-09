@@ -12,7 +12,6 @@
     "release:firefox": "yarn -s _stash_lint_clean && jake -q firefox && open ./pkg",
     "ch": "DEV=1 jake -q",
     "ff": "DEV=1 jake -q firefox",
-    "tsc": "tsc -p ts.src.json",
     "tc": "yarn -s tsc --noEmit",
     "lint": "yarn -s format:check & p=$! ; yarn -s eslint ||s=1 ; wait $p||s=1 ; exit $s",
     "eslint": "eslint --fix *.js src/ spec/ --ext .ts,.ejs.html",
@@ -20,7 +19,7 @@
     "format": "yarn -s _prettier -w . ; yarn -s _restore",
     "_prettier": "p=.prettierignore ; cat $p > .tmp ; cat .gitignore >> $p ; yarn -s prettier -u --loglevel warn",
     "_restore": "cat .tmp > .prettierignore ; rm .tmp",
-    "test": "DEV=1 jake config[specs] ; TS_NODE_PROJECT='./ts.spec.json' mocha",
+    "test": "DEV=1 jake -q config[specs] ; mocha",
     "test:watch": "yarn -s test -R min --watch --parallel"
   },
   "devDependencies": {

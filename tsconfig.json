@@ -1,17 +1,9 @@
 {
+  "extends": "./ts.base.json",
+
+  "include": ["src/"],
+
   "compilerOptions": {
-    "noErrorTruncation": true, // no (...) in errors
-
-    /* typechecking */
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true,
-    // do not skipLibCheck, we want our d.ts validated
-
-    /* modules */
-    "moduleResolution": "nodenext", // this makes other peoples d.ts pass
-    "esModuleInterop": true,
-    "module": "es2022",
-    "target": "es2021"
+    "outDir": "build/"
   }
 }
