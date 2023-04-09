@@ -80,7 +80,7 @@ const EJS = new FileList().include('src/templates/*.ejs.html')
 const TEMPLATES = join(BUILD_DIR, 'templates.js')
 // generated config
 const CONFIG = join(BUILD_DIR, 'config.js')
-const SPEC_CONFIG = join('src', 'config.js')
+const SPEC_CONFIG = join('src', 'config.ts')
 // generated manifest
 const MANIFEST = 'manifest.json'
 // generated and emitted scripts

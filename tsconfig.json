@@ -1,20 +1,17 @@
 {
-  "include": ["src/**/*"],
-
   "compilerOptions": {
-    "rootDir": "src",
-    "outDir": "build",
+    "noErrorTruncation": true, // no (...) in errors
 
-    "noErrorTruncation": true,
-
+    /* typechecking */
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitReturns": true,
+    // do not skipLibCheck, we want our d.ts validated
 
-    // modules
+    /* modules */
+    "moduleResolution": "nodenext", // this makes other peoples d.ts pass
     "esModuleInterop": true,
     "module": "es2022",
-    "target": "es2021",
-    "esModuleInterop": true
+    "target": "es2021"
   }
 }

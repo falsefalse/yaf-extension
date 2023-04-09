@@ -8,5 +8,5 @@ pkg/
 pkg-src/
 
 # generated files
-src/config.js
+src/config.ts
 manifest.json
