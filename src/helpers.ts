@@ -67,14 +67,16 @@ async function setIcon(tabId: number | undefined, path: string) {
     return
   }
 
-  const isNepal = path.endsWith('/np.png')
-
   const imgBlob = await (await fetch(path)).blob()
-  // read 16x11 bitmap, scale it up 4 times, no smoothing
+
+  const { width: w, height } = OG
+  const width = path.endsWith('/np.png') ? 9 : w
+
+  // read 16x11 (or 16x9 🇳🇵) bitmap, scale it up 4 times, no smoothing
   const bitmap = await createImageBitmap(imgBlob, {
     resizeQuality: 'pixelated',
-    resizeWidth: (isNepal ? 9 : OG.width) * factor,
-    resizeHeight: OG.height * factor
+    resizeWidth: width * factor,
+    resizeHeight: height * factor
   })
 
   // draw bitmap on canvas, center vertically

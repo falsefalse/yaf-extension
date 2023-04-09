@@ -1,7 +1,7 @@
 import { SinonStub } from 'sinon'
 import { expect } from 'chai'
 
-import { isLocal, getDomain, storage } from '../src/helpers.js'
+import { isLocal, getDomain, storage, setAction } from '../src/helpers.js'
 
 const pickStub = <K extends keyof O, O>(key: K, obj: O) => obj[key] as SinonStub
 
@@ -111,6 +111,96 @@ describe('helpers.ts', () => {
       await storage.set('smol', 'but fatal')
 
       expect(clearStub).to.be.calledOnce
+    })
+  })
+
+  describe('setAction', () => {
+    it('sets page action title', async () => {
+      await setAction(88, 'boop title', 'ignore me')
+
+      expect(chrome.action.setTitle).to.be.calledOnceWith({
+        tabId: 88,
+        title: 'boop title'
+      })
+    })
+
+    it('sets non-flag page action icon', async () => {
+      await setAction(99, 'ignore me', 'not a flag.png')
+
+      expect(chrome.action.setIcon).to.be.calledOnceWith({
+        tabId: 99,
+        path: 'not a flag.png'
+      })
+    })
+
+    describe('Flags 🚩', () => {
+      const createImageBitmapMock = pickStub('createImageBitmap', global)
+      let drawImageMock: SinonStub
+      let clearRectMock: SinonStub
+
+      before(() => {
+        const ctxMock = new OffscreenCanvas(1, 2).getContext('2d')!
+
+        clearRectMock = pickStub('clearRect', ctxMock)
+        drawImageMock = pickStub('drawImage', ctxMock)
+        pickStub('getImageData', ctxMock).callsFake(() => '🖼 upscaled')
+      })
+
+      it('upscales, centers and renders the flag', async () => {
+        createImageBitmapMock.callsFake(() => ({
+          this: 'is a bitmap!',
+          width: 16 * 4,
+          height: 11 * 4
+        }))
+
+        await setAction(14, 'Ukraine', '/img/flags/ua.png')
+
+        expect(clearRectMock).to.be.calledOnceWith(0, 0, 64, 64)
+
+        // upscale
+        expect(createImageBitmapMock).to.be.calledOnceWith('🖼', {
+          resizeQuality: 'pixelated',
+          resizeWidth: 16 * 4,
+          resizeHeight: 11 * 4
+        })
+
+        // center vertically
+        expect(drawImageMock).to.be.calledOnceWith(
+          { this: 'is a bitmap!', width: 16 * 4, height: 11 * 4 },
+          0,
+          10
+        )
+
+        // send to browser
+        expect(chrome.action.setIcon).to.be.calledOnceWith({
+          tabId: 14,
+          imageData: { '64': '🖼 upscaled' }
+        })
+      })
+
+      it('handles 🇳🇵 narrow flag', async () => {
+        createImageBitmapMock.callsFake(() => ({
+          this: 'is flag of Nepal',
+          width: 9 * 4,
+          height: 11 * 4
+        }))
+
+        await setAction(14, 'Nepal', '/img/flags/np.png')
+
+        expect(clearRectMock).to.be.calledOnceWith(0, 0, 64, 64)
+
+        expect(createImageBitmapMock).to.be.calledOnceWith('🖼', {
+          resizeQuality: 'pixelated',
+          resizeWidth: 9 * 4,
+          resizeHeight: 11 * 4
+        })
+
+        expect(drawImageMock).to.be.calledOnceWith(
+          { this: 'is flag of Nepal', width: 9 * 4, height: 11 * 4 },
+          0,
+          10
+        )
+      })
     })
   })
 })

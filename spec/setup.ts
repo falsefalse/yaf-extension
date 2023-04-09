@@ -8,8 +8,8 @@ chai.use(sinonChai)
 
 /* OffscreenCanvas */
 
-const canvasSandbox = sinon.createSandbox({
-  properties: ['spy']
+const canvasBox = sinon.createSandbox({
+  properties: ['spy', 'stub']
 })
 
 class OffscreenCanvasMock {
@@ -17,24 +17,53 @@ class OffscreenCanvasMock {
   getContext() {}
 }
 
-canvasSandbox.spy(OffscreenCanvasMock.prototype, 'getContext')
+const OffscreenCanvas = canvasBox.spy(OffscreenCanvasMock)
 
-/* chrome.storage.local */
+const Context2dStub = {
+  clearRect: canvasBox.spy(),
+  drawImage: canvasBox.spy(),
+  getImageData: canvasBox.stub()
+}
 
-const storageSandbox = sinon.createSandbox({
+canvasBox
+  .stub(OffscreenCanvasMock.prototype, 'getContext')
+  .callsFake(() => Context2dStub)
+
+/* chrome */
+
+const chromeBox = sinon.createSandbox({
   properties: ['stub']
 })
 
 const local = {
-  set: chromeSandbox.stub(),
-  get: chromeSandbox.stub(),
-  clear: chromeSandbox.stub()
+  set: chromeBox.stub(),
+  get: chromeBox.stub(),
+  clear: chromeBox.stub()
 }
+
+const action = {
+  setTitle: chromeBox.stub(),
+  setIcon: chromeBox.stub()
+}
+
+/* fetch */
+
+const fetch = () =>
+  Promise.resolve({
+    blob: () => Promise.resolve('🖼')
+  })
+
+/* createImageBitmap */
+
+const windowBox = sinon.createSandbox({ properties: ['stub'] })
+const createImageBitmap = windowBox.stub()
 
 /* Assign to window */
 
 Object.assign(global, {
-  OffscreenCanvas: canvasSandbox.spy(OffscreenCanvasMock),
+  createImageBitmap,
+  fetch,
+  OffscreenCanvas,
   chrome: {
     storage: { local },
     action
@@ -45,7 +74,8 @@ Object.assign(global, {
 
 export const mochaHooks = {
   afterEach() {
-    canvasSandbox.reset()
-    chromeSandbox.resetHistory()
+    canvasBox.resetHistory()
+    chromeBox.resetHistory()
+    windowBox.resetHistory()
   }
 }
