@@ -31,6 +31,12 @@
       }
     },
     {
+      "files": "spec/**.ts",
+      "rules": {
+        "@typescript-eslint/no-empty-function": "off"
+      }
+    },
+    {
       // has to be .html, plugin has a hardcoded check for it
       "files": "*.ejs.html",
       "extends": [

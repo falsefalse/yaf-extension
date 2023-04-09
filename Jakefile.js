@@ -80,6 +80,7 @@ const EJS = new FileList().include('src/templates/*.ejs.html')
 const TEMPLATES = join(BUILD_DIR, 'templates.js')
 // generated config
 const CONFIG = join(BUILD_DIR, 'config.js')
+const SPEC_CONFIG = join('src', 'config.js')
 // generated manifest
 const MANIFEST = 'manifest.json'
 // generated and emitted scripts
@@ -118,14 +119,15 @@ task('typescript', [BUILD_DIR], () => {
 
 const API_ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
 const DOH_ENDPOINT = 'https://dns.google/resolve'
-desc(`Generate ${CONFIG}`)
-task('config', [BUILD_DIR], () => {
-  const config = {
+desc(`Generate config`)
+task('config', [BUILD_DIR], (forSpecs = false) => {
+  const config = `export default ${stringify({
     apiUrl: API_ENDPOINT,
     dohApiUrl: DOH_ENDPOINT,
     version
-  }
-  writeFile(CONFIG, `export default ${stringify(config)}`)
+  })}`
+
+  writeFile(forSpecs ? SPEC_CONFIG : CONFIG, config)
 
   log('Created %s config', DEV ? red('🔧 development') : green('🌍 production'))
 })
@@ -165,9 +167,10 @@ task('build', (...args) => {
 })
 
 desc('Remove all')
-task('clean', ['manifest:clean', 'build:clobber', 'src:clobber'], () =>
+task('clean', ['manifest:clean', 'build:clobber', 'src:clobber'], () => {
   rmRf(BUILD_DIR)
-)
+  rmRf(SPEC_CONFIG)
+})
 
 let packageFiles
 namespace('build', () => {
