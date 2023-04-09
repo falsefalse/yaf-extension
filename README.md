@@ -8,11 +8,11 @@ Take a look at [server code] as well.
 
 ## Prerequisites
 
-Requires `node@16` and `yarn@1.22`.
+Requires `node@18`, `yarn@1.22` and `jake`.
 
 ```bash
+npm -g install yarn jake
 yarn install
-[sudo] yarn global add jake
 ```
 
 Why not `npm`? `yarn.lock` is ~3.1x smaller than `package-lock.json` (see 037b18f21422707d05dc5097f39e43df876764cb).
@@ -40,10 +40,28 @@ List all scripts and tasks. Use `jake -q` and `yarn -s` to limit the noise when 
 
 ```bash
 exit | yarn run
+
+# broken in the latest release, see next section
 jake -T
 ```
 
-#### With SublimeText
+#### `jake` task listing
+
+It's fixed in master but not released yet.
+
+To use the latest source
+
+```bash
+# remove global jake
+npm -g rm jake
+git clone git@github.com:jakejs/jake.git && cd jake
+npm install
+npm link
+```
+
+See jakejs/jake#417, jakejs/jake#420.
+
+#### SublimeText build system
 
 SublimeText users get the benefit of ready-made build tasks (requires [Terminus]).
 Open `extension.sublime-project` as a Project,
