@@ -9,3 +9,23 @@ interface Array<T> {
     thisArg?: any
   ): Exclude<S, Falsy>[]
 }
+
+// https://stackoverflow.com/a/52761156
+export type OverloadedReturnType<T> = T extends {
+  (...args: any[]): infer R
+  (...args: any[]): infer R
+  (...args: any[]): infer R
+  (...args: any[]): infer R
+}
+  ? R
+  : T extends {
+      (...args: any[]): infer R
+      (...args: any[]): infer R
+      (...args: any[]): infer R
+    }
+  ? R
+  : T extends { (...args: any[]): infer R; (...args: any[]): infer R }
+  ? R
+  : T extends (...args: any[]) => infer R
+  ? R
+  : any

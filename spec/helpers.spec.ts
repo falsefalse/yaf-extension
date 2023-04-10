@@ -1,5 +1,7 @@
 import { expect } from 'chai'
-import sinon, { SinonStub } from 'sinon'
+import sinon from 'sinon'
+
+import { pickStub } from './setup.js'
 
 import {
   isLocal,
@@ -8,12 +10,6 @@ import {
   setAction,
   resolve
 } from '../src/helpers.js'
-
-const pickStub = <K extends keyof O, O>(key: K, obj: O) =>
-  obj[key] as SinonStub<
-    any[],
-    O[K] extends (...args: any) => any ? Partial<ReturnType<O[K]>> : any
-  >
 
 describe('helpers.ts', () => {
   describe('isLocal', () => {
@@ -35,7 +31,6 @@ describe('helpers.ts', () => {
       [true,  '172.16.0.0'],
       [true,  '172.16.100.0'],
       [true,  '172.31.0.0'],
-      [true,  '172.31.0.0'],
       [false, '172.32.0.0'],
 
       [true,  '192.168.0.0'],
@@ -43,6 +38,7 @@ describe('helpers.ts', () => {
       [false, '191.168.0.0'],
 
       [false, '0.0'],
+      [false, '....'],
       [false, undefined],
       [false, '123'],
       [false, '127.0.0.0.boop.com'],
@@ -102,7 +98,7 @@ describe('helpers.ts', () => {
     })
 
     it('clears itself when full and sets the data', async () => {
-      setStub.onFirstCall().throws('im full')
+      setStub.onFirstCall().throws()
       setStub.onSecondCall().resolves()
 
       await storage.set('smol', 'but important')
@@ -220,7 +216,7 @@ describe('helpers.ts', () => {
 
     describe('Google DoH', () => {
       it('returns undefined when network error', async () => {
-        pickStub('fetch', global).throws('no network')
+        pickStub('fetch', global).throws()
 
         expect(await resolve('boop.com')).to.be.undefined
       })
