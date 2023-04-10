@@ -6,7 +6,7 @@ import sinonChai from 'sinon-chai'
 
 chai.use(sinonChai)
 
-/* OffscreenCanvas */
+/* OffscreenCanvas, createImageBitmap */
 
 const canvasBox = sinon.createSandbox({
   properties: ['spy', 'stub']
@@ -17,17 +17,18 @@ class OffscreenCanvasMock {
   getContext() {}
 }
 
-const OffscreenCanvas = canvasBox.spy(OffscreenCanvasMock)
-
 const Context2dStub = {
   clearRect: canvasBox.spy(),
   drawImage: canvasBox.spy(),
   getImageData: canvasBox.stub()
 }
 
-canvasBox
-  .stub(OffscreenCanvasMock.prototype, 'getContext')
+// don't want implementation to be reset hence sinon.stub
+OffscreenCanvasMock.prototype.getContext = sinon
+  .stub()
   .callsFake(() => Context2dStub)
+
+const createImageBitmap = canvasBox.stub()
 
 /* chrome */
 
@@ -46,24 +47,49 @@ const action = {
   setIcon: chromeBox.stub()
 }
 
+const resolve = chromeBox.stub()
+
 /* fetch */
 
-const fetch = () =>
-  Promise.resolve({
-    blob: () => Promise.resolve('🖼')
-  })
+const fetchBox = sinon.createSandbox({ properties: ['stub'] })
 
-/* createImageBitmap */
+const fetchResultStub = {
+  okStub: fetchBox.stub(),
+  blob: fetchBox.stub(),
+  json: fetchBox.stub()
+}
 
-const windowBox = sinon.createSandbox({ properties: ['stub'] })
-const createImageBitmap = windowBox.stub()
+Object.defineProperties(fetchResultStub, {
+  ok: {
+    get: fetchResultStub.okStub,
+    enumerable: true
+  }
+})
+
+// implementation is (re)set in beforeEach
+const fetch = fetchBox.stub()
 
 /* Assign to window */
 
+const stubs = { Context2dStub, fetchResultStub } as const
+
+declare global {
+  // eslint-disable-next-line no-var
+  var globalStubs: typeof stubs
+}
+
 Object.assign(global, {
-  createImageBitmap,
+  globalStubs: stubs,
+
   fetch,
-  OffscreenCanvas,
+
+  OffscreenCanvas: OffscreenCanvasMock,
+  createImageBitmap,
+
+  browser: {
+    dns: { resolve }
+  },
+
   chrome: {
     storage: { local },
     action
@@ -73,9 +99,13 @@ Object.assign(global, {
 /* Reset call counts hook */
 
 export const mochaHooks = {
+  beforeEach() {
+    fetch.resolves(fetchResultStub)
+  },
+
   afterEach() {
-    canvasBox.resetHistory()
-    chromeBox.resetHistory()
-    windowBox.resetHistory()
+    canvasBox.reset()
+    chromeBox.reset()
+    fetchBox.reset()
   }
 }

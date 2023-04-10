@@ -57,11 +57,11 @@ const factor = SIZE / OG.width
 const center = (whole: number, part: number) =>
   Math.round(Math.max(whole - part, 0) / 2)
 
-const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
-  willReadFrequently: true
-})
-
 async function setIcon(tabId: number | undefined, path: string) {
+  const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
+    willReadFrequently: true
+  })
+
   if (!ctx) throw 'Failed to get 2d canvas context'
 
   if (!path.startsWith('/img/flags/')) {
