@@ -117,17 +117,19 @@ async function resolve(domain: string) {
   url.searchParams.set('type', '1')
   url.searchParams.set('name', domain)
 
-  let response, data: DoHData
+  let response, data
   try {
     response = await fetch(url.toString())
-    data = await response.json()
+    data = (await response.json()) as DoHResponse | undefined
   } catch (error) {
     return
   }
 
+  if (!response.ok || !data || !('Status' in data)) return
+
   const { Status: status, Answer: answer } = data
 
-  if (!response.ok || status !== 0 || !answer) return
+  if (status !== 0 || !answer) return
 
   return answer.find(({ type }) => type == 1)?.data
 }

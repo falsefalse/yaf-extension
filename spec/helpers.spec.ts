@@ -1,7 +1,13 @@
 import { expect } from 'chai'
 import sinon, { SinonStub } from 'sinon'
 
-import { isLocal, getDomain, storage, setAction } from '../src/helpers.js'
+import {
+  isLocal,
+  getDomain,
+  storage,
+  setAction,
+  resolve
+} from '../src/helpers.js'
 
 const pickStub = <K extends keyof O, O>(key: K, obj: O) =>
   obj[key] as SinonStub<
@@ -202,6 +208,100 @@ describe('helpers.ts', () => {
           { width: 9 * 4, height: 11 * 4 },
           0,
           10
+        )
+      })
+    })
+  })
+
+  describe('resolve', () => {
+    const {
+      fetchResultStub: { json, okStub }
+    } = globalStubs
+
+    describe('Google DoH', () => {
+      it('returns undefined when network error', async () => {
+        pickStub('fetch', global).throws('no network')
+
+        expect(await resolve('boop.com')).to.be.undefined
+      })
+
+      it('returns undefined when http error', async () => {
+        expect(await resolve('boop.com')).to.be.undefined
+      })
+
+      it('returns undefined when DoH errors out', async () => {
+        okStub.returns(true)
+        json.resolves({ Status: 88 })
+
+        expect(await resolve('boop.com')).to.be.undefined
+      })
+
+      it('returns undefined when no Answer', async () => {
+        okStub.returns(true)
+        json.resolves({ Status: 0 })
+
+        expect(await resolve('boop.com')).to.be.undefined
+      })
+
+      it('returns undefined when no Answer with type 1 (A record)', async () => {
+        okStub.returns(true)
+        json.resolves({ Status: 0, Answer: [{ type: 'not 1' }] })
+
+        expect(await resolve('boop.com')).to.be.undefined
+      })
+
+      it('returns undefined when no data for Answer with type 1', async () => {
+        okStub.returns(true)
+        json.resolves({ Status: 0, Answer: [{ type: 1 }] })
+
+        expect(await resolve('boop.com')).to.be.undefined
+      })
+
+      it('makes correct query', async () => {
+        await resolve('boop.com')
+
+        expect(fetch).to.be.calledOnceWith(
+          'https://dns.google/resolve?type=1&name=boop.com'
+        )
+      })
+
+      it('resolves ip', async () => {
+        okStub.returns(true)
+        json.resolves({
+          Status: 0,
+          Answer: [{ type: 1, data: '7.7.7.7' }]
+        })
+
+        expect(await resolve('boop.com')).to.eq('7.7.7.7')
+      })
+    })
+
+    describe('Firefox dns.resolve', () => {
+      before(() => {
+        // @ts-expect-error: let's pretend we are in firefox
+        chrome.dns = 'is there'
+      })
+
+      after(() => {
+        // @ts-expect-error: stop pretending we are in firefox
+        delete chrome.dns
+      })
+
+      const resolveMock = pickStub('resolve', browser.dns)
+
+      it('resolves ip without fetch', async () => {
+        resolveMock.resolves({ addresses: ['66.66.66.66'] })
+
+        expect(await resolve('boop.com')).to.eq('66.66.66.66')
+        expect(fetch).not.to.be.called
+      })
+
+      it('falls back to DoH when could not resolve', async () => {
+        resolveMock.rejects('nope')
+        await resolve('boop.com')
+
+        expect(fetch).to.be.calledOnceWith(
+          'https://dns.google/resolve?type=1&name=boop.com'
         )
       })
     })
