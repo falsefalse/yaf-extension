@@ -1,6 +1,9 @@
-import sinon from 'sinon'
+import sinon, { SinonStub } from 'sinon'
 import chai from 'chai'
 import sinonChai from 'sinon-chai'
+
+import type { OverloadedReturnType } from '../src/lib/es5.js'
+import { DoHResponse } from '../src/lib/types.js'
 
 /* Matchers */
 
@@ -44,7 +47,9 @@ const local = {
 
 const action = {
   setTitle: chromeBox.stub(),
-  setIcon: chromeBox.stub()
+  setIcon: chromeBox.stub(),
+  disable: chromeBox.stub(),
+  enable: chromeBox.stub()
 }
 
 const resolve = chromeBox.stub()
@@ -54,14 +59,20 @@ const resolve = chromeBox.stub()
 const fetchBox = sinon.createSandbox({ properties: ['stub'] })
 
 const fetchResultStub = {
-  okStub: fetchBox.stub(),
+  okStub: fetchBox.stub<any[], boolean>(),
+  statusStub: fetchBox.stub<any[], number>(),
   blob: fetchBox.stub(),
-  json: fetchBox.stub()
+  json: fetchBox.stub(),
+  text: fetchBox.stub()
 }
 
 Object.defineProperties(fetchResultStub, {
   ok: {
     get: fetchResultStub.okStub,
+    enumerable: true
+  },
+  status: {
+    get: fetchResultStub.statusStub,
     enumerable: true
   }
 })
@@ -101,6 +112,7 @@ Object.assign(global, {
 export const mochaHooks = {
   beforeEach() {
     fetch.resolves(fetchResultStub)
+    createImageBitmap.resolves({ width: 'not set', height: 'not set either' })
   },
 
   afterEach() {
@@ -109,3 +121,19 @@ export const mochaHooks = {
     fetchBox.reset()
   }
 }
+
+/* Helpers */
+
+export const pickStub = <O = any, K extends keyof O = keyof O>(
+  key: K,
+  object: O
+) =>
+  object[key] as SinonStub<
+    any[],
+    Partial<Awaited<Extract<OverloadedReturnType<O[K]>, Promise<any>>>> | any
+  >
+
+export const getDohResponse = (ip: string, status = 0): DoHResponse => ({
+  Status: status,
+  Answer: [{ type: 1, data: ip, TTL: 0, name: 'anything' }]
+})

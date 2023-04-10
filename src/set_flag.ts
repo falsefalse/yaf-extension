@@ -149,7 +149,7 @@ async function getCachedResponse(
 }
 
 export default async function setFlag(
-  { id: tabId, url }: chrome.tabs.Tab,
+  { id: tabId, url }: Pick<chrome.tabs.Tab, 'id' | 'url'>,
   { refetch = false } = {}
 ): Promise<Data | undefined> {
   const domain = getDomain(url)
