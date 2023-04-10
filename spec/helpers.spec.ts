@@ -105,12 +105,16 @@ describe('helpers.ts', () => {
       expect(await storage.get('another key')).to.eq('another valooe')
     })
 
-    it('clears itself when full', async () => {
-      setStub.throws('anything')
+    it('clears itself when full and sets the data', async () => {
+      setStub.onFirstCall().throws('im full')
+      setStub.onSecondCall().returns('pass')
 
-      await storage.set('smol', 'but fatal')
+      await storage.set('smol', 'but important')
 
       expect(clearStub).to.be.calledOnce
+      expect(setStub).to.be.calledTwice
+      expect(setStub.firstCall).to.be.calledWith({ smol: 'but important' })
+      expect(setStub.secondCall).to.be.calledWith({ smol: 'but important' })
     })
   })
 

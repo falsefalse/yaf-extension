@@ -37,10 +37,12 @@ function isLocal(ip: string | undefined): ip is string {
 
 const storage = {
   set: async (key: string, value: unknown) => {
+    const data = { [key]: value }
     try {
-      await chrome.storage.local.set({ [key]: value })
+      await chrome.storage.local.set(data)
     } catch (error) {
-      chrome.storage.local.clear()
+      await chrome.storage.local.clear()
+      await chrome.storage.local.set(data)
     }
   },
   get: async (key: string): Promise<Data | undefined> =>
