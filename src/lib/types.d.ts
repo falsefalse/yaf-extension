@@ -1,38 +1,54 @@
-// prettier-ignore
 // https://developers.google.com/speed/public-dns/docs/doh/json#dns_response_in_json
-export type DoHData = {
-  Status: number  // Standard DNS response code (32 bit integer).
+export interface DoHResponse {
+  /** Standard DNS response code (32 bit integer). */
+  Status: number
   Answer?: {
-    name: string  // Always matches name in the Question section
-    type: number  // A - Standard DNS RR type
-    TTL:  number  // Record's time-to-live in seconds
-    data: string  // Data for A - IP address as text
+    /** Hostname, always matches `name in the Question section. */
+    name: string
+    /** A - Standard DNS RR type, 1. */
+    type: number
+    /** Record's time-to-live in seconds. */
+    TTL: number
+    /** Data for A - IP address as text. */
+    data: string
   }[]
 }
 
 interface BaseData {
+  /** Epoch timestamp. */
   fetched_at: number
+  /** `true` for local domains, `false` otherwise. */
   is_local: boolean
 }
 
 export interface LocalResponse {
+  /** Local IP (either from domain or resolved to local). */
   ip: string
-  is_local: boolean
+  /** Always `true` for local IPs. */
+  is_local: true
 }
 
-// prettier-ignore
 export interface ErrorResponse {
-  error:   string  // either server returned error or 'failed to fetch'
-  status?: number  // not there when no network
-  ip?:     string  // could be returned from server but not necessarily
+  /** `fetch` error or error message returned from server. */
+  error: string
+  /** HTTP status of the latests request. */
+  status?: number
+  /** IP returned from server, when geo lookup fails. */
+  ip?: string
 }
 
 export interface GeoResponse {
+  /** ISO2 country code. */
   country_code: string
+  /** Human readable country name. */
   country_name: string
+  /** Resolved IP. */
   ip: string
+  /** City. */
   city?: string
+  /** Zip or postal code. */
   postal_code?: string
+  /** State, district, subdivision, etc. */
   region?: string
 }
 

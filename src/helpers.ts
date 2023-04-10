@@ -1,4 +1,4 @@
-import type { Data, DoHData } from './lib/types.js'
+import type { Data, DoHResponse } from './lib/types.js'
 
 import config from './config.js'
 
