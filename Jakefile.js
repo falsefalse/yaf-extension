@@ -105,7 +105,7 @@ task('manifest', (forFirefox = false) => {
 })
 namespace('manifest', () => {
   desc(`Remove ${MANIFEST}`)
-  task('clean', () => rmRf('manifest.json'))
+  task('clean', () => rmRf(MANIFEST))
 })
 
 desc('Typecheck & emit sources')
@@ -201,7 +201,14 @@ namespace('build', () => {
 
 namespace('src', () => {
   function define() {
-    this.packageFiles.include(['src/**', 'img/**', 'pkg/**', '*.*'])
+    this.packageFiles.include([
+      'build/**',
+      'img/**',
+      'src/**',
+      'spec/**',
+      'pkg/**',
+      '*.*'
+    ])
     this.packageDir = './pkg-src'
     this.needZip = true
   }
