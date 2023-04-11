@@ -26,8 +26,8 @@ const Context2dStub = {
   getImageData: canvasBox.stub()
 }
 
-// don't want implementation to be reset hence sinon.stub
-OffscreenCanvasMock.prototype.getContext = sinon.stub().returns(Context2dStub)
+const getContextStub = canvasBox.stub()
+OffscreenCanvasMock.prototype.getContext = getContextStub
 
 const createImageBitmap = canvasBox.stub()
 
@@ -75,7 +75,6 @@ Object.defineProperties(fetchResultStub, {
   }
 })
 
-// implementation is (re)set in beforeEach
 const fetch = fetchBox.stub()
 
 /* Assign to window */
@@ -112,12 +111,13 @@ Object.assign(global, {
   }
 })
 
-/* Reset call counts hook */
+/* Reset implementations */
 
 export const mochaHooks = {
   beforeEach() {
     fetch.resolves(fetchResultStub)
     createImageBitmap.resolves({ width: 'not set', height: 'not set either' })
+    getContextStub.returns(Context2dStub)
   },
 
   afterEach() {

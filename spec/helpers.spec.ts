@@ -153,6 +153,18 @@ describe('helpers.ts', () => {
         })
       })
 
+      it('throws if could not get 2d context', async () => {
+        pickStub('getContext', OffscreenCanvas.prototype).returns(null)
+
+        try {
+          await setAction(123, 'any', 'thing')
+        } catch (error: any) {
+          expect(error)
+            .to.be.instanceOf(Error)
+            .to.have.property('message', 'Failed to get 2d canvas context')
+        }
+      })
+
       const mockImage = (width: number, height: number) =>
         createImageBitmapMock.onFirstCall().resolves({ width, height })
 

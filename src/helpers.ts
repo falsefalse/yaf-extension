@@ -64,7 +64,7 @@ async function setIcon(tabId: number | undefined, path: string) {
     willReadFrequently: true
   })
 
-  if (!ctx) throw 'Failed to get 2d canvas context'
+  if (!ctx) throw new Error('Failed to get 2d canvas context')
 
   if (!path.startsWith('/img/flags/')) {
     await chrome.action.setIcon({ tabId, path })
