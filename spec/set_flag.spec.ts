@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 
 import { getDohResponse, pickStub } from './setup.js'
-import { GeoResponse } from '../src/lib/types.js'
+import type { GeoResponse } from '../src/lib/types.js'
 
 import setFlag from '../src/set_flag.js'
 

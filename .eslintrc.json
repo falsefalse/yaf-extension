@@ -27,7 +27,11 @@
         "no-unused-vars": "off",
         "@typescript-eslint/no-unused-vars": "error",
         // somehow it's "warn" by default
-        "@typescript-eslint/no-non-null-assertion": "error"
+        "@typescript-eslint/no-non-null-assertion": "error",
+        "@typescript-eslint/consistent-type-imports": [
+          "error",
+          { "fixStyle": "inline-type-imports" }
+        ]
       }
     },
     {

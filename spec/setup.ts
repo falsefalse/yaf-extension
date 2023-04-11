@@ -1,9 +1,9 @@
-import sinon, { SinonStub } from 'sinon'
+import sinon, { type SinonStub } from 'sinon'
 import chai from 'chai'
 import sinonChai from 'sinon-chai'
 
 import type { OverloadedReturnType } from '../src/lib/es5.js'
-import { DoHResponse } from '../src/lib/types.js'
+import type { DoHResponse } from '../src/lib/types.js'
 
 /* Matchers */
 
