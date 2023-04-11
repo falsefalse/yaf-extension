@@ -87,10 +87,17 @@ declare global {
   var globalStubs: typeof stubs
 }
 
+class HeadersMock {
+  constructor(headers: any) {
+    return headers
+  }
+}
+
 Object.assign(global, {
   globalStubs: stubs,
 
   fetch,
+  Headers: HeadersMock,
 
   OffscreenCanvas: OffscreenCanvasMock,
   createImageBitmap,
