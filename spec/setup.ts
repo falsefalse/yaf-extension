@@ -27,9 +27,7 @@ const Context2dStub = {
 }
 
 // don't want implementation to be reset hence sinon.stub
-OffscreenCanvasMock.prototype.getContext = sinon
-  .stub()
-  .callsFake(() => Context2dStub)
+OffscreenCanvasMock.prototype.getContext = sinon.stub().returns(Context2dStub)
 
 const createImageBitmap = canvasBox.stub()
 
