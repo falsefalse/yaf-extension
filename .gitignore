@@ -10,3 +10,6 @@ pkg-src/
 # generated files
 src/config.ts
 manifest.json
+
+# coverage report
+coverage*/

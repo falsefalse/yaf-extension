@@ -27,6 +27,11 @@ yarn build:firefox
 # production build: minified, points to https://geoip.furman.im
 jake -q
 jake -q firefox
+
+# specs
+yarn test[:watch]
+# coverage
+yarn coverage[:html]
 ```
 
 Open `chrome://extensions/`, turn on "Developer mode", click "Load unpacked",

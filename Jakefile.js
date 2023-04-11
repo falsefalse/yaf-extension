@@ -120,13 +120,18 @@ task('typescript', [BUILD_DIR], () => {
   }
 })
 
-const API_ENDPOINT = DEV ? 'http://localhost:8080' : 'https://geoip.furman.im'
+const API_ENDPOINT = 'https://geoip.furman.im'
+const DEV_ENDPOINT = 'http://localhost:8080'
 const DOH_ENDPOINT = 'https://dns.google/resolve'
 desc(`Generate config`)
 task('config', [BUILD_DIR], (forSpecs = false) => {
+  const forDev = forSpecs || DEV
+  const apiUrl = forDev ? DEV_ENDPOINT : API_ENDPOINT
+  const dohApiUrl = DOH_ENDPOINT
+
   const config = `export default ${stringify({
-    apiUrl: API_ENDPOINT,
-    dohApiUrl: DOH_ENDPOINT,
+    apiUrl,
+    dohApiUrl,
     version
   })}`
   const path = forSpecs ? SPEC_CONFIG : CONFIG
@@ -135,7 +140,7 @@ task('config', [BUILD_DIR], (forSpecs = false) => {
 
   log(
     'Created %s config',
-    DEV ? yellow('development 🚧') : blue('production 🌍')
+    forDev ? yellow('development 🚧') : blue('production 🌍')
   )
 })
 
