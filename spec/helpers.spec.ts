@@ -166,14 +166,17 @@ describe('helpers.ts', () => {
       })
 
       const mockImage = (width: number, height: number) =>
-        createImageBitmapMock.onFirstCall().resolves({ width, height })
+        createImageBitmapMock
+          .onFirstCall()
+          .resolves({ width, height, close() {} })
 
       const mockResizeCall = () =>
         createImageBitmapMock
           .onSecondCall()
           .callsFake((_, { resizeWidth, resizeHeight }) => ({
             width: resizeWidth,
-            height: resizeHeight
+            height: resizeHeight,
+            close() {}
           }))
 
       it('upscales, centers and renders the flag', async () => {
@@ -193,7 +196,7 @@ describe('helpers.ts', () => {
         })
         // center upscaled bitmap vertically in 64x64
         expect(drawImage).calledOnceWithExactly(
-          { width: 16 * 4, height: 11 * 4 },
+          sinon.match({ width: 16 * 4, height: 11 * 4 }),
           0,
           10
         )
@@ -221,7 +224,7 @@ describe('helpers.ts', () => {
         })
         // center upscaled bitmap vertically in 64x64
         expect(drawImage).calledOnceWithExactly(
-          { width: 9 * 4, height: 11 * 4 },
+          sinon.match({ width: 9 * 4, height: 11 * 4 }),
           14,
           10
         )
@@ -249,7 +252,7 @@ describe('helpers.ts', () => {
         })
         // center upscaled bitmap vertically in 64x64
         expect(drawImage).calledOnceWithExactly(
-          { width: 4 * 4, height: 5 * 4 },
+          sinon.match({ width: 4 * 4, height: 5 * 4 }),
           24,
           22
         )

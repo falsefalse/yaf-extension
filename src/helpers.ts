@@ -73,7 +73,9 @@ async function setIcon(tabId: number | undefined, path: string) {
 
   // read image and its dimensions
   const imgBlob = await (await fetch(path)).blob()
-  const { width, height } = await createImageBitmap(imgBlob)
+  const original = await createImageBitmap(imgBlob)
+  const { width, height } = original
+  original.close()
 
   // upscale without smoothing
   const upscaled = await createImageBitmap(imgBlob, {
@@ -89,6 +91,7 @@ async function setIcon(tabId: number | undefined, path: string) {
     center(SIZE, upscaled.width),
     center(SIZE, upscaled.height)
   )
+  upscaled.close()
 
   // pass bitmap to browser
   await chrome.action.setIcon({

@@ -116,7 +116,11 @@ Object.assign(global, {
 export const mochaHooks = {
   beforeEach() {
     fetch.resolves(fetchResultStub)
-    createImageBitmap.resolves({ width: 'not set', height: 'not set either' })
+    createImageBitmap.resolves({
+      width: 'not set',
+      height: 'not set either',
+      close() {}
+    })
     getContextStub.returns(Context2dStub)
   },
 
