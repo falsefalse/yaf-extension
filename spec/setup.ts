@@ -3,7 +3,7 @@ import chai from 'chai'
 import sinonChai from 'sinon-chai'
 
 import type { OverloadedReturnType } from '../src/lib/es5.js'
-import type { DoHResponse } from '../src/lib/types.js'
+import type { DoHResponse, GeoResponse } from '../src/lib/types.js'
 
 /* Matchers */
 
@@ -20,7 +20,7 @@ class OffscreenCanvasMock {
   getContext() {}
 }
 
-const Context2dStub = {
+const Context2d = {
   clearRect: canvasBox.spy(),
   drawImage: canvasBox.spy(),
   getImageData: canvasBox.stub()
@@ -56,34 +56,23 @@ const resolve = chromeBox.stub()
 
 const fetchBox = sinon.createSandbox({ properties: ['stub'] })
 
-const fetchResultStub = {
-  okStub: fetchBox.stub<any[], boolean>(),
-  statusStub: fetchBox.stub<any[], number>(),
+const fetchResult = {
+  ok: false,
+  status: 0,
   blob: fetchBox.stub(),
   json: fetchBox.stub(),
   text: fetchBox.stub()
 }
 
-Object.defineProperties(fetchResultStub, {
-  ok: {
-    get: fetchResultStub.okStub,
-    enumerable: true
-  },
-  status: {
-    get: fetchResultStub.statusStub,
-    enumerable: true
-  }
-})
-
 const fetch = fetchBox.stub()
 
 /* Assign to window */
 
-const stubs = { Context2dStub, fetchResultStub } as const
-
 declare global {
-  // eslint-disable-next-line no-var
-  var globalStubs: typeof stubs
+  /* eslint-disable no-var */
+  var Context2dStub: typeof Context2d
+  var fetchResultStub: typeof fetchResult
+  /* eslint-enable no-var */
 }
 
 class HeadersMock {
@@ -93,7 +82,8 @@ class HeadersMock {
 }
 
 Object.assign(global, {
-  globalStubs: stubs,
+  Context2dStub: Context2d,
+  fetchResultStub: fetchResult,
 
   fetch,
   Headers: HeadersMock,
@@ -115,13 +105,13 @@ Object.assign(global, {
 
 export const mochaHooks = {
   beforeEach() {
-    fetch.resolves(fetchResultStub)
+    fetch.resolves(fetchResult)
     createImageBitmap.resolves({
       width: 'not set',
       height: 'not set either',
       close() {}
     })
-    getContextStub.returns(Context2dStub)
+    getContextStub.returns(Context2d)
   },
 
   afterEach() {
@@ -145,4 +135,16 @@ export const pickStub = <O = any, K extends keyof O = keyof O>(
 export const getDohResponse = (ip: string, status = 0): DoHResponse => ({
   Status: status,
   Answer: [{ type: 1, data: ip, TTL: 0, name: 'anything' }]
+})
+
+export const getGeoResponse = (
+  ip: string,
+  overrides?: GeoResponse
+): GeoResponse => ({
+  country_code: 'UA',
+  country_name: 'Ukraine',
+  ip, // server echoes IP back
+  city: 'Boyarka',
+  region: 'Kyiv Metro Area',
+  ...overrides
 })

@@ -5,10 +5,10 @@ import config from './config.js'
 function getDomain(url: string | undefined) {
   if (!url) return
 
-  const urlObj = new URL(url)
-  if (!['http:', 'https:', 'ftp:'].includes(urlObj.protocol)) return
+  const { protocol, hostname } = new URL(url)
+  if (!['http:', 'https:', 'ftp:'].includes(protocol)) return
 
-  return urlObj.hostname
+  return hostname
 }
 
 function isLocal(ip: string | undefined): ip is string {
@@ -46,7 +46,7 @@ const storage = {
     }
   },
   get: async (key: string): Promise<Data | undefined> =>
-    (await chrome.storage.local.get(key))[key]
+    ((await chrome.storage.local.get(key)) || {})[key]
 }
 
 /* Upscale flags */

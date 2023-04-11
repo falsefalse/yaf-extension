@@ -11,6 +11,8 @@ import {
   resolve
 } from '../src/helpers.js'
 
+const TAB_ID = 14
+
 describe('helpers.ts', () => {
   describe('isLocal', () => {
     // prettier-ignore
@@ -97,6 +99,12 @@ describe('helpers.ts', () => {
       expect(await storage.get('another key')).to.eq('another valooe')
     })
 
+    it('#get returned null', async () => {
+      getStub.resolves(null)
+
+      expect(await storage.get('should not throw')).to.be.undefined
+    })
+
     it('clears itself when full and sets the data', async () => {
       setStub.onFirstCall().throws()
       setStub.onSecondCall().resolves()
@@ -130,15 +138,8 @@ describe('helpers.ts', () => {
     })
 
     describe('Flags 🚩', () => {
-      const createImageBitmapMock = pickStub('createImageBitmap', global)
-
-      const {
-        Context2dStub: { clearRect, drawImage, getImageData },
-        fetchResultStub: { blob: imageBlob }
-      } = globalStubs
-
       beforeEach(() => {
-        imageBlob.resolves('🖼')
+        fetchResultStub.blob.resolves('🖼')
         getImageData.returns('🖼 from canvas')
       })
 
@@ -165,114 +166,90 @@ describe('helpers.ts', () => {
         }
       })
 
-      const mockImage = (width: number, height: number) =>
-        createImageBitmapMock
-          .onFirstCall()
-          .resolves({ width, height, close() {} })
+      const { clearRect, drawImage, getImageData } = Context2dStub
 
-      const mockResizeCall = () =>
-        createImageBitmapMock
+      const createImageBitmapStub = pickStub('createImageBitmap', global)
+      const closeBitmapStub = sinon.stub()
+
+      const stubImageRead = (width: number, height: number) =>
+        createImageBitmapStub
+          .onFirstCall()
+          .resolves({ width, height, close: closeBitmapStub })
+
+      const stubImageResize = () =>
+        createImageBitmapStub
           .onSecondCall()
           .callsFake((_, { resizeWidth, resizeHeight }) => ({
             width: resizeWidth,
             height: resizeHeight,
-            close() {}
+            close: closeBitmapStub
           }))
 
-      it('upscales, centers and renders the flag', async () => {
-        mockImage(16, 11)
-        mockResizeCall()
-        await setAction(14, 'Ukraine', '/img/flags/ua.png')
+      afterEach(() => {
+        closeBitmapStub.resetHistory()
+      })
 
+      const expectResize = (
+        [width = 0, height = 0, scale = 0],
+        [pX = 0, pY = 0]
+      ) => {
         // clear canvas
         expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
         // create bitmap from blob, read dimensions
-        expect(createImageBitmapMock.firstCall).calledWithExactly('🖼')
+        expect(createImageBitmapStub.firstCall).calledWithExactly('🖼')
         // upscale
-        expect(createImageBitmapMock.secondCall).calledWithExactly('🖼', {
+        expect(createImageBitmapStub.secondCall).calledWithExactly('🖼', {
           resizeQuality: 'pixelated',
-          resizeWidth: 16 * 4,
-          resizeHeight: 11 * 4
+          resizeWidth: width * scale,
+          resizeHeight: height * scale
         })
+        // dispose of bitmaps
+        expect(closeBitmapStub).calledTwice
         // center upscaled bitmap vertically in 64x64
         expect(drawImage).calledOnceWithExactly(
-          sinon.match({ width: 16 * 4, height: 11 * 4 }),
-          0,
-          10
+          sinon.match({ width: width * scale, height: height * scale }),
+          pX,
+          pY
         )
         // send to browser
         expect(chrome.action.setIcon).calledWithExactly({
-          tabId: 14,
+          tabId: TAB_ID,
           imageData: { '64': '🖼 from canvas' }
         })
+      }
+
+      it('upscales, centers and renders the flag', async () => {
+        stubImageRead(16, 11)
+        stubImageResize()
+        await setAction(TAB_ID, 'Ukraine', '/img/flags/ua.png')
+
+        expectResize([16, 11, 4], [0, 10])
       })
 
       it('handles narrow 🇳🇵 flag', async () => {
-        mockImage(9, 11)
-        mockResizeCall()
-        await setAction(14, 'Nepal', '/img/flags/np.png')
+        stubImageRead(9, 11)
+        stubImageResize()
+        await setAction(TAB_ID, 'Nepal', '/img/flags/np.png')
 
-        // clear canvas
-        expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
-        // create bitmap from blob, read dimensions
-        expect(createImageBitmapMock.firstCall).calledWithExactly('🖼')
-        // upscale
-        expect(createImageBitmapMock.secondCall).calledWithExactly('🖼', {
-          resizeQuality: 'pixelated',
-          resizeWidth: 9 * 4,
-          resizeHeight: 11 * 4
-        })
-        // center upscaled bitmap vertically in 64x64
-        expect(drawImage).calledOnceWithExactly(
-          sinon.match({ width: 9 * 4, height: 11 * 4 }),
-          14,
-          10
-        )
-        // send to browser
-        expect(chrome.action.setIcon).calledWithExactly({
-          tabId: 14,
-          imageData: { '64': '🖼 from canvas' }
-        })
+        expectResize([9, 11, 4], [14, 10])
       })
 
       it("handles smol flag (don't have those but still)", async () => {
-        mockImage(4, 5)
-        mockResizeCall()
-        await setAction(14, 'Promes land', '/img/flags/promes.png')
+        stubImageRead(4, 5)
+        stubImageResize()
+        await setAction(TAB_ID, 'Promes land', '/img/flags/promes.png')
 
-        // clear canvas
-        expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
-        // create bitmap from blob, read dimensions
-        expect(createImageBitmapMock.firstCall).calledWithExactly('🖼')
-        // upscale
-        expect(createImageBitmapMock.secondCall).calledWithExactly('🖼', {
-          resizeQuality: 'pixelated',
-          resizeWidth: 4 * 4,
-          resizeHeight: 5 * 4
-        })
-        // center upscaled bitmap vertically in 64x64
-        expect(drawImage).calledOnceWithExactly(
-          sinon.match({ width: 4 * 4, height: 5 * 4 }),
-          24,
-          22
-        )
-        // send to browser
-        expect(chrome.action.setIcon).calledWithExactly({
-          tabId: 14,
-          imageData: { '64': '🖼 from canvas' }
-        })
+        expectResize([4, 5, 4], [24, 22])
       })
     })
   })
 
   describe('resolve', () => {
-    const {
-      fetchResultStub: { json, okStub }
-    } = globalStubs
+    const fetchStub = pickStub('fetch', global)
 
     describe('Google DoH', () => {
       it('returns undefined when network error', async () => {
-        pickStub('fetch', global).throws()
+        fetchStub.throws()
 
         expect(await resolve('boop.com')).to.be.undefined
       })
@@ -282,29 +259,32 @@ describe('helpers.ts', () => {
       })
 
       it('returns undefined when DoH errors out', async () => {
-        okStub.returns(true)
-        json.resolves({ Status: 88 })
+        fetchResultStub.ok = true
+        fetchResultStub.json.resolves({ Status: 88 })
 
         expect(await resolve('boop.com')).to.be.undefined
       })
 
       it('returns undefined when no Answer', async () => {
-        okStub.returns(true)
-        json.resolves({ Status: 0 })
+        fetchResultStub.ok = true
+        fetchResultStub.json.resolves({ Status: 0 })
 
         expect(await resolve('boop.com')).to.be.undefined
       })
 
       it('returns undefined when no Answer with type 1 (A record)', async () => {
-        okStub.returns(true)
-        json.resolves({ Status: 0, Answer: [{ type: 'not 1' }] })
+        fetchResultStub.ok = true
+        fetchResultStub.json.resolves({
+          Status: 0,
+          Answer: [{ type: 'not 1' }]
+        })
 
         expect(await resolve('boop.com')).to.be.undefined
       })
 
       it('returns undefined when no data for Answer with type 1', async () => {
-        okStub.returns(true)
-        json.resolves({ Status: 0, Answer: [{ type: 1 }] })
+        fetchResultStub.ok = true
+        fetchResultStub.json.resolves({ Status: 0, Answer: [{ type: 1 }] })
 
         expect(await resolve('boop.com')).to.be.undefined
       })
@@ -312,14 +292,14 @@ describe('helpers.ts', () => {
       it('makes correct query', async () => {
         await resolve('boop.com')
 
-        expect(fetch).to.be.calledOnceWith(
+        expect(fetchStub).to.be.calledOnceWith(
           'https://dns.google/resolve?type=1&name=boop.com'
         )
       })
 
       it('resolves ip', async () => {
-        okStub.returns(true)
-        json.resolves({
+        fetchResultStub.ok = true
+        fetchResultStub.json.resolves({
           Status: 0,
           Answer: [{ type: 1, data: '7.7.7.7' }]
         })
@@ -339,20 +319,20 @@ describe('helpers.ts', () => {
         delete chrome.dns
       })
 
-      const resolveMock = pickStub('resolve', browser.dns)
+      const resolveStub = pickStub('resolve', browser.dns)
 
       it('resolves ip without fetch', async () => {
-        resolveMock.resolves({ addresses: ['66.66.66.66'] })
+        resolveStub.resolves({ addresses: ['66.66.66.66'] })
 
         expect(await resolve('boop.com')).to.eq('66.66.66.66')
-        expect(fetch).not.to.be.called
+        expect(fetchStub).not.called
       })
 
       it('falls back to DoH when could not resolve', async () => {
-        resolveMock.rejects('nope')
+        resolveStub.rejects('nope')
         await resolve('boop.com')
 
-        expect(fetch).to.be.calledOnceWith(
+        expect(fetchStub).to.be.calledOnceWith(
           'https://dns.google/resolve?type=1&name=boop.com'
         )
       })

@@ -1,7 +1,6 @@
 import { expect } from 'chai'
 
-import { getDohResponse, pickStub } from './setup.js'
-import type { GeoResponse } from '../src/lib/types.js'
+import { getDohResponse, getGeoResponse, pickStub } from './setup.js'
 
 import setFlag from '../src/set_flag.js'
 import sinon, { type SinonFakeTimers } from 'sinon'
@@ -22,10 +21,6 @@ describe('set_flag.ts', () => {
 
   after(() => {
     clock.restore()
-  })
-
-  beforeEach(() => {
-    getStub.resolves({})
   })
 
   describe('Disable page action', () => {
@@ -73,11 +68,7 @@ describe('set_flag.ts', () => {
     })
 
     it('falls back to domain resolution when IP was not resolved', async () => {
-      fetchStub
-        .withArgs('https://dns.google/resolve?type=1&name=could.not.resolve')
-        .resolves({
-          ok: false
-        })
+      fetchResultStub.ok = false
 
       await setFlag({ id: TAB_ID, url: 'https://could.not.resolve' })
 
@@ -101,15 +92,12 @@ describe('set_flag.ts', () => {
 
     describe('Network and server errors', () => {
       it('uses error json if it can', async () => {
-        fetchStub.withArgs('http://localhost:8080/json.error').resolves({
-          ok: false,
-          status: 404,
-          text: () =>
-            Promise.resolve(
-              `{ "error": "say, domain wasn't resolved...",
+        fetchResultStub.ok = false
+        fetchResultStub.status = 404
+        fetchResultStub.text.resolves(
+          `{ "error": "say, domain wasn't resolved...",
                  "ip": "x.x.x.x" }`
-            )
-        })
+        )
 
         await setFlag({ id: TAB_ID, url: 'https://json.error' })
 
@@ -125,11 +113,9 @@ describe('set_flag.ts', () => {
       })
 
       it('uses error text', async () => {
-        fetchStub.withArgs('http://localhost:8080/text.error').resolves({
-          ok: false,
-          status: 500,
-          text: () => Promise.resolve('something went real wrong on the server')
-        })
+        fetchResultStub.ok = false
+        fetchResultStub.status = 500
+        fetchResultStub.text.resolves('something went real wrong on the server')
 
         await setFlag({ id: TAB_ID, url: 'https://text.error' })
 
@@ -144,9 +130,7 @@ describe('set_flag.ts', () => {
       })
 
       it('handles failed to fetch error', async () => {
-        fetchStub
-          .withArgs('http://localhost:8080/net.down')
-          .throws(new Error('oopsie network down'))
+        fetchStub.throws(new Error('oopsie network down'))
 
         await setFlag({ id: TAB_ID, url: 'https://net.down' })
 
@@ -160,11 +144,9 @@ describe('set_flag.ts', () => {
       })
 
       it('returns unknown errors as is', async () => {
-        fetchStub
-          .withArgs('http://localhost:8080/what.even.is.this')
-          .callsFake(() => {
-            throw 'not supposed to happen'
-          })
+        fetchStub.callsFake(() => {
+          throw 'not supposed to happen'
+        })
 
         await setFlag({ id: TAB_ID, url: 'https://what.even.is.this' })
 
@@ -186,13 +168,13 @@ describe('set_flag.ts', () => {
 
     it('does not fetch neither geo nor DoH for local domains', async () => {
       await setFlag({ id: TAB_ID, url: 'http://localhost' })
-      expect(fetchStub).not.to.be.called
+      expect(fetchStub).not.called
 
       await setFlag({ id: TAB_ID, url: 'https://0.0.0.0' })
-      expect(fetchStub).not.to.be.called
+      expect(fetchStub).not.called
 
       await setFlag({ id: TAB_ID, url: 'https://127.0.0.1' })
-      expect(fetchStub).not.to.be.called
+      expect(fetchStub).not.called
     })
 
     it('renders local resource title and icon', async () => {
@@ -308,7 +290,7 @@ describe('set_flag.ts', () => {
 
       await setFlag({ id: TAB_ID, url: 'http://no.network' })
 
-      expect(fetchStub).not.to.be.called
+      expect(fetchStub).not.called
     })
 
     it('refetches not founds after a day', async () => {
@@ -331,7 +313,7 @@ describe('set_flag.ts', () => {
 
       await setFlag({ id: TAB_ID, url: 'http://not.found' })
 
-      expect(fetchStub).not.to.be.called
+      expect(fetchStub).not.called
     })
 
     it('refetches the data if asked to', async () => {
@@ -347,7 +329,9 @@ describe('set_flag.ts', () => {
         { refetch: true }
       )
 
-      expect(fetchStub).calledTwice
+      expect(fetchStub.firstCall)
+        .calledWithMatch('dns.google')
+        .calledWithMatch('found.domain')
       expect(fetchStub.secondCall)
         .calledWithMatch('localhost:8080')
         .calledWithMatch('found.domain')
@@ -364,7 +348,9 @@ describe('set_flag.ts', () => {
 
       await setFlag({ id: TAB_ID, url: 'http://eight.days.old' })
 
-      expect(fetchStub).calledTwice
+      expect(fetchStub.firstCall)
+        .calledWithMatch('dns.google')
+        .calledWithMatch('eight.days.old')
       expect(fetchStub.secondCall)
         .calledWithMatch('localhost:8080')
         .calledWithMatch('eight.days.old')
@@ -396,20 +382,12 @@ describe('set_flag.ts', () => {
         json: () => Promise.resolve(getDohResponse('9.9.9.9'))
       })
 
-    const geoData: GeoResponse = {
-      country_code: 'UA',
-      country_name: 'Ukraine',
-      ip: '9.9.9.9', // server echoes IP back
-      city: 'Boyarka',
-      region: 'Kyiv Metro Area'
-    }
-
     fetchStub.withArgs('http://localhost:8080/9.9.9.9').resolves({
       ok: true,
-      json: () => Promise.resolve(geoData)
+      json: () => Promise.resolve(getGeoResponse('9.9.9.9'))
     })
 
-    pickStub('getImageData', globalStubs.Context2dStub).returns('🇺🇦')
+    pickStub('getImageData', Context2dStub).returns('🇺🇦')
 
     await setFlag({ id: TAB_ID, url: 'http://proper.site.ua' })
 
