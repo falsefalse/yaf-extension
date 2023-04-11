@@ -59,7 +59,7 @@ const SIZE = 64
 // (they all are apart from 16x9 Nepal 🇳🇵 )
 const scale = SIZE / 16
 
-async function setIcon(tabId: number | undefined, path: string) {
+async function setIcon(tabId: number, path: string) {
   const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
     willReadFrequently: true
   })
@@ -100,11 +100,7 @@ async function setIcon(tabId: number | undefined, path: string) {
   })
 }
 
-async function setAction(
-  tabId: number | undefined,
-  title: string,
-  iconPath: string
-) {
+async function setAction(tabId: number, title: string, iconPath: string) {
   chrome.action.setTitle({ tabId, title })
   await setIcon(tabId, iconPath)
 }

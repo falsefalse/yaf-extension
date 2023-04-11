@@ -23,6 +23,16 @@ describe('set_flag.ts', () => {
     clock.restore()
   })
 
+  it('does nothing if tabId is not there', async () => {
+    await setFlag({})
+
+    expect(chrome.action.setTitle).not.called
+    expect(chrome.action.setIcon).not.called
+    expect(fetch).not.called
+    expect(getStub).not.called
+    expect(setStub).not.called
+  })
+
   describe('Disable page action', () => {
     afterEach(() => {
       expect(chrome.action.disable).to.be.calledOnceWith(TAB_ID)

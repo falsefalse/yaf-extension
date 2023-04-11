@@ -8,11 +8,7 @@ import type {
 import config from './config.js'
 import { getDomain, isLocal, storage, setAction, resolve } from './helpers.js'
 
-async function updatePageAction(
-  tabId: number | undefined,
-  domain: string,
-  data: Data
-) {
+async function updatePageAction(tabId: number, domain: string, data: Data) {
   // marked local or is 'localhost'
   if (data.is_local || isLocal(domain)) {
     await setAction(
@@ -153,6 +149,8 @@ export default async function setFlag(
   { refetch = false } = {}
 ): Promise<Data | undefined> {
   const domain = getDomain(url)
+
+  if (!tabId) return
 
   if (!domain) {
     await chrome.action.disable(tabId)
