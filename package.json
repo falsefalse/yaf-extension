@@ -12,7 +12,7 @@
     "release:firefox": "yarn -s _prepare && jake -q firefox && open ./pkg",
     "build": "DEV=1 jake -q",
     "build:firefox": "DEV=1 jake -q firefox",
-    "typecheck": "yarn -s tsc --noEmit",
+    "typecheck": "yarn -s tsc --noEmit -p ts.base.json",
     "lint": "yarn -s format:check & p=$! ; yarn -s eslint ||s=1 ; wait $p||s=1 ; exit $s",
     "eslint": "eslint --fix *.js src/ spec/ --ext .ts,.ejs.html",
     "format:check": "yarn -s _prettier --check . ||s=1 ; yarn -s _restore ; exit $s",
