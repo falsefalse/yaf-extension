@@ -139,7 +139,7 @@ describe('helpers.ts', () => {
 
       beforeEach(() => {
         imageBlob.resolves('🖼')
-        getImageData.callsFake(() => '🖼 upscaled')
+        getImageData.returns('🖼 from canvas')
       })
 
       it('creates 64x64 canvas and 2d context', () => {
@@ -153,58 +153,99 @@ describe('helpers.ts', () => {
         })
       })
 
-      it('upscales, centers and renders the flag', async () => {
-        createImageBitmapMock.resolves({
-          width: 16 * 4,
-          height: 11 * 4
-        })
+      const mockImage = (width: number, height: number) =>
+        createImageBitmapMock.onFirstCall().resolves({ width, height })
 
+      const mockResizeCall = () =>
+        createImageBitmapMock
+          .onSecondCall()
+          .callsFake((_, { resizeWidth, resizeHeight }) => ({
+            width: resizeWidth,
+            height: resizeHeight
+          }))
+
+      it('upscales, centers and renders the flag', async () => {
+        mockImage(16, 11)
+        mockResizeCall()
         await setAction(14, 'Ukraine', '/img/flags/ua.png')
 
-        expect(clearRect).to.be.calledOnceWith(0, 0, 64, 64)
-
+        // clear canvas
+        expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
+        // create bitmap from blob, read dimensions
+        expect(createImageBitmapMock.firstCall).calledWithExactly('🖼')
         // upscale
-        expect(createImageBitmapMock).to.be.calledOnceWith('🖼', {
+        expect(createImageBitmapMock.secondCall).calledWithExactly('🖼', {
           resizeQuality: 'pixelated',
           resizeWidth: 16 * 4,
           resizeHeight: 11 * 4
         })
-
-        // center vertically
-        expect(drawImage).to.be.calledOnceWith(
+        // center upscaled bitmap vertically in 64x64
+        expect(drawImage).calledOnceWithExactly(
           { width: 16 * 4, height: 11 * 4 },
           0,
           10
         )
-
         // send to browser
-        expect(chrome.action.setIcon).to.be.calledOnceWith({
+        expect(chrome.action.setIcon).calledWithExactly({
           tabId: 14,
-          imageData: { '64': '🖼 upscaled' }
+          imageData: { '64': '🖼 from canvas' }
         })
       })
 
-      it('handles 🇳🇵 narrow flag', async () => {
-        createImageBitmapMock.resolves({
-          width: 9 * 4,
-          height: 11 * 4
-        })
-
+      it('handles narrow 🇳🇵 flag', async () => {
+        mockImage(9, 11)
+        mockResizeCall()
         await setAction(14, 'Nepal', '/img/flags/np.png')
 
-        expect(clearRect).to.be.calledOnceWith(0, 0, 64, 64)
-
-        expect(createImageBitmapMock).to.be.calledOnceWith('🖼', {
+        // clear canvas
+        expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
+        // create bitmap from blob, read dimensions
+        expect(createImageBitmapMock.firstCall).calledWithExactly('🖼')
+        // upscale
+        expect(createImageBitmapMock.secondCall).calledWithExactly('🖼', {
           resizeQuality: 'pixelated',
           resizeWidth: 9 * 4,
           resizeHeight: 11 * 4
         })
-
-        expect(drawImage).to.be.calledOnceWith(
+        // center upscaled bitmap vertically in 64x64
+        expect(drawImage).calledOnceWithExactly(
           { width: 9 * 4, height: 11 * 4 },
-          0,
+          14,
           10
         )
+        // send to browser
+        expect(chrome.action.setIcon).calledWithExactly({
+          tabId: 14,
+          imageData: { '64': '🖼 from canvas' }
+        })
+      })
+
+      it("handles smol flag (don't have those but still)", async () => {
+        mockImage(4, 5)
+        mockResizeCall()
+        await setAction(14, 'Promes land', '/img/flags/promes.png')
+
+        // clear canvas
+        expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
+        // create bitmap from blob, read dimensions
+        expect(createImageBitmapMock.firstCall).calledWithExactly('🖼')
+        // upscale
+        expect(createImageBitmapMock.secondCall).calledWithExactly('🖼', {
+          resizeQuality: 'pixelated',
+          resizeWidth: 4 * 4,
+          resizeHeight: 5 * 4
+        })
+        // center upscaled bitmap vertically in 64x64
+        expect(drawImage).calledOnceWithExactly(
+          { width: 4 * 4, height: 5 * 4 },
+          24,
+          22
+        )
+        // send to browser
+        expect(chrome.action.setIcon).calledWithExactly({
+          tabId: 14,
+          imageData: { '64': '🖼 from canvas' }
+        })
       })
     })
   })

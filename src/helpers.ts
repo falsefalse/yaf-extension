@@ -49,13 +49,15 @@ const storage = {
     (await chrome.storage.local.get(key))[key]
 }
 
-/* Upscale flag icons */
+/* Upscale flags */
 
-const SIZE = 64
-const OG = { width: 16, height: 11 }
-const factor = SIZE / OG.width
 const center = (whole: number, part: number) =>
   Math.round(Math.max(whole - part, 0) / 2)
+
+const SIZE = 64
+// pretend all flags are boxed in 16px wide box, gives nice scale factor
+// (they all are apart from 16x9 Nepal 🇳🇵 )
+const scale = SIZE / 16
 
 async function setIcon(tabId: number | undefined, path: string) {
   const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
@@ -69,21 +71,24 @@ async function setIcon(tabId: number | undefined, path: string) {
     return
   }
 
+  // read image and its dimensions
   const imgBlob = await (await fetch(path)).blob()
+  const { width, height } = await createImageBitmap(imgBlob)
 
-  const { width: w, height } = OG
-  const width = path.endsWith('/np.png') ? 9 : w
-
-  // read 16x11 (or 16x9 🇳🇵) bitmap, scale it up 4 times, no smoothing
-  const bitmap = await createImageBitmap(imgBlob, {
+  // upscale without smoothing
+  const upscaled = await createImageBitmap(imgBlob, {
     resizeQuality: 'pixelated',
-    resizeWidth: width * factor,
-    resizeHeight: height * factor
+    resizeWidth: width * scale,
+    resizeHeight: height * scale
   })
 
-  // draw bitmap on canvas, center vertically
+  // draw bitmap on canvas, centering it
   ctx.clearRect(0, 0, SIZE, SIZE)
-  ctx.drawImage(bitmap, 0, center(SIZE, bitmap.height))
+  ctx.drawImage(
+    upscaled,
+    center(SIZE, upscaled.width),
+    center(SIZE, upscaled.height)
+  )
 
   // pass bitmap to browser
   await chrome.action.setIcon({
