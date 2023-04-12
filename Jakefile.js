@@ -73,14 +73,16 @@ function minify(srcPath, forFirefox = false) {
 // lesssgoo!
 
 const BUILD_DIR = './build'
+const SRC_DIR = './src'
 
 // templates sources
 const EJS = new FileList().include('src/templates/*.ejs.html')
 // compiled templates
 const TEMPLATES = join(BUILD_DIR, 'templates.js')
+const SPEC_TEMPLATES = join(SRC_DIR, 'templates.js')
 // generated config
 const CONFIG = join(BUILD_DIR, 'config.js')
-const SPEC_CONFIG = join('src', 'config.ts')
+const SPEC_CONFIG = join(SRC_DIR, 'config.js')
 // generated manifest
 const MANIFEST = 'manifest.json'
 // generated and emitted scripts
@@ -134,8 +136,8 @@ task('config', [BUILD_DIR], (forSpecs = false) => {
     dohApiUrl,
     version
   })}`
-  const path = forSpecs ? SPEC_CONFIG : CONFIG
 
+  const path = forSpecs ? SPEC_CONFIG : CONFIG
   writeFile(path, config)
 
   log(
@@ -145,7 +147,7 @@ task('config', [BUILD_DIR], (forSpecs = false) => {
 })
 
 desc('Compile templates')
-task('templates', [BUILD_DIR], () => {
+task('templates', [BUILD_DIR], (forSpecs = false) => {
   const sources = EJS.toArray()
   const compiled = sources.reduce((_, tp) => {
     const name = basename(tp).replace('.ejs.html', '')
@@ -156,13 +158,10 @@ task('templates', [BUILD_DIR], () => {
     return _ + `export const ${name} = ${source}\n`
   }, '')
 
-  writeFile(TEMPLATES, compiled)
+  const path = forSpecs ? SPEC_TEMPLATES : TEMPLATES
+  writeFile(path, compiled)
 
-  log(
-    `Compiled %s templates → %s`,
-    yellow(sources.length),
-    grey(size(TEMPLATES))
-  )
+  log(`Compiled %s templates → %s`, yellow(sources.length), grey(size(path)))
 })
 
 desc('Minify')
@@ -172,17 +171,21 @@ task('minify', ['typescript', 'config', 'templates'], (forFirefox = false) => {
 })
 
 desc('Build all')
-task('build', (...args) => {
-  const [forFirefox] = args
+task('build', (forFirefox = false) => {
   if (!forFirefox) packageFiles.exclude('src/module.html')
-  ;['manifest', 'minify'].forEach(name => Task[name].invoke(...args))
+  ;['manifest', 'minify'].forEach(name => Task[name].invoke(forFirefox))
 })
 
 desc('Remove all')
-task('clean', ['manifest:clean', 'build:clobber', 'src:clobber'], () => {
-  rmRf(BUILD_DIR)
-  rmRf(SPEC_CONFIG)
-})
+task(
+  'clean',
+  ['manifest:clean', 'build:clobber', 'src:clobber'],
+  (onlySpecs = false) => {
+    if (!onlySpecs) rmRf(BUILD_DIR)
+    rmRf(SPEC_CONFIG)
+    rmRf(SPEC_TEMPLATES)
+  }
+)
 
 let packageFiles
 namespace('build', () => {

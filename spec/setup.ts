@@ -1,6 +1,7 @@
 import sinon, { type SinonStub } from 'sinon'
 import chai from 'chai'
 import sinonChai from 'sinon-chai'
+import chaiDom from 'chai-dom'
 
 import type { OverloadedReturnType } from '../src/lib/es5.js'
 import type { DoHResponse, GeoResponse } from '../src/lib/types.js'
@@ -8,6 +9,7 @@ import type { DoHResponse, GeoResponse } from '../src/lib/types.js'
 /* Matchers */
 
 chai.use(sinonChai)
+chai.use(chaiDom)
 
 /* OffscreenCanvas, createImageBitmap */
 
@@ -55,7 +57,8 @@ const resolve = chromeBox.stub()
 const tabs = {
   onUpdated: { addListener: chromeBox.stub() },
   onActivated: { addListener: chromeBox.stub() },
-  get: chromeBox.stub()
+  get: chromeBox.stub(),
+  query: chromeBox.stub()
 }
 
 /* fetch */
@@ -119,6 +122,8 @@ export const mochaHooks = {
       close() {}
     })
     getContextStub.returns(Context2d)
+
+    tabs.query.resolves([])
   },
 
   afterEach() {

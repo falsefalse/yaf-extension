@@ -8,7 +8,8 @@ pkg/
 pkg-src/
 
 # generated files
-src/config.ts
+src/config.js
+src/templates.js
 manifest.json
 
 # coverage report

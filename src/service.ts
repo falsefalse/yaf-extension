@@ -1,7 +1,7 @@
 import setFlag from './set_flag.js'
 
 const onUpdated = async (
-  _: number,
+  _tabId: number,
   { status }: { status?: string },
   tab: chrome.tabs.Tab
 ) => {

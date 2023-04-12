@@ -100,7 +100,7 @@ function delegateEvent<K extends keyof WindowEventMap>(
   })
 }
 
-window.addEventListener('DOMContentLoaded', async () => {
+async function handleDomReady() {
   const [currentTab] = await chrome.tabs.query({
     active: true,
     currentWindow: true
@@ -156,4 +156,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // service link click, timeout somehow makes firefox open link in a new tab
   delegateEvent('click', 'whois', () => setTimeout(() => window.close(), 50))
-})
+}
+
+window.addEventListener('DOMContentLoaded', handleDomReady)
+
+export { handleDomReady }
