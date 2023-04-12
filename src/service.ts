@@ -1,32 +1,29 @@
 import setFlag from './set_flag.js'
 
-async function getTabById(tabId: number | undefined) {
-  if (!tabId) return
+const onUpdated = async (
+  _: number,
+  { status }: { status?: string },
+  tab: chrome.tabs.Tab
+) => {
+  // 'complete' | 'loading' | undefined
+  if (status) await setFlag(tab)
+}
 
+const onActivated = async ({
+  tabId
+}: Pick<chrome.tabs.TabActiveInfo, 'tabId'>) => {
   try {
-    return await chrome.tabs.get(tabId)
+    const tab = await chrome.tabs.get(tabId)
+    if (tab?.url) await setFlag(tab)
   } catch (error) {
     return
   }
 }
 
-// update icon when tab is updated
-chrome.tabs.onUpdated.addListener(
-  async (tabId, { status, url }, receivedTab) => {
-    // doesn't always come, on refresh doesn't
-    url = url || receivedTab.url
+// update flag when tab is updated — navigation, refresh, ← / →
+chrome.tabs.onUpdated.addListener(onUpdated)
 
-    if (url && (status === 'loading' || status === 'complete')) {
-      const tab = await getTabById(receivedTab.id)
+// update flag when tab is selected
+chrome.tabs.onActivated.addListener(onActivated)
 
-      if (tab) await setFlag(tab)
-    }
-  }
-)
-
-// update icon when tab is selected
-chrome.tabs.onActivated.addListener(async ({ tabId }) => {
-  const tab = await getTabById(tabId)
-
-  if (tab?.url) await setFlag(tab)
-})
+export { onActivated, onUpdated }

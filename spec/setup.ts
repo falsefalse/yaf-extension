@@ -52,6 +52,12 @@ const action = {
 
 const resolve = chromeBox.stub()
 
+const tabs = {
+  onUpdated: { addListener: chromeBox.stub() },
+  onActivated: { addListener: chromeBox.stub() },
+  get: chromeBox.stub()
+}
+
 /* fetch */
 
 const fetchBox = sinon.createSandbox({ properties: ['stub'] })
@@ -97,7 +103,8 @@ Object.assign(global, {
 
   chrome: {
     storage: { local },
-    action
+    action,
+    tabs
   }
 })
 
