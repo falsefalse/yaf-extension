@@ -15,7 +15,7 @@ npm -g install yarn jake
 yarn install
 ```
 
-Why not `npm`? `yarn.lock` is ~3.1x smaller than `package-lock.json` (see 037b18f21422707d05dc5097f39e43df876764cb).
+Why not `npm`? `yarn.lock` is ~3.1x smaller than `package-lock.json` (see <code>[037b18f]</code>).
 
 ## Development
 
@@ -30,8 +30,10 @@ jake -q firefox
 
 # specs
 yarn test[:watch]
-# coverage
-yarn coverage[:html]
+# generate coverage
+yarn coverage
+# format generated coverage as html and open in default browser
+yarn coverage:html
 ```
 
 Open `chrome://extensions/`, turn on "Developer mode", click "Load unpacked",
@@ -95,3 +97,4 @@ $ jake -q src:package
 [Google DoH]: https://dns.google
 [server code]: https://github.com/falsefalse/geoip-server
 [Terminus]: https://packagecontrol.io/packages/Terminus
+[037b18f]: https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d05dc5097f39e43df876764cb
