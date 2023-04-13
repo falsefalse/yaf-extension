@@ -18,10 +18,10 @@
 <% if (area) { %>
   <% /*
     no white space between area, marker, and </li>
-    makes text selected _exactly_ when double clicked, without extra space
+    so when double clicked text is selected _exaclty_, w/o trailing space
   */ %>
   <li>
-    <%= area %><% if (located) { %><span class="located" title="Located!" /><% } %></li>
+    <% print(area); located && print('<span class="located" title="Located!" />') %></li>
 <% } %>
 
 <li><%= hinted(ip, 'Resolved IP address') %></li>
