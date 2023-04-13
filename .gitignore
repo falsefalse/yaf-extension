@@ -12,5 +12,9 @@ src/config.js
 src/templates.js
 manifest.json
 
+# make ts-node happy to run specs
+src/package.json
+spec/package.json
+
 # coverage report
 coverage*/

@@ -16,7 +16,7 @@ function isLocal(ip: string | undefined): ip is string {
 
   if (ip == 'localhost') return true
 
-  const octets = ip.split('.').map(oct => parseInt(oct, 10))
+  const octets = ip.split('.').map(o => parseInt(o, 10))
   if (octets.some(isNaN) || octets.length != 4) return false
 
   // 0.0.0.0

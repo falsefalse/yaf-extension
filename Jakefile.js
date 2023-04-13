@@ -164,6 +164,14 @@ task('templates', [BUILD_DIR], (forSpecs = false) => {
   log(`Compiled %s templates → %s`, yellow(sources.length), grey(size(path)))
 })
 
+// otherwise ts-node can not import anything
+desc('Pretend src/ and spec/ are modules')
+task('module', () => {
+  const typeModule = stringify({ type: 'module' })
+  writeFile('src/package.json', typeModule)
+  writeFile('spec/package.json', typeModule)
+})
+
 desc('Minify')
 task('minify', ['typescript', 'config', 'templates'], (forFirefox = false) => {
   if (DEV) return
@@ -184,6 +192,9 @@ task(
     if (!onlySpecs) rmRf(BUILD_DIR)
     rmRf(SPEC_CONFIG)
     rmRf(SPEC_TEMPLATES)
+    rmRf('src/package.json')
+    rmRf('spec/package.json')
+    rmRf('coverage/')
   }
 )
 
