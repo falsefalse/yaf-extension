@@ -1,7 +1,10 @@
+/// <reference types="./chai-dom-html.d.ts" />
+
 import sinon, { type SinonStub } from 'sinon'
 import chai from 'chai'
 import sinonChai from 'sinon-chai'
 import chaiDom from 'chai-dom'
+import chaiHtml from 'chai-html'
 
 import type { OverloadedReturnType } from '../src/lib/es5.js'
 import type { DoHResponse, GeoResponse } from '../src/lib/types.js'
@@ -10,6 +13,13 @@ import type { DoHResponse, GeoResponse } from '../src/lib/types.js'
 
 chai.use(sinonChai)
 chai.use(chaiDom)
+chai.use(chaiHtml)
+
+// both chai-dom and chai-html use .html, chai-html one wins
+// to make 🦜 happy — alias the method, and it's declaration
+chai.Assertion.addProperty('htmll', function () {
+  chai.util.flag(this, 'html', true)
+})
 
 /* OffscreenCanvas, createImageBitmap */
 

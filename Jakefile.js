@@ -47,13 +47,13 @@ const blue = s => `\x1b[34m${s}\x1b[0m`
 const grey = s => `\x1b[90m${s}\x1b[0m`
 /* eslint-enable no-unused-vars */
 
-function minify(srcPath, forFirefox = false) {
+function minify(srcPath, beautify = false) {
   const srcSize = size(srcPath)
 
   const config = {
     module: true,
-    ...(forFirefox && {
-      compress: false,
+    ...(beautify && {
+      compress: { dead_code: true },
       mangle: false,
       output: {
         beautify: true,
@@ -67,7 +67,13 @@ function minify(srcPath, forFirefox = false) {
   const { code } = uglify(readFile(srcPath), config)
   writeFile(srcPath, code)
 
-  log('Minified', srcPath, grey(srcSize), '→', blue(size(srcPath)))
+  log(
+    beautify ? 'Beautified 💅🏼' : 'Minified',
+    srcPath,
+    grey(srcSize),
+    '→',
+    blue(size(srcPath))
+  )
 }
 
 // lesssgoo!
@@ -162,6 +168,8 @@ task('templates', [BUILD_DIR], (forSpecs = false) => {
   writeFile(path, compiled)
 
   log(`Compiled %s templates → %s`, yellow(sources.length), grey(size(path)))
+
+  if (forSpecs) minify(path, true)
 })
 
 // otherwise ts-node can not import anything

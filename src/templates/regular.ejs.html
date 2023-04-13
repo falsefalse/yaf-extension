@@ -1,5 +1,5 @@
 <%
-  const hinted = (val, hint) => `<span title='${hint}'>${val}</span>`
+  const hinted = (val, hint) => val && `<span title='${hint}'>${val}</span>`
 
   const { country_name, domain, ip, city, region, postal_code } = locals
 
@@ -29,8 +29,7 @@
 <li class="separator" />
 
 <li class="service">
-  <% const href = `https://whois.domaintools.com/${domain}` %>
-  <a class="whois" href="<%= href %>"
+  <a class="whois" href="https://whois.domaintools.com/<%= domain %>"
     title="Open link in a new tab" target="_blank">
     Whois
   </a>
