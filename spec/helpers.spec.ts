@@ -1,7 +1,7 @@
-import { expect } from 'chai'
 import sinon from 'sinon'
+import { expect } from 'chai'
 
-import { pickStub } from './setup.js'
+import { getDohResponse, pickStub } from './setup.js'
 
 import {
   isLocal,
@@ -83,7 +83,7 @@ describe('helpers.ts', () => {
     it('#set', () => {
       storage.set('boop', { woop: 'shmloop' })
 
-      expect(setStub).to.be.calledOnceWith({
+      expect(setStub).calledOnceWith({
         boop: { woop: 'shmloop' }
       })
     })
@@ -111,10 +111,10 @@ describe('helpers.ts', () => {
 
       await storage.set('smol', 'but important')
 
-      expect(clearStub).to.be.calledOnce
-      expect(setStub).to.be.calledTwice
-      expect(setStub.firstCall).to.be.calledWith({ smol: 'but important' })
-      expect(setStub.secondCall).to.be.calledWith({ smol: 'but important' })
+      expect(clearStub).calledOnce
+      expect(setStub).calledTwice
+      expect(setStub.firstCall).calledWith({ smol: 'but important' })
+      expect(setStub.secondCall).calledWith({ smol: 'but important' })
     })
   })
 
@@ -122,7 +122,7 @@ describe('helpers.ts', () => {
     it('sets page action title', async () => {
       await setAction(88, 'boop title', 'ignore me')
 
-      expect(chrome.action.setTitle).to.be.calledOnceWith({
+      expect(chrome.action.setTitle).calledOnceWith({
         tabId: 88,
         title: 'boop title'
       })
@@ -131,7 +131,7 @@ describe('helpers.ts', () => {
     it('sets non-flag page action icon', async () => {
       await setAction(99, 'ignore me', 'not a flag.png')
 
-      expect(chrome.action.setIcon).to.be.calledOnceWith({
+      expect(chrome.action.setIcon).calledOnceWith({
         tabId: 99,
         path: 'not a flag.png'
       })
@@ -148,8 +148,8 @@ describe('helpers.ts', () => {
 
         setAction(123, 'any', 'thing')
 
-        expect(OffscreenCanvas).to.be.calledWith(64, 64)
-        expect(OffscreenCanvas.prototype.getContext).to.be.calledWith('2d', {
+        expect(OffscreenCanvas).calledWith(64, 64)
+        expect(OffscreenCanvas.prototype.getContext).calledWith('2d', {
           willReadFrequently: true
         })
       })
@@ -157,13 +157,16 @@ describe('helpers.ts', () => {
       it('throws if could not get 2d context', async () => {
         pickStub('getContext', OffscreenCanvas.prototype).returns(null)
 
+        let error
         try {
           await setAction(123, 'any', 'thing')
-        } catch (error: any) {
-          expect(error)
-            .to.be.instanceOf(Error)
-            .to.have.property('message', 'Failed to get 2d canvas context')
+        } catch (e) {
+          error = e
         }
+
+        expect(error)
+          .to.be.instanceOf(Error)
+          .to.have.property('message', 'Failed to get 2d canvas context')
       })
 
       const { clearRect, drawImage, getImageData } = Context2dStub
@@ -248,13 +251,13 @@ describe('helpers.ts', () => {
     const fetchStub = pickStub('fetch', global)
 
     describe('Google DoH', () => {
-      it('returns undefined when network error', async () => {
+      it('returns undefined when network errors out', async () => {
         fetchStub.throws()
 
         expect(await resolve('boop.com')).to.be.undefined
       })
 
-      it('returns undefined when http error', async () => {
+      it('returns undefined when gets http error', async () => {
         expect(await resolve('boop.com')).to.be.undefined
       })
 
@@ -265,14 +268,14 @@ describe('helpers.ts', () => {
         expect(await resolve('boop.com')).to.be.undefined
       })
 
-      it('returns undefined when no Answer', async () => {
+      it('returns undefined when gets no Answer', async () => {
         fetchResultStub.ok = true
         fetchResultStub.json.resolves({ Status: 0 })
 
         expect(await resolve('boop.com')).to.be.undefined
       })
 
-      it('returns undefined when no Answer with type 1 (A record)', async () => {
+      it('returns undefined when gets no Answer with type 1 (A record)', async () => {
         fetchResultStub.ok = true
         fetchResultStub.json.resolves({
           Status: 0,
@@ -282,7 +285,7 @@ describe('helpers.ts', () => {
         expect(await resolve('boop.com')).to.be.undefined
       })
 
-      it('returns undefined when no data for Answer with type 1', async () => {
+      it('returns undefined when gets no data for Answer with type 1', async () => {
         fetchResultStub.ok = true
         fetchResultStub.json.resolves({ Status: 0, Answer: [{ type: 1 }] })
 
@@ -292,17 +295,14 @@ describe('helpers.ts', () => {
       it('makes correct query', async () => {
         await resolve('boop.com')
 
-        expect(fetchStub).to.be.calledOnceWith(
+        expect(fetchStub).calledOnceWith(
           'https://dns.google/resolve?type=1&name=boop.com'
         )
       })
 
       it('resolves ip', async () => {
         fetchResultStub.ok = true
-        fetchResultStub.json.resolves({
-          Status: 0,
-          Answer: [{ type: 1, data: '7.7.7.7' }]
-        })
+        fetchResultStub.json.resolves(getDohResponse('7.7.7.7'))
 
         expect(await resolve('boop.com')).to.eq('7.7.7.7')
       })
@@ -332,7 +332,7 @@ describe('helpers.ts', () => {
         resolveStub.rejects('nope')
         await resolve('boop.com')
 
-        expect(fetchStub).to.be.calledOnceWith(
+        expect(fetchStub).calledOnceWith(
           'https://dns.google/resolve?type=1&name=boop.com'
         )
       })

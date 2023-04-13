@@ -7,7 +7,8 @@ import jsdom from 'jsdom-global'
 import { pickStub } from './setup.js'
 import { handleDomReady } from '../src/popup.js'
 
-const get = (selector: string) => document.querySelector(selector)
+const get = (s: string) => document.querySelector(s)
+const getAll = (s: string) => document.querySelectorAll(s)
 const click = (el: Element | null, eventInit: MouseEventInit = {}) =>
   el?.dispatchEvent(new MouseEvent('click', { bubbles: true, ...eventInit }))
 
@@ -57,7 +58,7 @@ describe('popup.ts', () => {
     expect(window.close).calledOnce
   })
 
-  it('closes popup and disables page action if can not get domain from tab url', async () => {
+  it('closes popup and disables page action if url is wronk', async () => {
     queryStub.resolves([{ id: 99, url: 'wronk://url' }])
 
     await handleDomReady()
@@ -90,10 +91,10 @@ describe('popup.ts', () => {
 
       expect(fetchStub.secondCall)
         .calledWithMatch('dns.google')
-        .and.calledWithMatch('furman.im')
+        .calledWithMatch('furman.im')
       expect(fetchStub.thirdCall)
         .calledWithMatch('localhost:8080')
-        .and.calledWithMatch('furman.im')
+        .calledWithMatch('furman.im')
     })
 
     it('opens donation link when reload is meta+clicked', async () => {
@@ -144,9 +145,13 @@ describe('popup.ts', () => {
       expect(get('.button.reload')).to.exist
 
       expect(get('.header')).to.have.text('Ukraine')
-      expect(get('.result')?.textContent)
-        .matches(/\bz.z.z.z\b/)
-        .and.matches(/\bKyiv, Kyiv City, 03453\b/)
+      // prettier-ignore
+      expect(getAll('.result li:not(.service, .separator)'))
+        .to.have.trimmed.text([
+          'Ukraine',
+          'Kyiv, Kyiv City, 03453',
+          'z.z.z.z'
+        ])
       expect(get('.located')).to.exist
 
       expect(get('a.whois')).to.have.attr(
@@ -168,11 +173,11 @@ describe('popup.ts', () => {
 
     await handleDomReady()
 
-    expect(get('.toolbar')).to.have.empty.html
+    expect(get('.toolbar')).to.have.empty.text
 
     expect(get('.header')).to.have.text('Local resource')
     expect(get('.resolved'))
-      .to.have.html('10.x.x.x')
+      .to.have.text('10.x.x.x')
       .to.have.attr('title', 'Resolved IP address')
   })
 
@@ -206,7 +211,7 @@ describe('popup.ts', () => {
 
     expect(get('.button.marklocal'))
       .to.have.class('marked')
-      .and.attr('title', 'Unmark domain as local')
+      .attr('title', 'Unmark domain as local')
 
     expect(fetchStub).not.to.be.called
   })
@@ -244,20 +249,26 @@ describe('popup.ts', () => {
       .to.have.attr('title', 'Unmark domain as local')
 
     expect(get('.header')).to.have.text('Local resource')
-    expect(get('.result')?.textContent).matches(/\bmarked.as.local\b/)
+    expect(getAll('.result li')).to.have.text([
+      'Local resource',
+      'marked.as.local'
+    ])
 
     click(get('.button.marklocal'))
     await new Promise(setImmediate)
 
     expect(fetchStub.firstCall)
       .calledWithMatch('dns.google')
-      .and.calledWithMatch('marked.as.local')
+      .calledWithMatch('marked.as.local')
     expect(fetchStub.secondCall)
       .calledWithMatch('localhost:8080')
-      .and.calledWithMatch('marked.as.local')
+      .calledWithMatch('marked.as.local')
 
     expect(get('.header')).to.have.text('marked.as.local')
-    expect(get('.result')?.textContent).matches(/\bnope, not resolved still\b/)
+    expect(getAll('.result li')).to.have.text([
+      'marked.as.local',
+      'nope, not resolved still'
+    ])
 
     expect(get('.button.marklocal')).not.to.have.class('marked')
     expect(get('.button.marklocal')).to.have.attr(

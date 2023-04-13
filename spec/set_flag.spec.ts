@@ -1,9 +1,9 @@
+import sinon, { type SinonFakeTimers } from 'sinon'
 import { expect } from 'chai'
 
 import { getDohResponse, getGeoResponse, pickStub } from './setup.js'
 
 import setFlag from '../src/set_flag.js'
-import sinon, { type SinonFakeTimers } from 'sinon'
 
 const TAB_ID = 88
 const NOW = new Date('2023-04-20T04:20:00.000Z')
@@ -35,13 +35,13 @@ describe('set_flag.ts', () => {
 
   describe('Disable page action', () => {
     afterEach(() => {
-      expect(chrome.action.disable).to.be.calledOnceWith(TAB_ID)
+      expect(chrome.action.disable).calledOnceWith(TAB_ID)
     })
 
     it('if domain is not there', async () => {
       await setFlag({ id: TAB_ID })
 
-      expect(chrome.action.setTitle).to.be.calledOnceWith({
+      expect(chrome.action.setTitle).calledOnceWith({
         tabId: TAB_ID,
         title: '😴'
       })
@@ -50,7 +50,7 @@ describe('set_flag.ts', () => {
     it('if URL schema does not match', async () => {
       await setFlag({ id: TAB_ID, url: 'gopher://is.out.of.the.question' })
 
-      expect(chrome.action.setTitle).to.be.calledOnceWith({
+      expect(chrome.action.setTitle).calledOnceWith({
         tabId: TAB_ID,
         title: '😴'
       })
@@ -82,6 +82,7 @@ describe('set_flag.ts', () => {
 
       await setFlag({ id: TAB_ID, url: 'https://could.not.resolve' })
 
+      // first call is DoH
       expect(fetchStub.secondCall)
         .calledWithMatch('localhost:8080')
         .calledWithMatch('could.not.resolve')
@@ -90,6 +91,7 @@ describe('set_flag.ts', () => {
     it('sets request parameters', async () => {
       await setFlag({ id: TAB_ID, url: 'https://head.e.rs' })
 
+      // first call is DoH
       expect(fetchStub.secondCall).calledWith(sinon.match.string, {
         headers: {
           Accept: 'application/json',
@@ -173,7 +175,7 @@ describe('set_flag.ts', () => {
 
   describe('Local IPs', () => {
     afterEach(() => {
-      expect(chrome.action.enable).to.be.calledWith(TAB_ID)
+      expect(chrome.action.enable).calledWith(TAB_ID)
     })
 
     it('does not fetch neither geo nor DoH for local domains', async () => {
@@ -190,11 +192,11 @@ describe('set_flag.ts', () => {
     it('renders local resource title and icon', async () => {
       await setFlag({ id: TAB_ID, url: 'https://127.0.0.1' })
 
-      expect(chrome.action.setTitle).to.be.calledWith({
+      expect(chrome.action.setTitle).calledWith({
         tabId: TAB_ID,
         title: '127.0.0.1 is a local resource'
       })
-      expect(chrome.action.setIcon).to.be.calledWith({
+      expect(chrome.action.setIcon).calledWith({
         tabId: TAB_ID,
         path: '/img/local_resource.png'
       })
@@ -232,7 +234,7 @@ describe('set_flag.ts', () => {
         await setFlag({ id: TAB_ID, url: 'http://imma.local.dev' })
 
         expect(fetchStub.firstCall)
-          .to.be.calledWithMatch('dns.google')
+          .calledWithMatch('dns.google')
           .calledWithMatch('imma.local.dev')
         expect(fetchStub.secondCall).to.be.null
       })
@@ -240,11 +242,11 @@ describe('set_flag.ts', () => {
       it('renders local resource title and icon', async () => {
         await setFlag({ id: TAB_ID, url: 'http://so.am.i' })
 
-        expect(chrome.action.setTitle).to.be.calledWith({
+        expect(chrome.action.setTitle).calledWith({
           tabId: TAB_ID,
           title: 'so.am.i is a local resource'
         })
-        expect(chrome.action.setIcon).to.be.calledWith({
+        expect(chrome.action.setIcon).calledWith({
           tabId: TAB_ID,
           path: '/img/local_resource.png'
         })
@@ -379,8 +381,8 @@ describe('set_flag.ts', () => {
 
       // `not.called` won't do, it will `fetch` image blob from disk
       expect(fetchStub)
-        .not.to.be.calledWithMatch('dns.google')
-        .not.to.be.calledWithMatch('localhost:8080')
+        .not.calledWithMatch('dns.google')
+        .not.calledWithMatch('localhost:8080')
     })
   })
 
@@ -402,18 +404,18 @@ describe('set_flag.ts', () => {
     await setFlag({ id: TAB_ID, url: 'http://proper.site.ua' })
 
     // resolve
-    expect(fetchStub.firstCall).to.be.calledWithMatch('proper.site.ua')
+    expect(fetchStub.firstCall).calledWithMatch('proper.site.ua')
     // geo lookup
-    expect(fetchStub.secondCall).to.be.calledWithMatch('9.9.9.9')
+    expect(fetchStub.secondCall).calledWithMatch('9.9.9.9')
     // load image
-    expect(fetchStub.thirdCall).to.be.calledWithMatch('/img/flags/ua.png')
+    expect(fetchStub.thirdCall).calledWithMatch('/img/flags/ua.png')
 
-    expect(chrome.action.enable).to.be.calledOnceWith(TAB_ID)
-    expect(chrome.action.setTitle).to.be.calledOnceWith({
+    expect(chrome.action.enable).calledOnceWith(TAB_ID)
+    expect(chrome.action.setTitle).calledOnceWith({
       tabId: TAB_ID,
       title: 'Ukraine → Kyiv Metro Area → Boyarka'
     })
-    expect(chrome.action.setIcon).to.be.calledOnceWith({
+    expect(chrome.action.setIcon).calledOnceWith({
       tabId: TAB_ID,
       imageData: { '64': '🇺🇦' }
     })
