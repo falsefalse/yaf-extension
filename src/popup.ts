@@ -93,8 +93,11 @@ function delegateEvent<K extends keyof WindowEventMap>(
   listener: (event: WindowEventMap[K]) => unknown
 ) {
   window.addEventListener(eventName, event => {
-    if (!(event.target instanceof Element)) return
-    if (!event.target.classList.contains(className)) return
+    if (
+      event.target instanceof Element &&
+      !event.target.classList.contains(className)
+    )
+      return
 
     return listener(event)
   })
@@ -116,8 +119,7 @@ async function handleDomReady() {
   const data = await setFlag(currentTab)
 
   // happens on extensions page
-  if (!data || !domain) {
-    await chrome.action.disable(currentTab.id)
+  if (!domain || !data) {
     window.close()
     return
   }

@@ -148,9 +148,9 @@ export default async function setFlag(
   { id: tabId, url }: Pick<chrome.tabs.Tab, 'id' | 'url'>,
   { refetch = false } = {}
 ): Promise<Data | undefined> {
-  const domain = getDomain(url)
-
   if (!tabId) return
+
+  const domain = getDomain(url)
 
   if (!domain) {
     await chrome.action.disable(tabId)
