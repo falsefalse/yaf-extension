@@ -1,3 +1,19 @@
+### 1.1.8
+
+- Loading states! 💅🏼
+  🔵 badge for loading, 🔴 badge for errors.
+  Resolved or local domains are blurred while loading, same as popup.
+- Fix: dispose of bitmaps when done resizing the flag
+- Fix: don't lose the data when writing into full storage
+- Fix: make it impossible to render `undefined` in the popup
+- Fix: centering of non-rectangular flags (🇳🇵)
+- Tech
+  - document data types
+  - add specs, collect coverage, github workflow
+  - build task for extension source packaging
+  - simplify package scripts
+  - update readme
+
 ### 1.1.7
 
 - Fixes for local IPs
