@@ -11,81 +11,82 @@ Take a look at [server code] as well.
 Requires `node@18`, `yarn@1.22` and `jake`.
 
 ```bash
+# allows require-ing globally installed packages
+export NODE_PATH=`npm -g root`
+
 npm -g install yarn jake
 yarn install
 ```
 
-Why not `npm`? `yarn.lock` is ~3.1x smaller than `package-lock.json` (see <code>[037b18f]</code>).
+<details>
+  <summary>Why not <code>npm</code>?</summary>
+  Because of the lock file size 🐈
+  <code>yarn.lock</code> is ~3.1x smaller than <code>package-lock.json</code>,
+  see <a href="https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d05dc5097f39e43df876764cb"><code>037b18f</code></a>.
+</details>
 
 ## Development
 
 ```bash
-# dev build: un-minified, points to http://localhost:8080
-yarn build
-yarn build:firefox
+# development build: un-minified, points to http://localhost:8080
+yarn build[:firefox]
 
 # production build: minified, points to https://geoip.furman.im
-jake -q
-jake -q firefox
+jake -q [:firefox]
 
 # specs
 yarn test[:watch]
 # generate coverage
 yarn coverage
-# format generated coverage as html and open in default browser
-yarn coverage:html
+# compile html report and open it in the default browser
+yarn report
 ```
 
-Open `chrome://extensions/`, turn on "Developer mode", click "Load unpacked",
-pick `pkg/DEV-yet-another-flags-<version>/manifest.json`.
+### Run development build
 
-🦊 uses zip file instead – `pkg/DEV-yet-another-flags-<version>.zip`.
+- open `chrome://extensions/`, turn on "Developer mode"
+- click "Load unpacked"
+- navigate to `./pkg` and pick `manifest.json`
 
 Don't forget to reload the extension in the browser when rebuilding.
 
-List all scripts and tasks. Use `jake -q` and `yarn -s` to limit the noise when running.
+### SublimeText build system
 
-```bash
-exit | yarn run
+SublimeText users get the benefit of ready-made build tasks (requires [Terminus]).
 
-# broken in the latest release, see next section
-jake -T
-```
+Open `extension.sublime-project` as a Project and press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>.
 
-#### `jake` task listing
+`tc` and `lint` tasks have navigable output.
 
-It's fixed in master but not released yet.
+### Release
 
-To use the latest source
+- Bump version in `package.json`
+- Add changelog entry
+- Build release packages
+
+  ```bash
+  yarn release
+  yarn release:firefox
+  ```
+
+#### Fix `jake -T`
+
+The command is broken in the latest release, but already fixed in master.
 
 ```bash
 # remove global jake
 npm -g rm jake
+# get latest master and link it globally
 git clone git@github.com:jakejs/jake.git && cd jake
-npm install
+npm i
 npm link
 ```
 
 See jakejs/jake#417, jakejs/jake#420.
 
-#### SublimeText build system
-
-SublimeText users get the benefit of ready-made build tasks (requires [Terminus]).
-Open `extension.sublime-project` as a Project,
-press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>. `tc` and `lint` tasks parse the results to make them navigable (or at least clickable in case of `prettier` warnings).
-
-### Release
-
-Prepare `pkg/yet-another-flags-<version>.zip`.
-
-```bash
-yarn release
-yarn release:firefox
-```
-
 #### Package sources
 
-AMO sometimes requires full source code to be submitted along with the build (because of compiled templates). This task prepares source code archive.
+AMO sometimes requires full source code to be submitted along with the build (because of compiled templates). Use this task to prepare source code archive.
 
 ```bash
 $ jake -q src:package
@@ -97,4 +98,3 @@ $ jake -q src:package
 [Google DoH]: https://dns.google
 [server code]: https://github.com/falsefalse/geoip-server
 [Terminus]: https://packagecontrol.io/packages/Terminus
-[037b18f]: https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d05dc5097f39e43df876764cb
