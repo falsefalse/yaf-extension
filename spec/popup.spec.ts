@@ -1,10 +1,10 @@
-import sinon from 'sinon'
+import sinon, { type SinonFakeTimers } from 'sinon'
 import { expect } from 'chai'
 
 import { readFileSync as readFile } from 'fs'
 import jsdom from 'jsdom-global'
 
-import { pickStub } from './setup.js'
+import { pickStub, getGeoResponse } from './setup.js'
 import { handleDomReady } from '../src/popup.js'
 
 const get = (s: string) => document.querySelector(s)
@@ -18,7 +18,19 @@ const setStub = pickStub('set', chrome.storage.local)
 const fetchStub = pickStub('fetch', global)
 const popupHtml = readFile('./src/popup.html', 'utf8')
 
+const NOW = new Date('2023-04-20T04:20:00.000Z')
+
 describe('popup.ts', () => {
+  let clock: SinonFakeTimers
+
+  before(() => {
+    clock = sinon.useFakeTimers({ now: NOW, toFake: ['Date', 'setTimeout'] })
+  })
+
+  after(() => {
+    clock.restore()
+  })
+
   beforeEach(() => {
     jsdom(popupHtml)
 
@@ -70,24 +82,20 @@ describe('popup.ts', () => {
   describe('Reload button', () => {
     it('fetches new data when reload clicked', async () => {
       queryStub.resolves([{ url: 'http://furman.im', id: 88 }])
+
       getStub.resolves({
         'furman.im': {
-          fetched_at: new Date().getTime(),
-          ip: 'z.z.z.z',
-          country_code: 'UA',
-          country_name: 'Ukraine',
-          city: 'Kyiv',
-          region: 'Kyiv City',
-          postal_code: '03453'
+          fetched_at: NOW.getTime(),
+          ...getGeoResponse('z.z.z.z')
         }
       })
 
       await handleDomReady()
 
+      expect(fetchStub.firstCall).calledWithMatch('flags/ua.png')
+
       click(get('.button.reload'))
       await new Promise(setImmediate)
-
-      expect(fetchStub.firstCall).calledWithMatch('flags/ua.png')
 
       expect(fetchStub.secondCall)
         .calledWithMatch('dns.google')
@@ -101,13 +109,8 @@ describe('popup.ts', () => {
       queryStub.resolves([{ url: 'http://furman.im', id: 88 }])
       getStub.resolves({
         'furman.im': {
-          fetched_at: new Date().getTime(),
-          ip: 'z.z.z.z',
-          country_code: 'UA',
-          country_name: 'Ukraine',
-          city: 'Kyiv',
-          region: 'Kyiv City',
-          postal_code: '03453'
+          fetched_at: NOW.getTime(),
+          ...getGeoResponse('z.z.z.z')
         }
       })
 
@@ -129,13 +132,12 @@ describe('popup.ts', () => {
       queryStub.resolves([{ url: 'http://furman.im', id: 88 }])
       getStub.resolves({
         'furman.im': {
-          fetched_at: new Date().getTime(),
-          ip: 'z.z.z.z',
-          country_code: 'UA',
-          country_name: 'Ukraine',
-          city: 'Kyiv',
-          region: 'Kyiv City',
-          postal_code: '03453'
+          fetched_at: NOW.getTime(),
+          ...getGeoResponse('z.z.z.z', {
+            city: 'Kyiv',
+            region: 'Kyiv City',
+            postal_code: '03453'
+          })
         }
       })
 
@@ -161,11 +163,22 @@ describe('popup.ts', () => {
     })
   })
 
-  it('does not render toolbar for local IPs', async () => {
+  it('does not render toolbar for local domains', async () => {
+    queryStub.resolves([{ url: 'http://0.0.0.0', id: 88 }])
+
+    await handleDomReady()
+
+    expect(get('.toolbar')).to.be.empty
+
+    expect(get('.header')).to.have.text('Local resource')
+    expect(getAll('.result li')).to.have.text(['Local resource', '0.0.0.0'])
+  })
+
+  it('does not render toolbar for domains resolved to local IPs', async () => {
     queryStub.resolves([{ url: 'http://resolved.local', id: 88 }])
     getStub.resolves({
       'resolved.local': {
-        fetched_at: new Date().getTime(),
+        fetched_at: NOW.getTime(),
         ip: '10.x.x.x',
         is_local: true
       }
@@ -173,7 +186,7 @@ describe('popup.ts', () => {
 
     await handleDomReady()
 
-    expect(get('.toolbar')).to.have.empty.text
+    expect(get('.toolbar')).to.be.empty
 
     expect(get('.header')).to.have.text('Local resource')
     expect(get('.resolved'))
@@ -182,12 +195,11 @@ describe('popup.ts', () => {
   })
 
   it('allows to mark unresolved domain as local', async () => {
-    const now = new Date().getTime()
     queryStub.resolves([{ url: 'http://not.resolved', id: 88 }])
     getStub.resolves({
       'not.resolved': {
-        fetched_at: now,
-        error: 'not found this one'
+        error: 'not found this one',
+        fetched_at: NOW.getTime()
       }
     })
 
@@ -203,7 +215,7 @@ describe('popup.ts', () => {
 
     expect(setStub).calledWith({
       'not.resolved': {
-        fetched_at: now,
+        fetched_at: NOW.getTime(),
         error: 'not found this one',
         is_local: true
       }
@@ -213,10 +225,10 @@ describe('popup.ts', () => {
       .to.have.class('marked')
       .attr('title', 'Unmark domain as local')
 
-    expect(fetchStub).not.to.be.called
+    expect(fetchStub).not.called
   })
 
-  it('refetches when unmarked as local', async () => {
+  it('renders mark as local when domain is still not resolved after unmarking', async () => {
     queryStub.resolves([{ url: 'http://marked.as.local', id: 88 }])
 
     fetchResultStub.ok = true
@@ -224,10 +236,7 @@ describe('popup.ts', () => {
       error: 'nope, not resolved still'
     })
 
-    const data = {
-      fetched_at: new Date().getTime(),
-      error: 'not found, this one'
-    }
+    const data = { fetched_at: NOW.getTime() }
     getStub
       .onFirstCall()
       .resolves({
@@ -248,7 +257,6 @@ describe('popup.ts', () => {
       .to.have.class('marked')
       .to.have.attr('title', 'Unmark domain as local')
 
-    expect(get('.header')).to.have.text('Local resource')
     expect(getAll('.result li')).to.have.text([
       'Local resource',
       'marked.as.local'
@@ -264,7 +272,15 @@ describe('popup.ts', () => {
       .calledWithMatch('localhost:8080')
       .calledWithMatch('marked.as.local')
 
-    expect(get('.header')).to.have.text('marked.as.local')
+    // store new data
+    expect(setStub).calledWith({
+      'marked.as.local': {
+        fetched_at: NOW.getTime(),
+        is_local: false,
+        error: 'nope, not resolved still'
+      }
+    })
+
     expect(getAll('.result li')).to.have.text([
       'marked.as.local',
       'nope, not resolved still'
@@ -275,5 +291,110 @@ describe('popup.ts', () => {
       'title',
       'Mark domain as local'
     )
+  })
+
+  it('hides mark button when domain resolves after unmarking', async () => {
+    queryStub.resolves([{ url: 'http://unresolved.at.first', id: 88 }])
+
+    fetchResultStub.ok = true
+    fetchResultStub.json
+      .onFirstCall()
+      .resolves({
+        error: 'not resolved at first'
+      })
+      .onSecondCall()
+      .resolves({
+        ...getGeoResponse('x.x.x.x')
+      })
+
+    const data = {
+      fetched_at: NOW.getTime(),
+      error: 'not resolved at first'
+    }
+    getStub
+      .onFirstCall()
+      .resolves({
+        'unresolved.at.first': { ...data, is_local: true }
+      })
+      .onSecondCall()
+      .resolves({
+        'unresolved.at.first': { ...data, is_local: true }
+      })
+      .onThirdCall()
+      .resolves({
+        'unresolved.at.first': { ...data, is_local: false }
+      })
+
+    await handleDomReady()
+
+    expect(get('.button.marklocal'))
+      .to.have.class('marked')
+      .to.have.attr('title', 'Unmark domain as local')
+
+    expect(getAll('.result li')).to.have.text([
+      'Local resource',
+      'unresolved.at.first'
+    ])
+
+    click(get('.button.marklocal'))
+    await new Promise(setImmediate)
+
+    expect(fetchStub.firstCall)
+      .calledWithMatch('dns.google')
+      .calledWithMatch('unresolved.at.first')
+    expect(fetchStub.secondCall)
+      .calledWithMatch('localhost:8080')
+      .calledWithMatch('unresolved.at.first')
+
+    expect(get('.header')).to.have.text('Ukraine')
+    expect(getAll('.result li:not(.separator)')).to.have.trimmed.text([
+      'Ukraine',
+      'Boyarka, Kyiv Metro Area',
+      'x.x.x.x',
+      'Whois'
+    ])
+
+    expect(get('.button.marklocal')).to.be.null
+  })
+
+  describe('Donation animation', () => {
+    const random = { Math }
+
+    beforeEach(() => {
+      queryStub.resolves([{ url: 'http://furman.im', id: 88 }])
+
+      getStub.resolves({
+        'furman.im': {
+          fetched_at: NOW.getTime(),
+          ...getGeoResponse('z.z.z.z')
+        }
+      })
+    })
+
+    afterEach(() => {
+      Object.assign(Math, { random })
+    })
+
+    it('animates for 2s when dice rolls less than 1/4', async () => {
+      Math.random = () => 0.2
+
+      await handleDomReady()
+
+      expect(
+        document.documentElement.style.getPropertyValue('--js-rotator-duration')
+      ).to.eq('2000ms')
+
+      expect(get('.rotator')).not.to.be.null
+      clock.tick(2000)
+      expect(get('.rotator')).to.be.null
+    })
+
+    it('does not animate when dice rolls more than 1/4', async () => {
+      Math.random = () => 1
+
+      await handleDomReady()
+
+      expect(get('.rotator')).to.be.null
+    })
   })
 })
