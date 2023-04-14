@@ -1,5 +1,7 @@
 # Yet Another Flags 🇺🇦
 
+[![coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/falsefalse/5f76f3b771603857432300417fcb90e0/raw/badge.json)](https://github.com/falsefalse/yaf-extension/actions/workflows/specs.yml)
+
 Minimalistic web extension that shows country flag for the current tab domain. Available for [Chrome] and [Firefox].
 
 Extension uses free [MaxMind City DB] for geo location, and [Google DoH] for localized DNS resolution.
@@ -12,7 +14,7 @@ Requires `node@18`, `yarn@1.22` and `jake`.
 
 ```bash
 # allows require-ing globally installed packages
-export NODE_PATH=`npm -g root`
+export NODE_PATH=`npm -g root` >> ~/.profile
 
 npm -g install yarn jake
 yarn install
@@ -20,9 +22,10 @@ yarn install
 
 <details>
   <summary>Why not <code>npm</code>?</summary>
-  Because of the lock file size 🐈
-  <code>yarn.lock</code> is ~3.1x smaller than <code>package-lock.json</code>,
-  see <a href="https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d05dc5097f39e43df876764cb"><code>037b18f</code></a>.
+
+Because of the lock file size — <code>yarn.lock</code> is three times smaller.
+See <a href="https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d05dc5097f39e43df876764cb"><code>037b18f</code></a> 🐈
+
 </details>
 
 ## Development
@@ -63,7 +66,6 @@ Open `extension.sublime-project` as a Project and press <kbd>Cmd</kbd>+<kbd>Shif
 - Bump version in `package.json`
 - Add changelog entry
 - Build release packages
-
   ```bash
   yarn release
   yarn release:firefox
@@ -77,9 +79,8 @@ The command is broken in the latest release, but already fixed in master.
 # remove global jake
 npm -g rm jake
 # get latest master and link it globally
-git clone git@github.com:jakejs/jake.git && cd jake
-npm i
-npm link
+git clone git@github.com:jakejs/jake.git
+cd jake && npm i && npm link
 ```
 
 See jakejs/jake#417, jakejs/jake#420.
@@ -89,7 +90,7 @@ See jakejs/jake#417, jakejs/jake#420.
 AMO sometimes requires full source code to be submitted along with the build (because of compiled templates). Use this task to prepare source code archive.
 
 ```bash
-$ jake -q src:package
+jake -q src:package
 ```
 
 [Chrome]: https://chrome.google.com/webstore/detail/dmchcmgddbhmbkakammmklpoonoiiomk

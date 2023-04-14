@@ -21,7 +21,9 @@
     "test:clean": "jake -q clean[specs]",
     "test:watch": "yarn -s test -R min --watch --parallel",
     "coverage": "c8 yarn -s test -R dot",
-    "report": "c8 -r html report && open coverage/index.html"
+    "report": "c8 -r html report && open coverage/index.html",
+    "coverage:ci": "c8 -o . -r json-summary yarn -s test",
+    "report:ci": "c8 -o . -r text report"
   },
   "devDependencies": {
     "@types/chai": "^4.3.4",

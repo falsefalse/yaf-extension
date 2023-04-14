@@ -1,0 +1,48 @@
+name: Specs
+on:
+  push:
+    branches: [master]
+
+jobs:
+  specs-and-coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: Install
+        run: |
+          echo "NODE_PATH=`npm -g root`" >> $GITHUB_ENV
+          npm -g install jake
+          yarn install --frozen-lockfile
+
+      - name: Specs
+        env:
+          NODE_PATH: ${{env.NODE_PATH}}
+        run: |
+          yarn coverage:ci
+
+      - name: Reports
+        run: |
+          echo "coverage_total=`node -pe "Object.values(require('./coverage-summary.json').total).filter(({ pct }) => +pct).reduce((a, { pct }) => a + pct / 4, 0).toFixed(2)"`" >> $GITHUB_ENV
+          function code_block() { echo '```'; echo -e "$1" ; echo '```' ; }
+          code_block "$(yarn -s report:ci)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update badge
+        uses: schneegans/dynamic-badges-action@v1.6.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: 5f76f3b771603857432300417fcb90e0
+          filename: badge.json
+          namedLogo: chai
+          logoColor: white
+          logoWidth: 12
+          label: coverage
+          message: ${{env.coverage_total}}%
+          valColorRange: ${{env.coverage_total}}
+          minColorRange: 0
+          maxColorRange: 100
