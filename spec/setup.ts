@@ -1,4 +1,4 @@
-/// <reference types="./chai-dom-html.d.ts" />
+/// <reference types="./chai-html.d.ts" />
 
 import sinon, { type SinonStub } from 'sinon'
 import chai from 'chai'
@@ -15,8 +15,8 @@ chai.use(sinonChai)
 chai.use(chaiDom)
 chai.use(chaiHtml)
 
-// both chai-dom and chai-html use .html, chai-html one wins
-// to make 🦜 happy — alias the method, and it's declaration
+// both chai-dom and chai-html use .html, last one wins
+// to make 🦜 happy — alias the method and it's declaration
 chai.Assertion.addProperty('htmll', function () {
   chai.util.flag(this, 'html', true)
 })
@@ -71,7 +71,7 @@ const tabs = {
   query: chromeBox.stub()
 }
 
-/* fetch */
+/* fetch, Headers */
 
 const fetchBox = sinon.createSandbox({ properties: ['stub'] })
 
@@ -85,6 +85,12 @@ const fetchResult = {
 
 const fetch = fetchBox.stub()
 
+class HeadersMock {
+  constructor(headers: any) {
+    return headers
+  }
+}
+
 /* Assign to window */
 
 declare global {
@@ -92,12 +98,6 @@ declare global {
   var Context2dStub: typeof Context2d
   var fetchResultStub: typeof fetchResult
   /* eslint-enable no-var */
-}
-
-class HeadersMock {
-  constructor(headers: any) {
-    return headers
-  }
 }
 
 Object.assign(global, {
@@ -154,14 +154,14 @@ export const pickStub = <O = any, K extends keyof O = keyof O>(
     Partial<Awaited<Extract<OverloadedReturnType<O[K]>, Promise<any>>>> | any
   >
 
-export const getDohResponse = (ip: string, status = 0): DoHResponse => ({
-  Status: status,
+export const getDohResponse = (ip: string): DoHResponse => ({
+  Status: 0,
   Answer: [{ type: 1, data: ip, TTL: 0, name: 'anything' }]
 })
 
 export const getGeoResponse = (
   ip: string,
-  overrides?: GeoResponse
+  overrides?: Partial<GeoResponse>
 ): GeoResponse => ({
   country_code: 'UA',
   country_name: 'Ukraine',
