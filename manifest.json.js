@@ -48,7 +48,7 @@ module.exports = ({ forFirefox, DEV } = {}) => ({
       16: 'img/icon/16.png',
       32: 'img/icon/32.png'
     },
-    default_title: 'Yet Another Flags',
+    default_title: DEV ? `${name} 🚧` : name,
     default_popup: 'src/popup.html'
   }
 })
