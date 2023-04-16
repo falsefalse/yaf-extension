@@ -65,6 +65,15 @@
       "working_dir": "$project_path",
       "target": "terminus_exec",
       "auto_close": true
+    },
+
+    {
+      "name": "test 🧪",
+      "cmd": ["yarn", "-s", "test"],
+
+      "working_dir": "$project_path",
+      "target": "terminus_exec",
+      "auto_close": false
     }
   ]
 }

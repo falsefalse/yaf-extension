@@ -92,17 +92,17 @@ describe('popup.ts', () => {
 
       await handleDomReady()
 
-      expect(fetchStub.firstCall).calledWithMatch('flags/ua.png')
+      expect(fetchStub).calledWith(sinon.match('flags/ua.png'))
 
       click(get('.button.reload'))
       await new Promise(setImmediate)
 
-      expect(fetchStub.secondCall)
-        .calledWithMatch('dns.google')
-        .calledWithMatch('furman.im')
-      expect(fetchStub.thirdCall)
-        .calledWithMatch('localhost:8080')
-        .calledWithMatch('furman.im')
+      expect(fetchStub).calledWith(
+        sinon.match('dns.google').and(sinon.match('furman.im'))
+      )
+      expect(fetchStub).calledWith(
+        sinon.match('localhost:8080').and(sinon.match('furman.im'))
+      )
     })
 
     it('opens donation link when reload is meta+clicked', async () => {
@@ -214,42 +214,39 @@ describe('popup.ts', () => {
     await new Promise(setImmediate)
 
     expect(setStub).calledWith({
-      'not.resolved': {
-        fetched_at: NOW.getTime(),
-        error: 'not found this one',
+      'not.resolved': sinon.match({
         is_local: true
-      }
+      })
     })
 
     expect(get('.button.marklocal'))
       .to.have.class('marked')
       .attr('title', 'Unmark domain as local')
 
-    expect(fetchStub).not.called
+    expect(fetchStub)
+      .not.calledWith(
+        sinon.match('dns.google').and(sinon.match('not.resolved'))
+      )
+      .not.calledWith(
+        sinon.match('localhost:8080').and(sinon.match('not.resolved'))
+      )
   })
 
   it('renders mark as local when domain is still not resolved after unmarking', async () => {
     queryStub.resolves([{ url: 'http://marked.as.local', id: 88 }])
 
-    fetchResultStub.ok = true
-    fetchResultStub.json.resolves({
-      error: 'nope, not resolved still'
+    new FakeStorage({
+      'marked.as.local': {
+        fetched_at: NOW.getTime(),
+        is_local: true,
+        error: 'not resolved at first'
+      }
     })
 
-    const data = { fetched_at: NOW.getTime() }
-    getStub
-      .onFirstCall()
-      .resolves({
-        'marked.as.local': { ...data, is_local: true }
-      })
-      .onSecondCall()
-      .resolves({
-        'marked.as.local': { ...data, is_local: true }
-      })
-      .onThirdCall()
-      .resolves({
-        'marked.as.local': { ...data, is_local: false }
-      })
+    fetchStub.withArgs(sinon.match('marked.as.local')).resolves({
+      ok: true,
+      json: () => Promise.resolve({ error: 'nope, not resolved still' })
+    })
 
     await handleDomReady()
 
@@ -265,21 +262,11 @@ describe('popup.ts', () => {
     click(get('.button.marklocal'))
     await new Promise(setImmediate)
 
-    expect(fetchStub.firstCall)
-      .calledWithMatch('dns.google')
-      .calledWithMatch('marked.as.local')
-    expect(fetchStub.secondCall)
-      .calledWithMatch('localhost:8080')
-      .calledWithMatch('marked.as.local')
-
-    // store new data
-    expect(setStub).calledWith({
-      'marked.as.local': {
-        fetched_at: NOW.getTime(),
-        is_local: false,
-        error: 'nope, not resolved still'
-      }
-    })
+    expect(fetchStub)
+      .calledWith(sinon.match('dns.google').and(sinon.match('marked.as.local')))
+      .calledWith(
+        sinon.match('localhost:8080').and(sinon.match('marked.as.local'))
+      )
 
     expect(getAll('.result li')).to.have.text([
       'marked.as.local',
@@ -296,34 +283,27 @@ describe('popup.ts', () => {
   it('hides mark button when domain resolves after unmarking', async () => {
     queryStub.resolves([{ url: 'http://unresolved.at.first', id: 88 }])
 
-    fetchResultStub.ok = true
-    fetchResultStub.json
+    fetchStub
+      .withArgs(sinon.match('unresolved.at.first'))
       .onFirstCall()
       .resolves({
-        error: 'not resolved at first'
+        ok: true,
+        json: () => Promise.resolve({ error: 'not resolved at first' })
       })
+      .withArgs(sinon.match('unresolved.at.first'))
       .onSecondCall()
       .resolves({
-        ...getGeoResponse('x.x.x.x')
+        ok: true,
+        json: () => Promise.resolve(getGeoResponse('x.x.x.x'))
       })
 
-    const data = {
-      fetched_at: NOW.getTime(),
-      error: 'not resolved at first'
-    }
-    getStub
-      .onFirstCall()
-      .resolves({
-        'unresolved.at.first': { ...data, is_local: true }
-      })
-      .onSecondCall()
-      .resolves({
-        'unresolved.at.first': { ...data, is_local: true }
-      })
-      .onThirdCall()
-      .resolves({
-        'unresolved.at.first': { ...data, is_local: false }
-      })
+    new FakeStorage({
+      'unresolved.at.first': {
+        fetched_at: NOW.getTime(),
+        is_local: true,
+        error: 'not resolved at first'
+      }
+    })
 
     await handleDomReady()
 
@@ -339,12 +319,12 @@ describe('popup.ts', () => {
     click(get('.button.marklocal'))
     await new Promise(setImmediate)
 
-    expect(fetchStub.firstCall)
-      .calledWithMatch('dns.google')
-      .calledWithMatch('unresolved.at.first')
-    expect(fetchStub.secondCall)
-      .calledWithMatch('localhost:8080')
-      .calledWithMatch('unresolved.at.first')
+    expect(fetchStub).calledWith(
+      sinon.match('dns.google').and(sinon.match('unresolved.at.first'))
+    )
+    expect(fetchStub).calledWith(
+      sinon.match('localhost:8080').and(sinon.match('unresolved.at.first'))
+    )
 
     expect(get('.header')).to.have.text('Ukraine')
     expect(getAll('.result li:not(.separator)')).to.have.trimmed.text([

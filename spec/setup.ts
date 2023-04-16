@@ -28,18 +28,27 @@ const canvasBox = sinon.createSandbox({
 })
 
 class OffscreenCanvasMock {
-  constructor() {}
-  getContext() {}
+  props: Record<string, unknown>
+
+  constructor(width: number, height: number) {
+    this.props = { width, height }
+  }
+
+  getContext() {
+    return {
+      canvas: { ...this.props },
+      ...Context2d
+    }
+  }
 }
 
 const Context2d = {
   clearRect: canvasBox.spy(),
   drawImage: canvasBox.spy(),
-  getImageData: canvasBox.stub()
+  getImageData: canvasBox.stub(),
+  measureText: canvasBox.stub(),
+  fillText: canvasBox.stub()
 }
-
-const getContextStub = canvasBox.stub()
-OffscreenCanvasMock.prototype.getContext = getContextStub
 
 const createImageBitmap = canvasBox.stub()
 
@@ -53,6 +62,31 @@ const local = {
   set: chromeBox.stub(),
   get: chromeBox.stub(),
   clear: chromeBox.stub()
+}
+
+type KeyedData = Record<string, Record<string, unknown>>
+
+class Storage {
+  store: KeyedData
+
+  constructor(data: KeyedData = {}) {
+    this.store = data
+
+    // @ts-expect-error: faking local storage
+    chrome.storage.local = this
+  }
+
+  async get(key: string) {
+    return Promise.resolve({ [key]: this.store[key] })
+  }
+
+  async set(dataToSet: KeyedData) {
+    Object.entries(dataToSet).forEach(([key, value]) => {
+      this.store[key] = { ...this.store[key], ...value }
+    })
+
+    return Promise.resolve()
+  }
 }
 
 const action = {
@@ -92,17 +126,18 @@ class HeadersMock {
 }
 
 /* Assign to window */
-
 declare global {
   /* eslint-disable no-var */
   var Context2dStub: typeof Context2d
   var fetchResultStub: typeof fetchResult
+  var FakeStorage: typeof Storage
   /* eslint-enable no-var */
 }
 
 Object.assign(global, {
   Context2dStub: Context2d,
   fetchResultStub: fetchResult,
+  FakeStorage: Storage,
 
   fetch,
   Headers: HeadersMock,
@@ -125,13 +160,21 @@ Object.assign(global, {
 
 export const mochaHooks = {
   beforeEach() {
+    // restore storage back, in case of FakeStorage was used
+    Object.assign(chrome.storage, { local })
+
     fetch.resolves(fetchResult)
+
     createImageBitmap.resolves({
       width: 'not set',
       height: 'not set either',
       close() {}
     })
-    getContextStub.returns(Context2d)
+
+    Context2d.measureText.returns({
+      width: 'text width not set',
+      actualBoundingBoxDescent: 'text height not set either'
+    })
 
     tabs.query.resolves([])
   },
