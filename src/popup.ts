@@ -42,7 +42,7 @@ function renderPopup(domain: string, data: Data) {
 
   const { is_local } = data
 
-  // 'locahost' and alike domains don't need toolbar
+  // 'localhost' and alike domains don't need toolbar
   if (!isLocal(domain)) {
     toolbarEl.innerHTML = toolbar({
       is_local,

@@ -12,7 +12,7 @@
 
 ### 1.1.6
 
-- Build improvs, no user visible changes.
+- Build improvements, no user visible changes.
 
 ### 1.1.5
 

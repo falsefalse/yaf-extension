@@ -48,7 +48,7 @@ describe('popup.ts', () => {
     expect(window.close).calledOnce
   })
 
-  it('does not try to render into empty dom', async () => {
+  it('does not try to render into empty DOM', async () => {
     jsdom('<nope>nothing</nope>')
     queryStub.resolves([{ id: 99, url: 'http://something' }])
 
@@ -70,7 +70,7 @@ describe('popup.ts', () => {
     expect(window.close).calledOnce
   })
 
-  it('closes popup and disables page action if url is wronk', async () => {
+  it('closes popup and disables page action if URL is wronk', async () => {
     queryStub.resolves([{ id: 99, url: 'wronk://url' }])
 
     await handleDomReady()

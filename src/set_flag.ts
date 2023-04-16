@@ -135,7 +135,7 @@ async function getCachedResponse(
     return { ...baseData, ...(await request(domain)) }
   }
 
-  // handle http and netwok errors
+  // handle http and network errors
   if ('error' in storedData) {
     const { error, status } = storedData
 
