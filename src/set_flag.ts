@@ -6,23 +6,28 @@ import type {
 } from './lib/types.js'
 
 import config from './config.js'
-import { getDomain, isLocal, storage, setAction, resolve } from './helpers.js'
+import {
+  getDomain,
+  isLocal,
+  storage,
+  resolve,
+  setPageAction
+} from './helpers.js'
 
 async function updatePageAction(tabId: number, domain: string, data: Data) {
   // marked local or is 'localhost'
   if (data.is_local || isLocal(domain)) {
-    await setAction(
-      tabId,
-      `${domain} is a local resource`,
-      '/img/local_resource.png'
-    )
+    await setPageAction(tabId, domain, { kind: 'local' })
 
     return
   }
 
   // not found
   if ('error' in data) {
-    await setAction(tabId, `Error: ${data.error}`, '/img/icon/32.png')
+    await setPageAction(tabId, domain, {
+      kind: 'error',
+      title: `Error: ${data.error}`
+    })
 
     return
   }
@@ -31,10 +36,11 @@ async function updatePageAction(tabId: number, domain: string, data: Data) {
   if ('country_code' in data) {
     const { country_code, country_name, city, region } = data
 
-    const title = [country_name, region, city].filter(Boolean).join(' → ')
-    const iconPath = `/img/flags/${country_code.toLowerCase()}.png`
-
-    await setAction(tabId, title, iconPath)
+    await setPageAction(tabId, domain, {
+      kind: 'geo',
+      country_code,
+      title: [country_name, region, city].filter(Boolean).join(' → ')
+    })
   }
 }
 
@@ -100,6 +106,7 @@ const day = 24 * 60 * 60 // seconds
 const week = 7 * day
 
 async function getCachedResponse(
+  tabId: number,
   domain: string,
   refetch: boolean
 ): Promise<Data> {
@@ -107,13 +114,13 @@ async function getCachedResponse(
     fetched_at: new Date().getTime(),
     is_local: isLocal(domain)
   }
-
   // use forever-local mode for 'localhost' or local range IP domains
   if (baseData.is_local) return baseData
 
-  const storedData = await storage.get(domain)
+  const storedData = await storage.getDomain(domain)
 
   if (!storedData?.fetched_at) {
+    setPageAction(tabId, domain, { kind: 'loading' })
     return { ...baseData, ...(await request(domain)) }
   }
 
@@ -124,6 +131,7 @@ async function getCachedResponse(
   const { fetched_at } = storedData
 
   if (refetch || passedMoreThan(week, fetched_at)) {
+    setPageAction(tabId, domain, { kind: 'loading' })
     return { ...baseData, ...(await request(domain)) }
   }
 
@@ -137,6 +145,7 @@ async function getCachedResponse(
       // refetch non-http errors often, maybe network is back
       (error && !status && passedMoreThan(aMin, fetched_at))
     ) {
+      setPageAction(tabId, domain, { kind: 'loading' })
       return { ...baseData, ...(await request(domain)) }
     }
   }
@@ -161,8 +170,9 @@ export default async function setFlag(
     await chrome.action.enable(tabId)
   }
 
-  const data = await getCachedResponse(domain, refetch)
+  const data = await getCachedResponse(tabId, domain, refetch)
   await storage.set(domain, data)
+
   await updatePageAction(tabId, domain, data)
 
   return data

@@ -45,37 +45,62 @@ const storage = {
       await chrome.storage.local.set(data)
     }
   },
-  get: async (key: string): Promise<Data | undefined> =>
-    ((await chrome.storage.local.get(key)) || {})[key]
+  get: async (key: string) =>
+    ((await chrome.storage.local.get(key)) || {})[key],
+
+  getDomain: async (domain: string): Promise<Data | undefined> =>
+    await storage.get(domain),
+
+  setDomainIcon: async (domain: string, path: string) => {
+    const data = await storage.get(domain)
+    if (data) {
+      await storage.set(domain, { ...data, icon: path })
+    }
+  },
+  getDomainIcon: async (domain: string) => {
+    const data: Record<string, string> = await storage.get(domain)
+
+    return data?.icon || DEFAULT_ICON
+  }
 }
 
-/* Upscale flags */
+const isFirefox = () => 'dns' in chrome
 
-const center = (whole: number, part: number) =>
-  Math.round(Math.max(whole - part, 0) / 2)
+/* Canvas shenanigans */
 
-const SIZE = 64
-// pretend all flags are boxed in 16px wide box, gives nice scale factor
-// (they all are apart from 16x9 Nepal 🇳🇵 )
-const scale = SIZE / 16
+const DEFAULT_ICON = '/img/icon/32.png'
 
-async function setIcon(tabId: number, path: string) {
-  const ctx = new OffscreenCanvas(SIZE, SIZE).getContext('2d', {
+function getCtx(size = 64): [OffscreenCanvasRenderingContext2D, number] {
+  const ctx = new OffscreenCanvas(size, size).getContext('2d', {
     willReadFrequently: true
   })
 
   if (!ctx) throw new Error('Failed to get 2d canvas context')
 
-  if (!path.startsWith('/img/flags/')) {
-    await chrome.action.setIcon({ tabId, path })
-    return
-  }
+  ctx.clearRect(0, 0, size, size)
 
+  return [ctx, size]
+}
+
+const center = (whole: number, part: number) =>
+  Math.round(Math.max(whole - part, 0) / 2)
+
+/* upscale icon by width */
+async function drawUpscaled(
+  ctx: OffscreenCanvasRenderingContext2D,
+  path: string
+) {
   // read image and its dimensions
   const imgBlob = await (await fetch(path)).blob()
   const original = await createImageBitmap(imgBlob)
   const { width, height } = original
   original.close()
+
+  const size = ctx.canvas.width
+  // give all flags scale factor 4
+  // pretend all flags are boxed in 16px wide box
+  // they all are apart from 16 x 9 Nepal 🇳🇵
+  const scale = path.includes('/flags/') ? 4 : size / width
 
   // upscale without smoothing
   const upscaled = await createImageBitmap(imgBlob, {
@@ -85,28 +110,124 @@ async function setIcon(tabId: number, path: string) {
   })
 
   // draw bitmap on canvas, centering it
-  ctx.clearRect(0, 0, SIZE, SIZE)
   ctx.drawImage(
     upscaled,
-    center(SIZE, upscaled.width),
-    center(SIZE, upscaled.height)
+    center(size, upscaled.width),
+    center(size, upscaled.height)
   )
   upscaled.close()
+}
 
-  // pass bitmap to browser
+function addGlyph(ctx: OffscreenCanvasRenderingContext2D, glyph: string) {
+  const size = ctx.canvas.width
+
+  ctx.font = '24px serif'
+  ctx.fillStyle = `rgb(0, 0, 0, 1)`
+
+  // eslint-disable-next-line prefer-const
+  let { width: textWidth, actualBoundingBoxDescent: textDescent } =
+    ctx.measureText(glyph)
+
+  // firefox needs something to hang down, otherwise emoji gets cut off
+  if (isFirefox()) {
+    glyph += ' q'
+    textDescent = ctx.measureText(glyph).actualBoundingBoxDescent
+  }
+
+  ctx.fillText(glyph, size - textWidth, size - textDescent)
+}
+
+async function setFlagIcon(tabId: number, domain: string, path: string) {
+  const [ctx, size] = getCtx()
+
+  await drawUpscaled(ctx, path)
+
   await chrome.action.setIcon({
     tabId,
-    imageData: { [SIZE.toString()]: ctx.getImageData(0, 0, SIZE, SIZE) }
+    imageData: {
+      [size.toString()]: ctx.getImageData(0, 0, size, size)
+    }
+  })
+
+  // store icon path for current domain, setProgressIcon uses it
+  // there is no way to read image data back from page action :/
+  await storage.setDomainIcon(domain, path)
+}
+
+/* Render action progress onto page icon */
+
+async function setProgressIcon(tabId: number, domain: string, glyph: string) {
+  const path = await storage.getDomainIcon(domain)
+
+  const [ctx, size] = getCtx()
+
+  // Firefox can not OffscreenCanvasRenderingContext2D.filter
+  // https://wpt.fyi/results/html/canvas/offscreen/manual/filter/offscreencanvas.filter.html
+  // so fall back to glyphs instead
+  if (path == DEFAULT_ICON || isFirefox()) {
+    await drawUpscaled(ctx, path)
+    addGlyph(ctx, glyph)
+  } else {
+    ctx.filter = 'blur(2px)'
+    await drawUpscaled(ctx, path)
+  }
+
+  await chrome.action.setIcon({
+    tabId,
+    imageData: {
+      [size.toString()]: ctx.getImageData(0, 0, size, size)
+    }
   })
 }
 
-async function setAction(tabId: number, title: string, iconPath: string) {
-  chrome.action.setTitle({ tabId, title })
-  await setIcon(tabId, iconPath)
+/* Set page action */
+
+type Actions =
+  | { kind: 'local' | 'loading' }
+  | { kind: 'error'; title: string }
+  | { kind: 'geo'; country_code: string; title: string }
+
+async function setPageAction(tabId: number, domain: string, action: Actions) {
+  const { kind } = action
+
+  if (kind == 'local') {
+    const title = `${domain} is a local resource`
+    await chrome.action.setTitle({ tabId, title })
+
+    const path = '/img/local_resource.png'
+    await chrome.action.setIcon({ tabId, path })
+    await storage.setDomainIcon(domain, path)
+  }
+
+  if (kind == 'geo') {
+    const { country_code, title } = action
+    await chrome.action.setTitle({ tabId, title })
+
+    const flagPng = `${country_code.toLowerCase()}.png`
+    const path = `/img/flags/${flagPng}`
+
+    await setFlagIcon(tabId, domain, path)
+  }
+
+  if (kind == 'loading') {
+    const title = `Resolving ${domain} …`
+    await chrome.action.setTitle({ tabId, title })
+
+    await setProgressIcon(tabId, domain, '🔵')
+  }
+
+  if (kind == 'error') {
+    const { title } = action
+    await chrome.action.setTitle({ tabId, title })
+
+    await setProgressIcon(tabId, domain, '🔴')
+  }
 }
 
+/* Google DNS over HTTPS */
+
 async function resolve(domain: string) {
-  if ('dns' in chrome) {
+  if (isFirefox()) {
     try {
       const {
         addresses: [ip]
@@ -138,4 +259,4 @@ async function resolve(domain: string) {
   return answer.find(({ type }) => type == 1)?.data
 }
 
-export { getDomain, isLocal, storage, setAction, resolve }
+export { getDomain, isLocal, storage, resolve, setPageAction }
