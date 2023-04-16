@@ -1,13 +1,13 @@
 import sinon from 'sinon'
 import { expect } from 'chai'
 
-import { getDohResponse, pickStub } from './setup.js'
+import { getDohResponse, getGeoResponse, pickStub } from './setup.js'
 
 import {
   isLocal,
   getDomain,
   storage,
-  setAction,
+  setPageAction,
   resolve
 } from '../src/helpers.js'
 
@@ -118,57 +118,74 @@ describe('helpers.ts', () => {
     })
   })
 
-  describe('setAction', () => {
-    it('sets page action title', async () => {
-      await setAction(88, 'boop title', 'ignore me')
+  describe('setPageAction', () => {
+    const setDomainSpy = sinon.spy(storage, 'setDomainIcon')
+
+    afterEach(() => {
+      setDomainSpy.resetHistory()
+    })
+
+    it('sets local domain action icon and title', async () => {
+      await setPageAction(99, 'do.main', { kind: 'local' })
 
       expect(chrome.action.setTitle).calledOnceWith({
-        tabId: 88,
-        title: 'boop title'
+        tabId: 99,
+        title: `do.main is a local resource`
       })
-    })
-
-    it('sets non-flag page action icon', async () => {
-      await setAction(99, 'ignore me', 'not a flag.png')
-
       expect(chrome.action.setIcon).calledOnceWith({
         tabId: 99,
-        path: 'not a flag.png'
+        path: sinon.match('local_resource.png')
       })
+      expect(setDomainSpy).calledWith('do.main', '/img/local_resource.png')
     })
 
-    describe('Flags 🚩', () => {
-      beforeEach(() => {
-        fetchResultStub.blob.resolves('🖼')
-        getImageData.returns('🖼 from canvas')
+    it('sets loading action icon and title', async () => {
+      await setPageAction(99, 'do.main', { kind: 'loading' })
+
+      expect(chrome.action.setTitle).calledOnceWith({
+        tabId: 99,
+        title: `Resolving do.main …`
+      })
+      expect(chrome.action.setIcon).calledOnceWith({
+        tabId: 99,
+        imageData: { 64: sinon.match.any }
+      })
+      expect(setDomainSpy).not.called
+    })
+
+    it('sets error action icon and title', async () => {
+      await setPageAction(99, 'do.main', { kind: 'error', title: 'bonk!' })
+
+      expect(chrome.action.setTitle).calledOnceWith({
+        tabId: 99,
+        title: `bonk!`
+      })
+      expect(chrome.action.setIcon).calledOnceWith({
+        tabId: 99,
+        imageData: { 64: sinon.match.any }
+      })
+      expect(setDomainSpy).not.called
+    })
+
+    it('sets resolved flag action icon and title', async () => {
+      await setPageAction(99, 'do.main', {
+        kind: 'geo',
+        country_code: 'np',
+        title: 'nepal ftw'
       })
 
-      it('creates 64x64 canvas and 2d context', () => {
-        sinon.spy(global, 'OffscreenCanvas')
-
-        setAction(123, 'any', 'thing')
-
-        expect(OffscreenCanvas).calledWith(64, 64)
-        expect(OffscreenCanvas.prototype.getContext).calledWith('2d', {
-          willReadFrequently: true
-        })
+      expect(chrome.action.setTitle).calledOnceWith({
+        tabId: 99,
+        title: `nepal ftw`
       })
-
-      it('throws if could not get 2d context', async () => {
-        pickStub('getContext', OffscreenCanvas.prototype).returns(null)
-
-        let error
-        try {
-          await setAction(123, 'any', 'thing')
-        } catch (e) {
-          error = e
-        }
-
-        expect(error)
-          .to.be.instanceOf(Error)
-          .to.have.property('message', 'Failed to get 2d canvas context')
+      expect(chrome.action.setIcon).calledOnceWith({
+        tabId: 99,
+        imageData: { 64: sinon.match.any }
       })
+      expect(setDomainSpy).calledWith('do.main', '/img/flags/np.png')
+    })
 
+    describe('Canvasing  🎨', () => {
       const { clearRect, drawImage, getImageData } = Context2dStub
 
       const createImageBitmapStub = pickStub('createImageBitmap', global)
@@ -188,61 +205,221 @@ describe('helpers.ts', () => {
             close: closeBitmapStub
           }))
 
+      beforeEach(() => {
+        fetchResultStub.blob.resolves('🖼')
+        getImageData.returns('🖼 from canvas')
+      })
+
       afterEach(() => {
         closeBitmapStub.resetHistory()
       })
 
-      const expectResize = (
-        [width = 0, height = 0, scale = 0],
-        [pX = 0, pY = 0]
-      ) => {
-        // clear canvas
-        expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
-        // create bitmap from blob, read dimensions
-        expect(createImageBitmapStub.firstCall).calledWithExactly('🖼')
-        // upscale
-        expect(createImageBitmapStub.secondCall).calledWithExactly('🖼', {
-          resizeQuality: 'pixelated',
-          resizeWidth: width * scale,
-          resizeHeight: height * scale
-        })
-        // dispose of bitmaps
-        expect(closeBitmapStub).calledTwice
-        // center upscaled bitmap vertically in 64x64
-        expect(drawImage).calledOnceWithExactly(
-          sinon.match({ width: width * scale, height: height * scale }),
-          pX,
-          pY
-        )
-        // send to browser
-        expect(chrome.action.setIcon).calledWithExactly({
-          tabId: TAB_ID,
-          imageData: { '64': '🖼 from canvas' }
-        })
-      }
+      describe('Progress icons ', () => {
+        const fillTextStub = pickStub('fillText', Context2dStub)
 
-      it('upscales, centers and renders the flag', async () => {
-        stubImageRead(16, 11)
-        stubImageResize()
-        await setAction(TAB_ID, 'Ukraine', '/img/flags/ua.png')
+        it('renders 🔵 when loading', async () => {
+          await setPageAction(123, 'is.loadi.ng', { kind: 'loading' })
 
-        expectResize([16, 11, 4], [0, 10])
+          expect(fetchStub).calledWith('/img/icon/32.png')
+          expect(fillTextStub).calledWith('🔵')
+        })
+
+        it('renders 🔴 when errored out', async () => {
+          await setPageAction(123, 'nope.error', {
+            kind: 'error',
+            title: 'nah'
+          })
+
+          expect(fetchStub).calledWith('/img/icon/32.png')
+          expect(fillTextStub).calledWith('🔴')
+        })
+
+        const fetchStub = pickStub('fetch', global)
+
+        it('blurs existing icon when loading', async () => {
+          new FakeStorage({
+            'resolved.domain': {
+              icon: 'anything.png',
+              ...getGeoResponse('x.x.x.x')
+            }
+          })
+
+          await setPageAction(123, 'resolved.domain', {
+            kind: 'error',
+            title: 'nah'
+          })
+
+          expect(fetchStub).calledWith('anything.png')
+          expect(Context2dStub._filter).to.eq('blur(2px)')
+          expect(fillTextStub).not.called
+        })
+
+        it('blurs local domain icon when loading', async () => {
+          new FakeStorage({
+            'local.domain': { is_local: true }
+          })
+
+          await setPageAction(123, 'local.domain', {
+            kind: 'local'
+          })
+
+          // drawn local_resource.png
+          expect(fetchStub).not.called
+          expect(fillTextStub).not.called
+          expect(Context2dStub._filter).to.eq('blur(2px)')
+
+          await setPageAction(123, 'local.domain', {
+            kind: 'loading'
+          })
+
+          expect(fetchStub).calledWithMatch('local_resource.png')
+          expect(fillTextStub).not.called
+          expect(Context2dStub._filter).to.eq('blur(2px)')
+        })
+
+        describe('Firefox', () => {
+          before(() => {
+            // @ts-expect-error: let's pretend we are in firefox
+            chrome.dns = 'is there'
+          })
+
+          after(() => {
+            // @ts-expect-error: stop pretending we are in firefox
+            delete chrome.dns
+          })
+
+          it('adds character with overhang (q) to a glyph', async () => {
+            await setPageAction(123, 'is.loadi.ng', { kind: 'loading' })
+
+            expect(fetchStub).calledWith('/img/icon/32.png')
+            expect(fillTextStub).calledWith('🔵 q')
+          })
+
+          it('draws glyph on existing icon when loading', async () => {
+            new FakeStorage({
+              'resolved.domain': {
+                icon: 'flaggo.png',
+                ...getGeoResponse('x.x.x.x')
+              }
+            })
+
+            await setPageAction(123, 'resolved.domain', {
+              kind: 'loading'
+            })
+
+            expect(fetchStub).calledWith('flaggo.png')
+            expect(fillTextStub).calledWith('🔵 q')
+            expect(Context2dStub._filter).to.be.undefined
+          })
+
+          it('draws glyph on existing icon for local domains', async () => {
+            new FakeStorage({
+              'local.domain': { is_local: true }
+            })
+
+            await setPageAction(123, 'local.domain', {
+              kind: 'local'
+            })
+
+            // drawn local_resource.png
+            expect(fetchStub).not.called
+            expect(fillTextStub).not.called
+            expect(Context2dStub._filter).to.be.undefined
+
+            await setPageAction(123, 'local.domain', {
+              kind: 'loading'
+            })
+
+            expect(fetchStub).calledWithMatch('local_resource.png')
+            expect(fillTextStub).calledWith('🔵 q')
+            expect(Context2dStub._filter).to.be.undefined
+          })
+        })
       })
 
-      it('handles narrow 🇳🇵 flag', async () => {
-        stubImageRead(9, 11)
-        stubImageResize()
-        await setAction(TAB_ID, 'Nepal', '/img/flags/np.png')
+      describe('Flags 🚩', () => {
+        it('throws if could not get 2d context', async () => {
+          const stub = sinon
+            .stub(OffscreenCanvas.prototype, 'getContext')
+            .returns(null)
 
-        expectResize([9, 11, 4], [14, 10])
-      })
+          let error
+          try {
+            await setPageAction(123, 'boo.p', { kind: 'loading' })
+          } catch (e) {
+            error = e
+          }
 
-      it("handles smol flag (don't have those but still)", async () => {
-        stubImageRead(4, 5)
-        stubImageResize()
-        await setAction(TAB_ID, 'Promes land', '/img/flags/promes.png')
+          expect(error)
+            .to.be.instanceOf(Error)
+            .to.have.property('message', 'Failed to get 2d canvas context')
 
-        expectResize([4, 5, 4], [24, 22])
+          stub.restore()
+        })
+
+        const expectResize = (
+          [width = 0, height = 0, scale = 0],
+          [pX = 0, pY = 0]
+        ) => {
+          // clear canvas
+          expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
+          // create bitmap from blob, read dimensions
+          expect(createImageBitmapStub.firstCall).calledWithExactly('🖼')
+          // upscale
+          expect(createImageBitmapStub.secondCall).calledWithExactly('🖼', {
+            resizeQuality: 'pixelated',
+            resizeWidth: width * scale,
+            resizeHeight: height * scale
+          })
+          // dispose of bitmaps
+          expect(closeBitmapStub).calledTwice
+          // center upscaled bitmap vertically in 64x64
+          expect(drawImage).calledOnceWithExactly(
+            sinon.match({ width: width * scale, height: height * scale }),
+            pX,
+            pY
+          )
+          // send to browser
+          expect(chrome.action.setIcon).calledWithExactly({
+            tabId: TAB_ID,
+            imageData: { '64': '🖼 from canvas' }
+          })
+        }
+
+        const geoKind = { kind: 'geo', title: 'geo kind of action' } as const
+
+        it('upscales, centers and renders the flag', async () => {
+          stubImageRead(16, 11)
+          stubImageResize()
+          await setPageAction(TAB_ID, 'boop.ua', {
+            ...geoKind,
+            country_code: 'UA'
+          })
+
+          expectResize([16, 11, 4], [0, 10])
+        })
+
+        it('handles narrow 🇳🇵 flag', async () => {
+          stubImageRead(9, 11)
+          stubImageResize()
+          await setPageAction(TAB_ID, 'Nepal', {
+            ...geoKind,
+            country_code: 'NP'
+          })
+
+          expectResize([9, 11, 4], [14, 10])
+        })
+
+        it("handles smol flag (don't have those but still)", async () => {
+          stubImageRead(4, 5)
+          stubImageResize()
+          await setPageAction(TAB_ID, 'Promes land', {
+            ...geoKind,
+            country_code: 'BOOP'
+          })
+
+          expectResize([4, 5, 4], [24, 22])
+        })
       })
     })
   })
@@ -321,7 +498,7 @@ describe('helpers.ts', () => {
 
       const resolveStub = pickStub('resolve', browser.dns)
 
-      it('resolves ip without fetch', async () => {
+      it('resolves IP without fetch', async () => {
         resolveStub.resolves({ addresses: ['66.66.66.66'] })
 
         expect(await resolve('boop.com')).to.eq('66.66.66.66')

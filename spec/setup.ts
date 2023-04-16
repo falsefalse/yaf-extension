@@ -32,17 +32,27 @@ class OffscreenCanvasMock {
 
   constructor(width: number, height: number) {
     this.props = { width, height }
+    delete Context2d._filter
   }
 
   getContext() {
     return {
       canvas: { ...this.props },
+
+      get filter() {
+        return Context2d._filter
+      },
+      set filter(value) {
+        Context2d._filter = value
+      },
+
       ...Context2d
     }
   }
 }
 
 const Context2d = {
+  _filter: undefined,
   clearRect: canvasBox.spy(),
   drawImage: canvasBox.spy(),
   getImageData: canvasBox.stub(),
