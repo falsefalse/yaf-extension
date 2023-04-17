@@ -13,11 +13,14 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: '18.x'
+          cache: 'yarn'
 
       - name: Install
         run: |
-          echo "NODE_PATH=`npm -g root`" >> $GITHUB_ENV
-          npm -g install jake
+          yarn_global_modules=`yarn global dir`/node_modules
+          echo "NODE_PATH=$yarn_global_modules" >> $GITHUB_ENV
+
+          yarn global add jake
           yarn install --frozen-lockfile
 
       - name: Specs
@@ -28,8 +31,13 @@ jobs:
 
       - name: Reports
         run: |
-          echo "coverage_total=`node -pe "Object.values(require('./coverage-summary.json').total).filter(({ pct }) => +pct).reduce((a, { pct }) => a + pct / 4, 0).toFixed(2)"`" >> $GITHUB_ENV
           function code_block() { echo '```'; echo -e "$1" ; echo '```' ; }
+
+          echo "badge_total=`node -pe "Object.entries(require('./coverage-summary.json').total).filter(([key]) => key != 'branchesTrue').reduce((a, [,{ pct }], _, { length }) => a + pct / length, 0).toFixed(2)"`" >> $GITHUB_ENV
+
+          summary=$(node -pe 'Object.entries(require("./coverage-summary.json").total).filter(([key]) => key != "branchesTrue").map(([key, {covered, total}]) => [key.replace(/^./, m => m.toUpperCase()).padEnd(11, " "), ":", covered.toString().padStart(4, " "), " /", total.toString().padStart(4, " ")].join("")).join("\n")')
+
+          code_block "$summary" >> $GITHUB_STEP_SUMMARY
           code_block "$(yarn -s report:ci)" >> $GITHUB_STEP_SUMMARY
 
       - name: Update badge
@@ -42,7 +50,7 @@ jobs:
           logoColor: white
           logoWidth: 12
           label: coverage
-          message: ${{env.coverage_total}}%
-          valColorRange: ${{env.coverage_total}}
+          message: ${{env.badge_total}}%
+          valColorRange: ${{env.badge_total}}
           minColorRange: 0
           maxColorRange: 100
