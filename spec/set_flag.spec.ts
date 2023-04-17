@@ -36,24 +36,23 @@ describe('set_flag.ts', () => {
   describe('Disable page action', () => {
     afterEach(() => {
       expect(chrome.action.disable).calledOnceWith(TAB_ID)
+
+      expect(chrome.action.setTitle).calledOnceWith({
+        tabId: TAB_ID,
+        title: '😴'
+      })
+      expect(chrome.action.setTitle).calledOnceWith({
+        tabId: TAB_ID,
+        title: '😴'
+      })
     })
 
     it('if domain is not there', async () => {
       await setFlag({ id: TAB_ID })
-
-      expect(chrome.action.setTitle).calledOnceWith({
-        tabId: TAB_ID,
-        title: '😴'
-      })
     })
 
     it('if URL schema does not match', async () => {
       await setFlag({ id: TAB_ID, url: 'gopher://is.out.of.the.question' })
-
-      expect(chrome.action.setTitle).calledOnceWith({
-        tabId: TAB_ID,
-        title: '😴'
-      })
     })
   })
 
@@ -403,7 +402,7 @@ describe('set_flag.ts', () => {
       json: () => Promise.resolve(getGeoResponse('9.9.9.9'))
     })
 
-    pickStub('getImageData', Context2dStub).returns('🇺🇦')
+    Context2dStub.getImageData.returns('🇺🇦')
 
     await setFlag({ id: TAB_ID, url: 'http://proper.site.ua' })
 

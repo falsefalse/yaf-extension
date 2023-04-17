@@ -134,7 +134,7 @@ async function handleDomReady() {
 
     // flip and save
     data = { ...data, is_local: !data.is_local }
-    await storage.set(domain, data)
+    await storage.saveDomain(domain, data)
 
     // when marked as local – re-render, otherwise refetch
     if (data.is_local) {

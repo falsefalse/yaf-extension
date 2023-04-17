@@ -8,7 +8,8 @@ import {
   getDomain,
   storage,
   setPageAction,
-  resolve
+  resolve,
+  SquareCanvas
 } from '../src/helpers.js'
 
 const TAB_ID = 14
@@ -81,10 +82,14 @@ describe('helpers.ts', () => {
       clearStub = pickStub('clear', chrome.storage.local)
 
     it('#set', () => {
-      storage.set('boop', { woop: 'shmloop' })
+      storage.saveDomain('boop', {
+        fetched_at: 777,
+        ip: 'b.b.b.b',
+        is_local: true
+      })
 
       expect(setStub).calledOnceWith({
-        boop: { woop: 'shmloop' }
+        boop: { fetched_at: 777, ip: 'b.b.b.b', is_local: true }
       })
     })
 
@@ -94,35 +99,46 @@ describe('helpers.ts', () => {
         'another key': 'another valooe'
       })
 
-      expect(await storage.get('but a key')).to.be.undefined
-      expect(await storage.get('a key')).to.eq('valooe')
-      expect(await storage.get('another key')).to.eq('another valooe')
+      expect(await storage.getDomain('but a key')).to.be.undefined
+      expect(await storage.getDomain('a key')).to.eq('valooe')
+      expect(await storage.getDomain('another key')).to.eq('another valooe')
     })
 
-    it('#get returned null', async () => {
-      getStub.resolves(null)
+    it('#get returned undefined', async () => {
+      getStub.resolves(undefined)
 
-      expect(await storage.get('should not throw')).to.be.undefined
+      expect(await storage.getDomain('should not throw')).to.be.undefined
     })
 
     it('clears itself when full and sets the data', async () => {
       setStub.onFirstCall().throws()
       setStub.onSecondCall().resolves()
 
-      await storage.set('smol', 'but important')
+      const data = {
+        fetched_at: 1,
+        error: 'smol but important',
+        is_local: false
+      }
+
+      await storage.saveDomain('smol', data)
 
       expect(clearStub).calledOnce
       expect(setStub).calledTwice
-      expect(setStub.firstCall).calledWith({ smol: 'but important' })
-      expect(setStub.secondCall).calledWith({ smol: 'but important' })
+      expect(setStub.firstCall).calledWith({ smol: data })
+      expect(setStub.secondCall).calledWith({ smol: data })
     })
   })
 
   describe('setPageAction', () => {
-    const setDomainSpy = sinon.spy(storage, 'setDomainIcon')
+    const actionBox = sinon.createSandbox({ properties: ['spy'] })
+
+    const saveIconSpy = actionBox.spy(storage, 'saveDomainIcon')
+    const drawSpy = actionBox.spy(SquareCanvas.prototype, 'drawUpscaled')
+    const glyphSpy = actionBox.spy(SquareCanvas.prototype, 'addGlyph' as any)
+    const blurSpy = actionBox.spy(SquareCanvas.prototype, 'blur' as any)
 
     afterEach(() => {
-      setDomainSpy.resetHistory()
+      actionBox.reset()
     })
 
     it('sets local domain action icon and title', async () => {
@@ -136,7 +152,7 @@ describe('helpers.ts', () => {
         tabId: 99,
         path: sinon.match('local_resource.png')
       })
-      expect(setDomainSpy).calledWith('do.main', '/img/local_resource.png')
+      expect(saveIconSpy).calledWith('do.main', '/img/local_resource.png')
     })
 
     it('sets loading action icon and title', async () => {
@@ -150,7 +166,7 @@ describe('helpers.ts', () => {
         tabId: 99,
         imageData: { 64: sinon.match.any }
       })
-      expect(setDomainSpy).not.called
+      expect(saveIconSpy).not.called
     })
 
     it('sets error action icon and title', async () => {
@@ -164,7 +180,7 @@ describe('helpers.ts', () => {
         tabId: 99,
         imageData: { 64: sinon.match.any }
       })
-      expect(setDomainSpy).not.called
+      expect(saveIconSpy).not.called
     })
 
     it('sets resolved flag action icon and title', async () => {
@@ -182,7 +198,7 @@ describe('helpers.ts', () => {
         tabId: 99,
         imageData: { 64: sinon.match.any }
       })
-      expect(setDomainSpy).calledWith('do.main', '/img/flags/np.png')
+      expect(saveIconSpy).calledWith('do.main', '/img/flags/np.png')
     })
 
     describe('Canvasing  🎨', () => {
@@ -197,13 +213,18 @@ describe('helpers.ts', () => {
           .resolves({ width, height, close: closeBitmapStub })
 
       const stubImageResize = () =>
-        createImageBitmapStub
-          .onSecondCall()
-          .callsFake((_, { resizeWidth, resizeHeight }) => ({
-            width: resizeWidth,
-            height: resizeHeight,
-            close: closeBitmapStub
-          }))
+        createImageBitmapStub.onSecondCall().callsFake(
+          (_, { resizeWidth, resizeHeight }) =>
+            new Promise(resolve => {
+              setTimeout(() => {
+                resolve({
+                  width: resizeWidth,
+                  height: resizeHeight,
+                  close: closeBitmapStub
+                })
+              }, 15)
+            })
+        )
 
       beforeEach(() => {
         fetchResultStub.blob.resolves('🖼')
@@ -216,10 +237,13 @@ describe('helpers.ts', () => {
 
       describe('Progress icons ', () => {
         const fillTextStub = pickStub('fillText', Context2dStub)
+        const fetchStub = pickStub('fetch', global)
 
         it('renders 🔵 when loading', async () => {
           await setPageAction(123, 'is.loadi.ng', { kind: 'loading' })
 
+          expect(drawSpy).calledBefore(glyphSpy)
+          expect(blurSpy).not.called
           expect(fetchStub).calledWith('/img/icon/32.png')
           expect(fillTextStub).calledWith('🔵')
         })
@@ -230,11 +254,11 @@ describe('helpers.ts', () => {
             title: 'nah'
           })
 
+          expect(glyphSpy).calledAfter(drawSpy)
+          expect(blurSpy).not.called
           expect(fetchStub).calledWith('/img/icon/32.png')
           expect(fillTextStub).calledWith('🔴')
         })
-
-        const fetchStub = pickStub('fetch', global)
 
         it('blurs existing icon when loading', async () => {
           new FakeStorage({
@@ -249,8 +273,9 @@ describe('helpers.ts', () => {
             title: 'nah'
           })
 
+          expect(blurSpy).calledBefore(drawSpy)
+          expect(glyphSpy).not.called
           expect(fetchStub).calledWith('anything.png')
-          expect(Context2dStub._filter).to.eq('blur(2px)')
           expect(fillTextStub).not.called
         })
 
@@ -263,18 +288,18 @@ describe('helpers.ts', () => {
             kind: 'local'
           })
 
-          // drawn local_resource.png
+          // initial draw — local_resource.png
           expect(fetchStub).not.called
           expect(fillTextStub).not.called
-          expect(Context2dStub._filter).to.eq('blur(2px)')
 
           await setPageAction(123, 'local.domain', {
             kind: 'loading'
           })
 
+          expect(blurSpy).calledBefore(drawSpy)
+          expect(glyphSpy).not.called
           expect(fetchStub).calledWithMatch('local_resource.png')
           expect(fillTextStub).not.called
-          expect(Context2dStub._filter).to.eq('blur(2px)')
         })
 
         describe('Firefox', () => {
@@ -307,9 +332,10 @@ describe('helpers.ts', () => {
               kind: 'loading'
             })
 
+            expect(glyphSpy).calledAfter(drawSpy)
+            expect(blurSpy).not.called
             expect(fetchStub).calledWith('flaggo.png')
             expect(fillTextStub).calledWith('🔵 q')
-            expect(Context2dStub._filter).to.be.undefined
           })
 
           it('draws glyph on existing icon for local domains', async () => {
@@ -321,18 +347,20 @@ describe('helpers.ts', () => {
               kind: 'local'
             })
 
-            // drawn local_resource.png
+            // initial draw — local_resource.png
+            expect(glyphSpy).not.called
+            expect(blurSpy).not.called
             expect(fetchStub).not.called
             expect(fillTextStub).not.called
-            expect(Context2dStub._filter).to.be.undefined
 
             await setPageAction(123, 'local.domain', {
               kind: 'loading'
             })
 
+            expect(glyphSpy).calledAfter(drawSpy)
+            expect(blurSpy).not.called
             expect(fetchStub).calledWithMatch('local_resource.png')
             expect(fillTextStub).calledWith('🔵 q')
-            expect(Context2dStub._filter).to.be.undefined
           })
         })
       })
@@ -477,7 +505,7 @@ describe('helpers.ts', () => {
         )
       })
 
-      it('resolves ip', async () => {
+      it('resolves IP address', async () => {
         fetchResultStub.ok = true
         fetchResultStub.json.resolves(getDohResponse('7.7.7.7'))
 

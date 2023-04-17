@@ -27,24 +27,18 @@ const canvasBox = sinon.createSandbox({
   properties: ['spy', 'stub']
 })
 
-class OffscreenCanvasMock {
+interface OffscreenCanvasMock {
   props: Record<string, unknown>
+}
 
+class OffscreenCanvasMock {
   constructor(width: number, height: number) {
     this.props = { width, height }
-    delete Context2d._filter
   }
 
   getContext() {
     return {
       canvas: { ...this.props },
-
-      get filter() {
-        return Context2d._filter
-      },
-      set filter(value) {
-        Context2d._filter = value
-      },
 
       ...Context2d
     }
@@ -52,7 +46,6 @@ class OffscreenCanvasMock {
 }
 
 const Context2d = {
-  _filter: undefined,
   clearRect: canvasBox.spy(),
   drawImage: canvasBox.spy(),
   getImageData: canvasBox.stub(),
@@ -74,12 +67,12 @@ const local = {
   clear: chromeBox.stub()
 }
 
-type KeyedData = Record<string, Record<string, unknown>>
+interface Storage {
+  store: Record<string, Record<string, unknown>>
+}
 
 class Storage {
-  store: KeyedData
-
-  constructor(data: KeyedData = {}) {
+  constructor(data: Storage['store']) {
     this.store = data
 
     // @ts-expect-error: faking local storage
@@ -90,8 +83,8 @@ class Storage {
     return Promise.resolve({ [key]: this.store[key] })
   }
 
-  async set(dataToSet: KeyedData) {
-    Object.entries(dataToSet).forEach(([key, value]) => {
+  async set(toSet: Storage['store']) {
+    Object.entries(toSet).forEach(([key, value]) => {
       this.store[key] = { ...this.store[key], ...value }
     })
 
@@ -183,7 +176,7 @@ export const mochaHooks = {
 
     Context2d.measureText.returns({
       width: 'text width not set',
-      actualBoundingBoxDescent: 'text height not set either'
+      actualBoundingBoxDescent: 'text descent not set'
     })
 
     tabs.query.resolves([])
@@ -198,13 +191,19 @@ export const mochaHooks = {
 
 /* Helpers */
 
-export const pickStub = <O = any, K extends keyof O = keyof O>(
+export const pickStub = <
+  O = any,
+  K extends keyof O = keyof O,
+  TAwaitedReturn = Awaited<OverloadedReturnType<O[K]>>
+>(
   key: K,
   object: O
 ) =>
   object[key] as SinonStub<
     any[],
-    Partial<Awaited<Extract<OverloadedReturnType<O[K]>, Promise<any>>>> | any
+    TAwaitedReturn extends Array<infer I>
+      ? Promise<Partial<I>[]>
+      : Promise<Partial<TAwaitedReturn>>
   >
 
 export const getDohResponse = (ip: string): DoHResponse => ({

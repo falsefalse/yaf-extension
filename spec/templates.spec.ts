@@ -14,7 +14,7 @@ describe('templates/', () => {
       )
     })
 
-    it('renders ip', () => {
+    it('renders IP address', () => {
       r = local({ domain: 'boo.op', ip: 'x.x.x.x' })
 
       expect(r).htmll.to.equal(`

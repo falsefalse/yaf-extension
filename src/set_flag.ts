@@ -171,7 +171,7 @@ export default async function setFlag(
   }
 
   const data = await getCachedResponse(tabId, domain, refetch)
-  await storage.set(domain, data)
+  await storage.saveDomain(domain, data)
 
   await updatePageAction(tabId, domain, data)
 

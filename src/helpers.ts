@@ -2,6 +2,8 @@ import type { Data, DoHResponse } from './lib/types.js'
 
 import config from './config.js'
 
+/* domains and IPs */
+
 function getDomain(url: string | undefined) {
   if (!url) return
 
@@ -35,8 +37,10 @@ function isLocal(ip: string | undefined): ip is string {
   return false
 }
 
-const storage = {
-  set: async (key: string, value: unknown) => {
+/* local storage */
+
+class Storage {
+  private async set(key: string, value: unknown) {
     const data = { [key]: value }
     try {
       await chrome.storage.local.set(data)
@@ -44,143 +48,165 @@ const storage = {
       await chrome.storage.local.clear()
       await chrome.storage.local.set(data)
     }
-  },
-  get: async (key: string) =>
-    ((await chrome.storage.local.get(key)) || {})[key],
+  }
 
-  getDomain: async (domain: string): Promise<Data | undefined> =>
-    await storage.get(domain),
+  private async get(key: string) {
+    return ((await chrome.storage.local.get(key)) || {})[key]
+  }
 
-  setDomainIcon: async (domain: string, path: string) => {
-    const data = await storage.get(domain)
+  async saveDomain(domain: string, value: Data) {
+    return await this.set(domain, value)
+  }
+  async getDomain(domain: string): Promise<Data | undefined> {
+    return await this.get(domain)
+  }
+
+  async saveDomainIcon(domain: string, path: string) {
+    const data = await this.get(domain)
     if (data) {
-      await storage.set(domain, { ...data, icon: path })
+      await this.set(domain, { ...data, icon: path })
     }
-  },
-  getDomainIcon: async (domain: string) => {
-    const data: Record<string, string> = await storage.get(domain)
+  }
+  async getDomainIcon(domain: string) {
+    const data = await this.get(domain)
 
     return data?.icon || DEFAULT_ICON
   }
 }
 
-const isFirefox = () => 'dns' in chrome
+const storage = new Storage()
 
-/* Canvas shenanigans */
+/* Canvas shenanigans 🎨 */
+
+const isFirefox = () => 'dns' in chrome
 
 const DEFAULT_ICON = '/img/icon/32.png'
 
-function getCtx(size = 64): [OffscreenCanvasRenderingContext2D, number] {
-  const ctx = new OffscreenCanvas(size, size).getContext('2d', {
-    willReadFrequently: true
-  })
-
-  if (!ctx) throw new Error('Failed to get 2d canvas context')
-
-  ctx.clearRect(0, 0, size, size)
-
-  return [ctx, size]
+export interface SquareCanvas {
+  size: number
+  ctx: OffscreenCanvasRenderingContext2D
 }
 
-const center = (whole: number, part: number) =>
-  Math.round(Math.max(whole - part, 0) / 2)
+export class SquareCanvas {
+  // local_resource.png is 64x64, globe is 32x32, flags 16px wide
+  // so upscale everything to 64px
+  constructor(size = 64) {
+    const ctx = new OffscreenCanvas(size, size).getContext('2d', {
+      willReadFrequently: true
+    })
+    if (!ctx) throw new Error('Failed to get 2d canvas context')
 
-/* upscale icon by width */
-async function drawUpscaled(
-  ctx: OffscreenCanvasRenderingContext2D,
-  path: string
-) {
-  // read image and its dimensions
-  const imgBlob = await (await fetch(path)).blob()
-  const original = await createImageBitmap(imgBlob)
-  const { width, height } = original
-  original.close()
+    this.ctx = ctx
+    this.size = size
 
-  const size = ctx.canvas.width
-  // give all flags scale factor 4
-  // pretend all flags are boxed in 16px wide box
-  // they all are apart from 16 x 9 Nepal 🇳🇵
-  const scale = path.includes('/flags/') ? 4 : size / width
-
-  // upscale without smoothing
-  const upscaled = await createImageBitmap(imgBlob, {
-    resizeQuality: 'pixelated',
-    resizeWidth: width * scale,
-    resizeHeight: height * scale
-  })
-
-  // draw bitmap on canvas, centering it
-  ctx.drawImage(
-    upscaled,
-    center(size, upscaled.width),
-    center(size, upscaled.height)
-  )
-  upscaled.close()
-}
-
-function addGlyph(ctx: OffscreenCanvasRenderingContext2D, glyph: string) {
-  const size = ctx.canvas.width
-
-  ctx.font = '24px serif'
-  ctx.fillStyle = `rgb(0, 0, 0, 1)`
-
-  // eslint-disable-next-line prefer-const
-  let { width: textWidth, actualBoundingBoxDescent: textDescent } =
-    ctx.measureText(glyph)
-
-  // firefox needs something to hang down, otherwise emoji gets cut off
-  if (isFirefox()) {
-    glyph += ' q'
-    textDescent = ctx.measureText(glyph).actualBoundingBoxDescent
+    this.ctx.clearRect(0, 0, size, size)
   }
 
-  ctx.fillText(glyph, size - textWidth, size - textDescent)
+  private center(whole: number, part: number) {
+    return Math.round(Math.max(whole - part, 0) / 2)
+  }
+
+  async drawUpscaled(path: string) {
+    const { size, ctx, center } = this
+
+    // read image and its dimensions
+    const imgBlob = await (await fetch(path)).blob()
+    const original = await createImageBitmap(imgBlob)
+    const { width, height } = original
+    original.close()
+
+    // give all flags scale factor 4
+    // pretend all flags are boxed in 16px wide box
+    // they all are, apart from 9 x 11 Nepal 🇳🇵
+    const scale = path.includes('/flags/') ? 4 : size / width
+
+    // upscale without smoothing
+    const upscaled = await createImageBitmap(imgBlob, {
+      resizeQuality: 'pixelated',
+      resizeWidth: width * scale,
+      resizeHeight: height * scale
+    })
+
+    ctx.drawImage(
+      upscaled,
+      center(size, upscaled.width),
+      center(size, upscaled.height)
+    )
+    upscaled.close()
+  }
+
+  async drawUpscaledWithGlyph(path: string, glyph: string) {
+    await this.drawUpscaled(path)
+    this.addGlyph(glyph)
+  }
+  async drawUpscaledWithBlur(path: string) {
+    this.blur()
+    await this.drawUpscaled(path)
+  }
+
+  private blur(radius = 2) {
+    this.ctx.filter = `blur(${radius}px)`
+  }
+
+  private addGlyph(glyph: string) {
+    const { size, ctx } = this
+
+    ctx.font = '24px serif'
+    ctx.fillStyle = `rgb(0, 0, 0, 1)`
+
+    // eslint-disable-next-line prefer-const
+    let { width: textWidth, actualBoundingBoxDescent: textDescent } =
+      ctx.measureText(glyph)
+
+    // firefox needs something to hang down, otherwise emoji gets cut off
+    if (isFirefox()) {
+      glyph += ' q'
+      textDescent = ctx.measureText(glyph).actualBoundingBoxDescent
+    }
+
+    ctx.fillText(glyph, size - textWidth, size - textDescent)
+  }
+
+  async setIconFromCanvas(tabId: number) {
+    const { size, ctx } = this
+
+    await chrome.action.setIcon({
+      tabId,
+      imageData: {
+        [size.toString()]: ctx.getImageData(0, 0, size, size)
+      }
+    })
+  }
 }
+
+/* Page actions rendering: flags, loading, errors */
 
 async function setFlagIcon(tabId: number, domain: string, path: string) {
-  const [ctx, size] = getCtx()
+  const square = new SquareCanvas()
 
-  await drawUpscaled(ctx, path)
+  await square.drawUpscaled(path)
+  await square.setIconFromCanvas(tabId)
 
-  await chrome.action.setIcon({
-    tabId,
-    imageData: {
-      [size.toString()]: ctx.getImageData(0, 0, size, size)
-    }
-  })
-
-  // store icon path for current domain, setProgressIcon uses it
-  // there is no way to read image data back from page action :/
-  await storage.setDomainIcon(domain, path)
+  // there is no way to read current image data back from page action 😥
+  // save icon path, so we can draw a glyph over it
+  await storage.saveDomainIcon(domain, path)
 }
-
-/* Render action progress onto page icon */
 
 async function setProgressIcon(tabId: number, domain: string, glyph: string) {
   const path = await storage.getDomainIcon(domain)
-
-  const [ctx, size] = getCtx()
+  const square = new SquareCanvas()
 
   // Firefox can not OffscreenCanvasRenderingContext2D.filter
   // https://wpt.fyi/results/html/canvas/offscreen/manual/filter/offscreencanvas.filter.html
   // so fall back to glyphs instead
   if (path == DEFAULT_ICON || isFirefox()) {
-    await drawUpscaled(ctx, path)
-    addGlyph(ctx, glyph)
+    await square.drawUpscaledWithGlyph(path, glyph)
   } else {
-    ctx.filter = 'blur(2px)'
-    await drawUpscaled(ctx, path)
+    await square.drawUpscaledWithBlur(path)
   }
 
-  await chrome.action.setIcon({
-    tabId,
-    imageData: {
-      [size.toString()]: ctx.getImageData(0, 0, size, size)
-    }
-  })
+  square.setIconFromCanvas(tabId)
 }
-
-/* Set page action */
 
 type Actions =
   | { kind: 'local' | 'loading' }
@@ -196,7 +222,8 @@ async function setPageAction(tabId: number, domain: string, action: Actions) {
 
     const path = '/img/local_resource.png'
     await chrome.action.setIcon({ tabId, path })
-    await storage.setDomainIcon(domain, path)
+    // save icon path, so we can draw a glyph over it
+    await storage.saveDomainIcon(domain, path)
   }
 
   if (kind == 'geo') {
