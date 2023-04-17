@@ -67,13 +67,7 @@ function minify(srcPath, beautify = false) {
   const { code } = uglify(readFile(srcPath), config)
   writeFile(srcPath, code)
 
-  log(
-    beautify ? 'Beautified 💅🏼' : 'Minified',
-    srcPath,
-    grey(srcSize),
-    '→',
-    blue(size(srcPath))
-  )
+  log(beautify ? '💅🏼' : '🗜', srcPath, grey(srcSize), '→', blue(size(srcPath)))
 }
 
 // lesssgoo!
