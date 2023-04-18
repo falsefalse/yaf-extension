@@ -191,7 +191,11 @@ describe('popup.ts', () => {
     expect(get('.header')).to.have.text('Local resource')
     expect(get('.resolved'))
       .to.have.text('10.x.x.x')
-      .to.have.attr('title', 'Resolved 🕚 11:20:00 AM on 4/20/2023')
+      .to.have.attr('title')
+      // different locales produce different spaces for AM/PM
+      // github has ' ', macOS has \u202
+      .include('Resolved 🕓 4:20:00')
+      .and.include('AM on 4/20/2023')
   })
 
   it('allows to mark unresolved domain as local', async () => {

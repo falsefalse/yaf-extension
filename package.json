@@ -17,7 +17,7 @@
     "eslint": "eslint --fix *.js src/ spec/ --ext .ts,.ejs.html",
     "prettier": "prettier -u --loglevel warn --ignore-path .gitignore . !**.ejs.html ",
     "pretest": "jake -q config[specs] templates[specs] module",
-    "test": "mocha",
+    "test": "TZ=utc mocha",
     "test:clean": "jake -q clean[specs]",
     "test:watch": "yarn -s test -R min --watch --parallel",
     "coverage": "c8 yarn -s test -R dot",
