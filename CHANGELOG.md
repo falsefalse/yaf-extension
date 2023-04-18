@@ -1,8 +1,17 @@
+### 1.1.9
+
+- Render resolution 🕙 timestamp in the IP hint in the popup
+- Tech
+  - split helpers into modules
+  - refactor canvas and storage into classes
+  - more robust specs and types
+  - print coverage totals into workflow summary
+
 ### 1.1.8
 
 - Loading states! 💅🏼
-  🔵 badge for loading, 🔴 badge for errors.
-  Resolved or local domains are blurred while loading, same as popup.
+  - 🔵 badge for loading, 🔴 badge for errors
+  - Resolved or local domains are blurred while loading, same as popup
 - Fix: dispose of bitmaps when done resizing the flag
 - Fix: don't lose the data when writing into full storage
 - Fix: make it impossible to render `undefined` in the popup
