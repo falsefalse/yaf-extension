@@ -43,42 +43,26 @@ export function resolvedAtHint(epoch: number) {
   const date = new Date(epoch)
   const [time, day] = [date.toLocaleTimeString(), date.toLocaleDateString()]
 
-  const halves = {
-    0: '🕧',
-    1: '🕜',
-    2: '🕝',
-    3: '🕞',
-    4: '🕟',
-    5: '🕠',
-    6: '🕡',
-    7: '🕢',
-    8: '🕣',
-    9: '🕤',
-    10: '🕥',
-    11: '🕦',
-    12: '🕧'
+  const clocks = {
+    0: ['🕛', '🕧'],
+    1: ['🕐', '🕜'],
+    2: ['🕑', '🕝'],
+    3: ['🕒', '🕞'],
+    4: ['🕓', '🕟'],
+    5: ['🕔', '🕠'],
+    6: ['🕕', '🕡'],
+    7: ['🕖', '🕢'],
+    8: ['🕗', '🕣'],
+    9: ['🕘', '🕤'],
+    10: ['🕙', '🕥'],
+    11: ['🕚', '🕦'],
+    12: ['🕛', '🕧']
   } as const
 
-  const fulls = {
-    0: '🕛',
-    1: '🕐',
-    2: '🕑',
-    3: '🕒',
-    4: '🕓',
-    5: '🕔',
-    6: '🕕',
-    7: '🕖',
-    8: '🕗',
-    9: '🕘',
-    10: '🕙',
-    11: '🕚',
-    12: '🕛'
-  } as const
-
-  const hour = (date.getHours() % 12) as keyof typeof fulls
+  const hour = (date.getHours() % 12) as keyof typeof clocks
   const pastHalf = date.getMinutes() >= 30
 
-  const clock = (pastHalf ? halves : fulls)[hour]
+  const clock = clocks[hour][Number(pastHalf)]
 
   return `Resolved ${clock} ${time} on ${day}`
 }
