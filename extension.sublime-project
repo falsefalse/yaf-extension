@@ -21,11 +21,11 @@
       // eslint and prettier errors
       "file_regex": "^(?:\\[.*\\] )?(\\S+)\\s*?$",
       "line_regex": "^\\s+(\\d+):(\\d+)\\s+(.*)$",
+      "auto_close": true,
+      "focus": true,
 
       "working_dir": "$project_path",
-      "target": "terminus_exec",
-      "focus": true,
-      "auto_close": true
+      "target": "terminus_exec"
     },
 
     {
@@ -33,47 +33,49 @@
       "cmd": ["yarn", "typecheck"],
       // tsc errors
       "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
+      "auto_close": true,
+      "focus": true,
 
       "working_dir": "$project_path",
-      "target": "terminus_exec",
-      "focus": true,
-      "auto_close": true
+      "target": "terminus_exec"
     },
 
     {
       "name": "build 👷",
       "cmd": ["yarn", "-s", "build"],
+      "auto_close": true,
 
       "working_dir": "$project_path",
-      "target": "terminus_exec",
-      "auto_close": true
+      "target": "terminus_exec"
     },
 
     {
       "name": "build:ff 🦊",
       "cmd": ["yarn", "-s", "build:firefox"],
+      "auto_close": true,
 
       "working_dir": "$project_path",
-      "target": "terminus_exec",
-      "auto_close": true
+      "target": "terminus_exec"
     },
 
     {
       "name": "clean 🧹",
       "cmd": ["jake", "-q", "clean"],
+      "auto_close": true,
 
       "working_dir": "$project_path",
-      "target": "terminus_exec",
-      "auto_close": true
+      "target": "terminus_exec"
     },
 
     {
       "name": "test 🧪",
       "cmd": ["yarn", "-s", "test"],
+      "file_regex": "^.*file://(.*?):(\\d+):(\\d+)(.*)$",
+      "auto_close": false,
+      "focus": true,
 
       "working_dir": "$project_path",
-      "target": "terminus_exec",
-      "auto_close": false
+      "target": "terminus_exec"
     }
   ]
 }
