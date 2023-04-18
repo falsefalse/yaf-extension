@@ -1,18 +1,8 @@
-import type {
-  LocalResponse,
-  ErrorResponse,
-  GeoResponse,
-  Data
-} from './lib/types.js'
-
-import config from './config.js'
-import {
-  getDomain,
-  isLocal,
-  storage,
-  resolve,
-  setPageAction
-} from './helpers.js'
+import type { Data } from './lib/types.js'
+import { lookup } from './helpers/http.js'
+import { getDomain, isLocal } from './helpers/misc.js'
+import { setPageAction } from './helpers/page_action.js'
+import { storage } from './helpers/storage.js'
 
 async function updatePageAction(tabId: number, domain: string, data: Data) {
   // marked local or is 'localhost'
@@ -44,61 +34,6 @@ async function updatePageAction(tabId: number, domain: string, data: Data) {
   }
 }
 
-async function request(
-  domain: string
-): Promise<GeoResponse | ErrorResponse | LocalResponse> {
-  const ip = await resolve(domain)
-
-  // domain resolves to local IP
-  if (isLocal(ip)) return { ip, is_local: true }
-
-  const url = new URL(config.apiUrl)
-  // fallback to server-side resolving
-  url.pathname = ip || domain
-
-  const headers = new Headers({
-    Accept: 'application/json',
-    'x-client-version': config.version
-  })
-
-  let response
-  // handle network errors
-  try {
-    response = await fetch(url.toString(), {
-      headers,
-      credentials: 'omit',
-      mode: 'cors'
-    })
-  } catch (fetchError) {
-    return {
-      error:
-        fetchError instanceof Error
-          ? fetchError.message
-          : // assume string at this point
-            (fetchError as string)
-    }
-  }
-
-  // handle http errors
-  const { ok, status } = response
-  if (!ok) {
-    const errorText = await response.text()
-
-    let serverError
-    try {
-      serverError = JSON.parse(errorText) as { error: string; ip?: string }
-    } catch (parseError) {
-      // error is not valid json therefore string
-      serverError = { error: errorText }
-    }
-
-    return { status, ...serverError }
-  }
-
-  // got data
-  return (await response.json()) as GeoResponse
-}
-
 const passedMoreThan = (seconds: number, since: number) =>
   new Date().getTime() - since > seconds * 1000
 const aMin = 60 // seconds
@@ -121,7 +56,7 @@ async function getCachedResponse(
 
   if (!storedData?.fetched_at) {
     setPageAction(tabId, domain, { kind: 'loading' })
-    return { ...baseData, ...(await request(domain)) }
+    return { ...baseData, ...(await lookup(domain)) }
   }
 
   // skip network for local and 'marked as local' domains
@@ -132,7 +67,7 @@ async function getCachedResponse(
 
   if (refetch || passedMoreThan(week, fetched_at)) {
     setPageAction(tabId, domain, { kind: 'loading' })
-    return { ...baseData, ...(await request(domain)) }
+    return { ...baseData, ...(await lookup(domain)) }
   }
 
   // handle http and network errors
@@ -146,7 +81,7 @@ async function getCachedResponse(
       (error && !status && passedMoreThan(aMin, fetched_at))
     ) {
       setPageAction(tabId, domain, { kind: 'loading' })
-      return { ...baseData, ...(await request(domain)) }
+      return { ...baseData, ...(await lookup(domain)) }
     }
   }
 

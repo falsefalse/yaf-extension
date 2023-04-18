@@ -86,7 +86,7 @@ const SPEC_CONFIG = join(SRC_DIR, 'config.js')
 // generated manifest
 const MANIFEST = 'manifest.json'
 // generated and emitted scripts
-const SCRIPTS = new FileList().include(`${BUILD_DIR}/*.js`)
+const SCRIPTS = new FileList().include(`${BUILD_DIR}/**/*.js`)
 
 directory(BUILD_DIR)
 

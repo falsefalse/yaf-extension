@@ -1,7 +1,7 @@
 import type { Data } from './lib/types.js'
-
+import { getDomain, isLocal, resolvedAtHint } from './helpers/misc.js'
+import { storage } from './helpers/storage.js'
 import setFlag from './set_flag.js'
-import { storage, getDomain, isLocal, resolvedAtHint } from './helpers.js'
 import { toolbar, local, not_found, regular } from './templates.js'
 
 const DONATION = 'https://savelife.in.ua/en/donate-en/#donate-army-card-once'
