@@ -1,7 +1,15 @@
 <%
   const hinted = (val, hint) => val && `<span title='${hint}'>${val}</span>`
 
-  const { country_name, domain, ip, city, region, postal_code } = locals
+  const {
+    country_name,
+    domain,
+    ip,
+    city,
+    region,
+    postal_code,
+    resolved_at_hint
+  } = locals
 
   let area = [
     [city, 'City'],
@@ -24,7 +32,9 @@
     <% print(area); located && print('<span class="located" title="Located!" />') %></li>
 <% } %>
 
-<li><%= hinted(ip, 'Resolved IP address') %></li>
+<li>
+  <%= hinted(ip, resolved_at_hint) %>
+</li>
 
 <li class="separator" />
 

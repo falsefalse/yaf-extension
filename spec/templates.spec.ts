@@ -7,7 +7,10 @@ describe('templates/', () => {
 
   describe('local.ejs', () => {
     it('renders domain', () => {
-      r = local({ domain: 'bo.op' })
+      r = local({
+        domain: 'bo.op',
+        resolved_at_hint: "I'm Muzzy I eat clocks"
+      })
 
       expect(r).htmll.to.equal(
         '<li class="header">Local resource</li><li>bo.op</li>'
@@ -15,12 +18,16 @@ describe('templates/', () => {
     })
 
     it('renders IP address', () => {
-      r = local({ domain: 'boo.op', ip: 'x.x.x.x' })
+      r = local({
+        domain: 'boo.op',
+        ip: 'x.x.x.x',
+        resolved_at_hint: "I'm Muzzy I eat clocks"
+      })
 
       expect(r).htmll.to.equal(`
         <li class="header">Local resource</li>
         <li>boo.op</li>
-        <li title="Resolved IP address" class="resolved">x.x.x.x</li>`)
+        <li title="I'm Muzzy I eat clocks" class="resolved">x.x.x.x</li>`)
     })
 
     it('does not explode without data', () => {
@@ -56,7 +63,8 @@ describe('templates/', () => {
         country_name: 'Ukraine',
         city: 'Kyiv',
         region: 'Kyiv City',
-        postal_code: '03453'
+        postal_code: '03453',
+        resolved_at_hint: "I'm Muzzy I eat clocks"
       })
 
       expect(r).htmll.to.equal(`
@@ -64,7 +72,7 @@ describe('templates/', () => {
         <li>
           <span title='City'>Kyiv</span>, <span title='Region'>Kyiv City</span>, <span title='Postal Code'>03453</span><span class="located" title="Located!" /></li>
 
-        <li><span title='Resolved IP address'>z.z.z.z</span></li>
+        <li><span title='I'm Muzzy I eat clocks'>z.z.z.z</span></li>
 
         <li class="separator" />
 
@@ -81,7 +89,8 @@ describe('templates/', () => {
         domain: 'geo.furman.im',
         ip: 'yyy.yyy.yyy.yyy',
         country_name: 'Romania',
-        postal_code: '88014'
+        postal_code: '88014',
+        resolved_at_hint: "I'm Muzzy I eat clocks"
       })
 
       expect(r).htmll.to.equal(`
@@ -89,7 +98,7 @@ describe('templates/', () => {
         <li>
           <span title='Postal Code'>88014</span></li>
 
-        <li><span title='Resolved IP address'>yyy.yyy.yyy.yyy</span></li>
+        <li><span title='I'm Muzzy I eat clocks'>yyy.yyy.yyy.yyy</span></li>
 
         <li class="separator" />
 

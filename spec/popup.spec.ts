@@ -191,7 +191,7 @@ describe('popup.ts', () => {
     expect(get('.header')).to.have.text('Local resource')
     expect(get('.resolved'))
       .to.have.text('10.x.x.x')
-      .to.have.attr('title', 'Resolved IP address')
+      .to.have.attr('title', 'Resolved 🕚 11:20:00 AM on 4/20/2023')
   })
 
   it('allows to mark unresolved domain as local', async () => {

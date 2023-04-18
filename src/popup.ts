@@ -1,7 +1,7 @@
 import type { Data } from './lib/types.js'
 
 import setFlag from './set_flag.js'
-import { storage, getDomain, isLocal } from './helpers.js'
+import { storage, getDomain, isLocal, resolvedAtHint } from './helpers.js'
 import { toolbar, local, not_found, regular } from './templates.js'
 
 const DONATION = 'https://savelife.in.ua/en/donate-en/#donate-army-card-once'
@@ -40,7 +40,8 @@ function renderPopup(domain: string, data: Data) {
 
   if (!toolbarEl || !resultEl) return
 
-  const { is_local } = data
+  const { is_local, fetched_at } = data
+  const resolved_at_hint = resolvedAtHint(fetched_at)
 
   // 'localhost' and alike domains don't need toolbar
   if (!isLocal(domain)) {
@@ -53,6 +54,7 @@ function renderPopup(domain: string, data: Data) {
   // 'marked as local' overrides error
   if (isLocal(domain) || is_local) {
     resultEl.innerHTML = local({
+      resolved_at_hint,
       domain,
       ip: 'ip' in data ? data.ip : ''
     })
@@ -70,6 +72,7 @@ function renderPopup(domain: string, data: Data) {
     const { country_name, ip, city, region, postal_code } = data
 
     resultEl.innerHTML = regular({
+      resolved_at_hint,
       country_name,
       domain,
       city,
