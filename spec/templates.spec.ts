@@ -8,8 +8,7 @@ describe('templates/', () => {
   describe('local.ejs', () => {
     it('renders domain', () => {
       r = local({
-        domain: 'bo.op',
-        resolved_at_hint: "I'm Muzzy I eat clocks"
+        domain: 'bo.op'
       })
 
       expect(r).htmll.to.equal(

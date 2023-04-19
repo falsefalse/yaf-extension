@@ -35,7 +35,7 @@ See <a href="https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d
 yarn build[:firefox]
 
 # production build: minified, points to https://geoip.furman.im
-jake -q [:firefox]
+jake -q [firefox]
 
 # specs
 yarn test[:watch]
@@ -59,7 +59,7 @@ SublimeText users get the benefit of ready-made build tasks (requires [Terminus]
 
 Open `extension.sublime-project` as a Project and press <kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>.
 
-`tc` and `lint` tasks have navigable output.
+`tc 🦜`, `lint 🕵` and `test 🧪` tasks have navigable output.
 
 ### Release
 

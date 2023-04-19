@@ -70,6 +70,7 @@
     {
       "name": "test 🧪",
       "cmd": ["yarn", "-s", "test"],
+      // mocha spec errors
       "file_regex": "^.*file://(.*?):(\\d+):(\\d+)(.*)$",
       "auto_close": false,
       "focus": true,
