@@ -35,9 +35,10 @@ jobs:
 
           echo "badge_total=`node -pe "Object.entries(require('./coverage-summary.json').total).filter(([key]) => key != 'branchesTrue').reduce((a, [,{ pct }], _, { length }) => a + pct / length, 0).toFixed(2)"`" >> $GITHUB_ENV
 
-          summary=$(node -pe 'Object.entries(require("./coverage-summary.json").total).filter(([key]) => key != "branchesTrue").map(([key, {covered, total}]) => [key.replace(/^./, m => m.toUpperCase()).padEnd(11, " "), ":", covered.toString().padStart(4, " "), " /", total.toString().padStart(4, " ")].join("")).join("\n")')
+          summary=$(node -pe 'Object.entries(require("./coverage-summary.json").total).filter(([key]) => key != "branchesTrue").map(([key, {covered, total}]) => [" " + key.replace(/^./, m => m.toUpperCase()).padEnd(11, " "), " |", covered.toString().padStart(5, " "), " |", total.toString().padStart(5, " ")].join("")).join("\n")')
+          line="-------------|------|------"
+          code_block "$line\n$summary\n$line" >> $GITHUB_STEP_SUMMARY
 
-          code_block "$summary" >> $GITHUB_STEP_SUMMARY
           code_block "$(yarn -s report:ci)" >> $GITHUB_STEP_SUMMARY
 
       - name: Update badge
