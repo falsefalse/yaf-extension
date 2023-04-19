@@ -189,13 +189,52 @@ describe('popup.ts', () => {
     expect(get('.toolbar')).to.be.empty
 
     expect(get('.header')).to.have.text('Local resource')
-    expect(get('.resolved'))
-      .to.have.text('10.x.x.x')
-      .to.have.attr('title')
+    expect(get('.resolved')).to.have.text('10.x.x.x')
+  })
+
+  describe('Formatted hint', async () => {
+    beforeEach(() => {
+      queryStub.resolves([{ url: 'http://resolved.local', id: 88 }])
+    })
+
+    afterEach(() => {
+      expect(get('.header')).to.have.text('Local resource')
+      expect(get('.resolved')).to.have.text('192.168.x.x')
+    })
+
+    const local = (domain: string, fetched_at: Date) => ({
+      [domain]: {
+        fetched_at: fetched_at.getTime(),
+        ip: '192.168.x.x',
+        is_local: true
+      }
+    })
+
+    it('month ago', async () => {
+      const lastMonth = new Date('2023-03-10T16:35:35.000Z')
+      getStub.resolves(local('resolved.local', lastMonth))
+
+      await handleDomReady()
+
       // different locales produce different spaces for AM/PM
       // github has ' ', macOS has \u202
-      .include('Resolved 🕓 4:20:00')
-      .and.include('AM on 4/20/2023')
+      expect(get('.resolved'))
+        .to.have.attr('title')
+        .that.includes('Resolved at 🕟 04:35')
+        .and.includes('PM last month')
+    })
+
+    it('week ago', async () => {
+      const lastWeek = new Date('2023-04-10T16:25:35.000Z')
+      getStub.resolves(local('resolved.local', lastWeek))
+
+      await handleDomReady()
+
+      expect(get('.resolved'))
+        .to.have.attr('title')
+        .that.includes('Resolved at 🕓 04:25')
+        .and.includes('PM last week')
+    })
   })
 
   it('allows to mark unresolved domain as local', async () => {

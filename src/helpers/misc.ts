@@ -38,11 +38,28 @@ export const isFirefox = () => 'dns' in chrome
 export const DEFAULT_ICON = '/img/icon/32.png'
 
 /* Date */
+const DAY = 24 * 60 * 60 * 1000
+const relative = new Intl.RelativeTimeFormat('en', {
+  numeric: 'auto',
+  style: 'long'
+})
 
 export function resolvedAtHint(epoch: number) {
-  const date = new Date(epoch)
-  const [time, day] = [date.toLocaleTimeString(), date.toLocaleDateString()]
+  const now = new Date()
+  const resolved = new Date(epoch)
 
+  // relative past
+  const passedDays = (now.getTime() - resolved.getTime()) / DAY
+  const [passed, unit]: [number, Intl.RelativeTimeFormatUnit] =
+    passedDays >= 30
+      ? [passedDays / 30, 'month']
+      : passedDays >= 7
+      ? [passedDays / 7, 'week']
+      : [passedDays, 'day']
+
+  const agoRelative = relative.format(-1 * Math.round(passed), unit)
+
+  // clock
   const clocks = {
     0: ['🕛', '🕧'],
     1: ['🕐', '🕜'],
@@ -59,10 +76,15 @@ export function resolvedAtHint(epoch: number) {
     12: ['🕛', '🕧']
   } as const
 
-  const hour = (date.getHours() % 12) as keyof typeof clocks
-  const pastHalf = date.getMinutes() >= 30
-
+  const hour = (resolved.getHours() % 12) as keyof typeof clocks
+  const pastHalf = resolved.getMinutes() >= 30
   const clock = clocks[hour][Number(pastHalf)]
 
-  return `Resolved ${clock} ${time} on ${day}`
+  // time
+  const time = resolved.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  return `Resolved at ${clock} ${time} ${agoRelative}`
 }
