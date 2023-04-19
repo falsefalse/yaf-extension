@@ -1,6 +1,12 @@
 import type { Data } from './lib/types.js'
 import { lookup } from './helpers/http.js'
-import { getDomain, isLocal } from './helpers/misc.js'
+import {
+  getDomain,
+  isLocal,
+  passedMoreThanDay,
+  passedMoreThanMinute,
+  passedMoreThanWeek
+} from './helpers/misc.js'
 import { setPageAction } from './helpers/page_action.js'
 import { storage } from './helpers/storage.js'
 
@@ -34,12 +40,6 @@ async function updatePageAction(tabId: number, domain: string, data: Data) {
   }
 }
 
-const passedMoreThan = (seconds: number, since: number) =>
-  new Date().getTime() - since > seconds * 1000
-const aMin = 60 // seconds
-const day = 24 * 60 * 60 // seconds
-const week = 7 * day
-
 async function getCachedResponse(
   tabId: number,
   domain: string,
@@ -65,7 +65,7 @@ async function getCachedResponse(
   // handle stale data and refetch=true
   const { fetched_at } = storedData
 
-  if (refetch || passedMoreThan(week, fetched_at)) {
+  if (refetch || passedMoreThanWeek(fetched_at)) {
     setPageAction(tabId, domain, { kind: 'loading' })
     return { ...baseData, ...(await lookup(domain)) }
   }
@@ -76,9 +76,9 @@ async function getCachedResponse(
 
     if (
       // refetch not founds once a day
-      (status === 404 && passedMoreThan(day, fetched_at)) ||
+      (status === 404 && passedMoreThanDay(fetched_at)) ||
       // refetch non-http errors often, maybe network is back
-      (error && !status && passedMoreThan(aMin, fetched_at))
+      (error && !status && passedMoreThanMinute(fetched_at))
     ) {
       setPageAction(tabId, domain, { kind: 'loading' })
       return { ...baseData, ...(await lookup(domain)) }

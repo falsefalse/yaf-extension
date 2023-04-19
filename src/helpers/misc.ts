@@ -1,4 +1,4 @@
-/* domains and IPs */
+/* Domains and IPs */
 
 export function getDomain(url: string | undefined) {
   if (!url) return
@@ -33,20 +33,40 @@ export function isLocal(ip: string | undefined): ip is string {
   return false
 }
 
+/* Misc */
+
 export const isFirefox = () => 'dns' in chrome
 
 export const DEFAULT_ICON = '/img/icon/32.png'
 
-/* Date */
-const DAY = 24 * 60 * 60 * 1000
+/* Dates */
+
+const MINUTE = 60 * 1000
+const DAY = 24 * 60 * MINUTE
+const WEEK = 7 * DAY
+
+const passedMoreThan = (howMuchEpoch: number, sinceEpoch: number) =>
+  new Date().getTime() - sinceEpoch > howMuchEpoch
+
+const passedMoreThanWeek = (sinceEpoch: number) =>
+  passedMoreThan(WEEK, sinceEpoch)
+
+const passedMoreThanDay = (sinceEpoch: number) =>
+  passedMoreThan(DAY, sinceEpoch)
+
+const passedMoreThanMinute = (sinceEpoch: number) =>
+  passedMoreThan(MINUTE, sinceEpoch)
+
+export { passedMoreThanWeek, passedMoreThanDay, passedMoreThanMinute }
+
 const relative = new Intl.RelativeTimeFormat('en', {
   numeric: 'auto',
   style: 'long'
 })
 
-export function resolvedAtHint(epoch: number) {
+export function resolvedAtHint(resolvedAtEpoch: number) {
   const now = new Date()
-  const resolved = new Date(epoch)
+  const resolved = new Date(resolvedAtEpoch)
 
   // relative past
   const passedDays = (now.getTime() - resolved.getTime()) / DAY
