@@ -199,10 +199,10 @@
   resolved "https://registry.yarnpkg.com/@types/chai/-/chai-4.3.4.tgz#e913e8175db8307d78b4e8fa690408ba6b65dee4"
   integrity sha512-KnRanxnpfpjUTqTCXslZSEdLfXExwgNxYPdiO2WGUj8+HDjFi8R3k5RVKPeSCzLjCcshCAtVO2QBbVuAV4kTnw==
 
-"@types/chrome@^0.0.227":
-  version "0.0.227"
-  resolved "https://registry.yarnpkg.com/@types/chrome/-/chrome-0.0.227.tgz#06ac653adb4cb8a192f6e42d3a2079ef884cdf34"
-  integrity sha512-l1sVnf/1wZ/oNPw5X7OJMZjQlqVf3tPO50aE/aETHQRbrYhlHZkwv7lcuOWCimRSkFdHvAW4M+RIBAZACblXng==
+"@types/chrome@^0.0.233":
+  version "0.0.233"
+  resolved "https://registry.yarnpkg.com/@types/chrome/-/chrome-0.0.233.tgz#c56bb845a376b69f1a8d08c28a5d76283bae72e6"
+  integrity sha512-T3HUW8LDhHfYPbUkOZilhnqX04sZqEFIQO0OIG8byZ7PBIk2jYys1AkNg56UbtKbsh3dABmOniK+0Q3oyo7Sxg==
   dependencies:
     "@types/filesystem" "*"
     "@types/har-format" "*"
@@ -260,10 +260,15 @@
   resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-10.0.1.tgz#2f4f65bb08bc368ac39c96da7b2f09140b26851b"
   integrity sha512-/fvYntiO1GeICvqbQ3doGDIP97vWmvFt83GKguJ6prmQM2iXZfFcq6YE8KteFyRtX2/h5Hf91BYvPodJKFYv5Q==
 
-"@types/node@*", "@types/node@^18.15.11":
+"@types/node@*":
   version "18.15.11"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.11.tgz#b3b790f09cb1696cffcec605de025b088fa4225f"
   integrity sha512-E5Kwq2n4SbMzQOn6wnmBjuK9ouqlURrcZDVfbo9ftDDTFt3nk7ZKK4GMOzoYgnpQJKcxwQw+lGaBvvlMo0qN/Q==
+
+"@types/node@^18.15.12":
+  version "18.15.12"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.15.12.tgz#833756634e78c829e1254db006468dadbb0c696b"
+  integrity sha512-Wha1UwsB3CYdqUm2PPzh/1gujGCNtWVUYF0mB00fJFoR4gTyWTDPjSm+zBF787Ahw8vSGgBja90MkgFwvB86Dg==
 
 "@types/offscreencanvas@^2019.7.0":
   version "2019.7.0"
