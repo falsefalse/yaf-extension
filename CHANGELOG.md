@@ -1,6 +1,10 @@
+### 1.1.9.1
+
+- Show relative date in the IP address hint
+
 ### 1.1.9
 
-- Render resolution 🕙 timestamp in the IP hint in the popup
+- Render resolution 🕙 timestamp in the IP address hint in the popup
 - Tech
   - split helpers into modules
   - refactor canvas and storage into classes
