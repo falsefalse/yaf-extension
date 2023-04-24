@@ -1,7 +1,6 @@
 import type { Data } from './lib/types.js'
-import { getDomain, isLocal, resolvedAtHint } from './helpers/misc.js'
-import { storage } from './helpers/storage.js'
-import setFlag from './set_flag.js'
+import { setFlag } from './set_flag.js'
+import { getDomain, isLocal, resolvedAtHint, storage } from './helpers/index.js'
 import { toolbar, local, not_found, regular } from './templates.js'
 
 function animateRotator(duration = 2000, frequency = 4) {

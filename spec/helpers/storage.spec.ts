@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { pickStub } from '../setup.js'
 
-import { storage } from '../../src/helpers/storage.js'
+import { storage } from '../../src/helpers/index.js'
 
 describe('storage', () => {
   const setStub = pickStub('set', chrome.storage.local),

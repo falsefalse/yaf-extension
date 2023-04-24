@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 
-import { getDomain, isLocal, resolvedAtHint } from '../../src/helpers/misc.js'
+import { getDomain, isLocal, resolvedAtHint } from '../../src/helpers/index.js'
 
 describe('helpers.ts', () => {
   describe('isLocal', () => {

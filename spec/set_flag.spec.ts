@@ -3,7 +3,7 @@ import { expect } from 'chai'
 
 import { getDohResponse, getGeoResponse, pickStub } from './setup.js'
 
-import setFlag from '../src/set_flag.js'
+import { setFlag } from '../src/set_flag.js'
 
 const TAB_ID = 88
 const NOW = new Date('2023-04-20T04:20:00.000Z')

@@ -1,4 +1,4 @@
-import { isFirefox } from './misc.js'
+import { isFirefox } from './index.js'
 
 export interface SquareCanvas {
   size: number

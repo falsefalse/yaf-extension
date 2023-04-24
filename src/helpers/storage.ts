@@ -1,7 +1,7 @@
 /* local storage */
 
 import { type Data } from '../lib/types.js'
-import { DEFAULT_ICON } from './misc.js'
+import { DEFAULT_ICON } from './index.js'
 
 class Storage {
   private async set(key: string, value: unknown) {

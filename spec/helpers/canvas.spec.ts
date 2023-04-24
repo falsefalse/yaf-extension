@@ -2,8 +2,7 @@ import sinon from 'sinon'
 import { expect } from 'chai'
 import { getGeoResponse, pickStub } from '../setup.js'
 
-import { setPageAction } from '../../src/helpers/page_action.js'
-import { SquareCanvas } from '../../src/helpers/canvas.js'
+import { setPageAction, SquareCanvas } from '../../src/helpers/index.js'
 
 const TAB_ID = 14
 

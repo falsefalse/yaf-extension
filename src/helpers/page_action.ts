@@ -1,8 +1,6 @@
 /* Page actions rendering: flags, loading, errors */
 
-import { SquareCanvas } from './canvas.js'
-import { DEFAULT_ICON, isFirefox } from './misc.js'
-import { storage } from './storage.js'
+import { SquareCanvas, DEFAULT_ICON, isFirefox, storage } from './index.js'
 
 async function setFlagIcon(tabId: number, domain: string, path: string) {
   const square = new SquareCanvas()

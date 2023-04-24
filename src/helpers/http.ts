@@ -7,7 +7,7 @@ import type {
   GeoResponse,
   LocalResponse
 } from '../lib/types.js'
-import { isFirefox, isLocal } from './misc.js'
+import { isFirefox, isLocal } from './index.js'
 
 export async function resolve(domain: string) {
   if (isFirefox()) {

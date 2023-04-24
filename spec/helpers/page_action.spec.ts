@@ -1,8 +1,7 @@
 import sinon from 'sinon'
 import { expect } from 'chai'
 
-import { setPageAction } from '../../src/helpers/page_action.js'
-import { storage } from '../../src/helpers/storage.js'
+import { setPageAction, storage } from '../../src/helpers/index.js'
 
 describe('setPageAction', () => {
   const saveIconSpy = sinon.spy(storage, 'saveDomainIcon')

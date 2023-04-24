@@ -1,14 +1,14 @@
 import type { Data } from './lib/types.js'
-import { lookup } from './helpers/http.js'
 import {
+  lookup,
   getDomain,
   isLocal,
   passedMoreThanDay,
   passedMoreThanMinute,
-  passedMoreThanWeek
-} from './helpers/misc.js'
-import { setPageAction } from './helpers/page_action.js'
-import { storage } from './helpers/storage.js'
+  passedMoreThanWeek,
+  setPageAction,
+  storage
+} from './helpers/index.js'
 
 async function updatePageAction(tabId: number, domain: string, data: Data) {
   // marked local or is 'localhost'
@@ -88,7 +88,7 @@ async function getCachedResponse(
   return storedData
 }
 
-export default async function setFlag(
+export async function setFlag(
   { id: tabId, url }: Pick<chrome.tabs.Tab, 'id' | 'url'>,
   { refetch = false } = {}
 ): Promise<Data | undefined> {

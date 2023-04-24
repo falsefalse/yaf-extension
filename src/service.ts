@@ -1,4 +1,4 @@
-import setFlag from './set_flag.js'
+import { setFlag } from './set_flag.js'
 
 const onUpdated = async (
   _tabId: number,

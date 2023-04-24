@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { getDohResponse, pickStub } from '../setup.js'
 
-import { resolve } from '../../src/helpers/http.js'
+import { resolve } from '../../src/helpers/index.js'
 
 describe('resolve', () => {
   const fetchStub = pickStub('fetch', global)
