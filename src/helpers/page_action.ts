@@ -49,6 +49,7 @@ export async function setPageAction(
 
     const path = '/img/local_resource.png'
     await chrome.action.setIcon({ tabId, path })
+
     // save icon path, so we can draw a glyph over it
     await storage.saveDomainIcon(domain, path)
   }
@@ -57,8 +58,7 @@ export async function setPageAction(
     const { country_code, title } = action
     await chrome.action.setTitle({ tabId, title })
 
-    const flagPng = `${country_code.toLowerCase()}.png`
-    const path = `/img/flags/${flagPng}`
+    const path = `/img/flags/${country_code.toLowerCase()}.png`
 
     await setFlagIcon(tabId, domain, path)
   }

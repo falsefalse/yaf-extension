@@ -4,15 +4,6 @@ import { storage } from './helpers/storage.js'
 import setFlag from './set_flag.js'
 import { toolbar, local, not_found, regular } from './templates.js'
 
-const DONATION = 'https://savelife.in.ua/en/donate-en/#donate-army-card-once'
-
-function setLoading() {
-  document.body.classList.add('is-loading')
-}
-function unsetLoading() {
-  document.body.classList.remove('is-loading')
-}
-
 function animateRotator(duration = 2000, frequency = 4) {
   if (Math.random() > 1 / frequency) return
 
@@ -83,14 +74,24 @@ function renderPopup(domain: string, data: Data) {
   }
 }
 
+const Loading = {
+  set() {
+    document.body.classList.add('is-loading')
+  },
+  unset() {
+    document.body.classList.remove('is-loading')
+  }
+}
+
 async function fetchAndRender(domain: string, tab: chrome.tabs.Tab) {
-  setLoading()
+  Loading.set()
   const data = await setFlag(tab, { refetch: true })
-  unsetLoading()
+  Loading.unset()
+
   if (data) renderPopup(domain, data)
 }
 
-function delegateEvent<K extends keyof WindowEventMap>(
+function delegatedEvent<K extends keyof WindowEventMap>(
   eventName: K,
   className: string,
   listener: (event: WindowEventMap[K]) => unknown
@@ -105,6 +106,8 @@ function delegateEvent<K extends keyof WindowEventMap>(
     return listener(event)
   })
 }
+
+const DONATION = 'https://savelife.in.ua/en/donate-en/#donate-army-card-once'
 
 async function handleDomReady() {
   const [currentTab] = await chrome.tabs.query({
@@ -131,7 +134,7 @@ async function handleDomReady() {
   animateRotator()
 
   // mark
-  delegateEvent('click', 'marklocal', async () => {
+  delegatedEvent('click', 'marklocal', async () => {
     let data = await setFlag(currentTab)
     if (!data) return
 
@@ -149,7 +152,7 @@ async function handleDomReady() {
   })
 
   // reload
-  delegateEvent('click', 'reload', async ({ metaKey }) => {
+  delegatedEvent('click', 'reload', async ({ metaKey }) => {
     if (metaKey) {
       window.open(DONATION, '_blank', 'noopener,noreferrer')
       window.close()
@@ -160,7 +163,7 @@ async function handleDomReady() {
   })
 
   // service link click, timeout somehow makes firefox open link in a new tab
-  delegateEvent('click', 'whois', () => setTimeout(() => window.close(), 50))
+  delegatedEvent('click', 'whois', () => setTimeout(() => window.close(), 50))
 }
 
 window.addEventListener('DOMContentLoaded', handleDomReady)
