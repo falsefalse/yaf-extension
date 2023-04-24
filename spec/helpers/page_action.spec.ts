@@ -11,7 +11,7 @@ describe('setPageAction', () => {
   })
 
   it('sets local domain action icon and title', async () => {
-    await setPageAction(99, 'do.main', { kind: 'local' })
+    await setPageAction(99, { kind: 'local', domain: 'do.main' })
 
     expect(chrome.action.setTitle).calledOnceWith({
       tabId: 99,
@@ -25,7 +25,7 @@ describe('setPageAction', () => {
   })
 
   it('sets loading action icon and title', async () => {
-    await setPageAction(99, 'do.main', { kind: 'loading' })
+    await setPageAction(99, { kind: 'loading', domain: 'do.main' })
 
     expect(chrome.action.setTitle).calledOnceWith({
       tabId: 99,
@@ -39,11 +39,15 @@ describe('setPageAction', () => {
   })
 
   it('sets error action icon and title', async () => {
-    await setPageAction(99, 'do.main', { kind: 'error', title: 'bonk!' })
+    await setPageAction(99, {
+      kind: 'error',
+      domain: 'do.main',
+      error: 'bonk!'
+    })
 
     expect(chrome.action.setTitle).calledOnceWith({
       tabId: 99,
-      title: `bonk!`
+      title: 'Error: bonk!'
     })
     expect(chrome.action.setIcon).calledOnceWith({
       tabId: 99,
@@ -53,10 +57,13 @@ describe('setPageAction', () => {
   })
 
   it('sets resolved flag action icon and title', async () => {
-    await setPageAction(99, 'do.main', {
+    await setPageAction(99, {
       kind: 'geo',
-      country_code: 'np',
-      title: 'nepal ftw'
+      domain: 'do.main',
+      data: {
+        country_code: 'np',
+        country_name: 'nepal ftw'
+      }
     })
 
     expect(chrome.action.setTitle).calledOnceWith({
@@ -68,5 +75,20 @@ describe('setPageAction', () => {
       imageData: { 64: sinon.match.any }
     })
     expect(saveIconSpy).calledWith('do.main', '/img/flags/np.png')
+  })
+
+  it('throws if impossible path was reached', async () => {
+    let error
+    try {
+      // @ts-expect-error: assertNever spec
+      await setPageAction(99, { kind: 'impossible-kind' })
+    } catch (e) {
+      error = e
+    }
+
+    expect(error).to.have.property(
+      'message',
+      "Unreachable path reached with 'impossible-kind'"
+    )
   })
 })

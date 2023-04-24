@@ -51,7 +51,7 @@ describe('Canvasing  🎨', () => {
     const fetchStub = pickStub('fetch', global)
 
     it('renders 🔵 when loading', async () => {
-      await setPageAction(123, 'is.loadi.ng', { kind: 'loading' })
+      await setPageAction(123, { kind: 'loading', domain: 'is.loadi.ng' })
 
       expect(drawSpy).calledBefore(glyphSpy)
       expect(blurSpy).not.called
@@ -60,9 +60,10 @@ describe('Canvasing  🎨', () => {
     })
 
     it('renders 🔴 when errored out', async () => {
-      await setPageAction(123, 'nope.error', {
+      await setPageAction(123, {
         kind: 'error',
-        title: 'nah'
+        domain: 'nope.error',
+        error: 'an error'
       })
 
       expect(glyphSpy).calledAfter(drawSpy)
@@ -79,9 +80,10 @@ describe('Canvasing  🎨', () => {
         }
       })
 
-      await setPageAction(123, 'resolved.domain', {
+      await setPageAction(123, {
         kind: 'error',
-        title: 'nah'
+        domain: 'resolved.domain',
+        error: 'nope!'
       })
 
       expect(blurSpy).calledBefore(drawSpy)
@@ -95,16 +97,18 @@ describe('Canvasing  🎨', () => {
         'local.domain': { is_local: true }
       })
 
-      await setPageAction(123, 'local.domain', {
-        kind: 'local'
+      await setPageAction(123, {
+        kind: 'local',
+        domain: 'local.domain'
       })
 
       // initial draw — local_resource.png
       expect(fetchStub).not.called
       expect(fillTextStub).not.called
 
-      await setPageAction(123, 'local.domain', {
-        kind: 'loading'
+      await setPageAction(123, {
+        kind: 'loading',
+        domain: 'local.domain'
       })
 
       expect(blurSpy).calledBefore(drawSpy)
@@ -125,7 +129,7 @@ describe('Canvasing  🎨', () => {
       })
 
       it('adds character with overhang (q) to a glyph', async () => {
-        await setPageAction(123, 'is.loadi.ng', { kind: 'loading' })
+        await setPageAction(123, { kind: 'loading', domain: 'is.loadi.ng' })
 
         expect(fetchStub).calledWith('/img/icon/32.png')
         expect(fillTextStub).calledWith('🔵 q')
@@ -139,8 +143,9 @@ describe('Canvasing  🎨', () => {
           }
         })
 
-        await setPageAction(123, 'resolved.domain', {
-          kind: 'loading'
+        await setPageAction(123, {
+          kind: 'loading',
+          domain: 'resolved.domain'
         })
 
         expect(glyphSpy).calledAfter(drawSpy)
@@ -154,8 +159,9 @@ describe('Canvasing  🎨', () => {
           'local.domain': { is_local: true }
         })
 
-        await setPageAction(123, 'local.domain', {
-          kind: 'local'
+        await setPageAction(123, {
+          kind: 'local',
+          domain: 'local.domain'
         })
 
         // initial draw — local_resource.png
@@ -164,8 +170,9 @@ describe('Canvasing  🎨', () => {
         expect(fetchStub).not.called
         expect(fillTextStub).not.called
 
-        await setPageAction(123, 'local.domain', {
-          kind: 'loading'
+        await setPageAction(123, {
+          kind: 'loading',
+          domain: 'local.domain'
         })
 
         expect(glyphSpy).calledAfter(drawSpy)
@@ -184,7 +191,7 @@ describe('Canvasing  🎨', () => {
 
       let error
       try {
-        await setPageAction(123, 'boo.p', { kind: 'loading' })
+        await setPageAction(123, { kind: 'loading', domain: 'boo.p' })
       } catch (e) {
         error = e
       }
@@ -225,14 +232,16 @@ describe('Canvasing  🎨', () => {
       })
     }
 
-    const geoKind = { kind: 'geo', title: 'geo kind of action' } as const
-
     it('upscales, centers and renders the flag', async () => {
       stubImageRead(16, 11)
       stubImageResize()
-      await setPageAction(TAB_ID, 'boop.ua', {
-        ...geoKind,
-        country_code: 'UA'
+      await setPageAction(TAB_ID, {
+        kind: 'geo',
+        domain: 'boop.ua',
+        data: {
+          country_name: 'Ukraine',
+          country_code: 'UA'
+        }
       })
 
       expectResize([16, 11, 4], [0, 10])
@@ -241,9 +250,13 @@ describe('Canvasing  🎨', () => {
     it('handles narrow 🇳🇵 flag', async () => {
       stubImageRead(9, 11)
       stubImageResize()
-      await setPageAction(TAB_ID, 'Nepal', {
-        ...geoKind,
-        country_code: 'NP'
+      await setPageAction(TAB_ID, {
+        kind: 'geo',
+        domain: 'nepal.gov.np',
+        data: {
+          country_name: 'Nepal',
+          country_code: 'NP'
+        }
       })
 
       expectResize([9, 11, 4], [14, 10])
@@ -252,9 +265,13 @@ describe('Canvasing  🎨', () => {
     it("handles smol flag (don't have those but still)", async () => {
       stubImageRead(4, 5)
       stubImageResize()
-      await setPageAction(TAB_ID, 'Promes land', {
-        ...geoKind,
-        country_code: 'BOOP'
+      await setPageAction(TAB_ID, {
+        kind: 'geo',
+        domain: 'nepal.gov.np',
+        data: {
+          country_name: 'Promes land',
+          country_code: 'boop'
+        }
       })
 
       expectResize([4, 5, 4], [24, 22])

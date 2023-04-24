@@ -13,30 +13,20 @@ import {
 async function updatePageAction(tabId: number, domain: string, data: Data) {
   // marked local or is 'localhost'
   if (data.is_local || isLocal(domain)) {
-    await setPageAction(tabId, domain, { kind: 'local' })
-
+    await setPageAction(tabId, { kind: 'local', domain })
     return
   }
 
   // not found
   if ('error' in data) {
-    await setPageAction(tabId, domain, {
-      kind: 'error',
-      title: `Error: ${data.error}`
-    })
-
+    await setPageAction(tabId, { kind: 'error', domain, error: data.error })
     return
   }
 
   // we have the data
   if ('country_code' in data) {
-    const { country_code, country_name, city, region } = data
-
-    await setPageAction(tabId, domain, {
-      kind: 'geo',
-      country_code,
-      title: [country_name, region, city].filter(Boolean).join(' → ')
-    })
+    await setPageAction(tabId, { kind: 'geo', domain, data })
+    return
   }
 }
 
@@ -55,7 +45,7 @@ async function getCachedResponse(
   const storedData = await storage.getDomain(domain)
 
   if (!storedData?.fetched_at) {
-    setPageAction(tabId, domain, { kind: 'loading' })
+    setPageAction(tabId, { kind: 'loading', domain })
     return { ...baseData, ...(await lookup(domain)) }
   }
 
@@ -66,7 +56,7 @@ async function getCachedResponse(
   const { fetched_at } = storedData
 
   if (refetch || passedMoreThanWeek(fetched_at)) {
-    setPageAction(tabId, domain, { kind: 'loading' })
+    setPageAction(tabId, { kind: 'loading', domain })
     return { ...baseData, ...(await lookup(domain)) }
   }
 
@@ -80,7 +70,7 @@ async function getCachedResponse(
       // refetch non-http errors often, maybe network is back
       (error && !status && passedMoreThanMinute(fetched_at))
     ) {
-      setPageAction(tabId, domain, { kind: 'loading' })
+      setPageAction(tabId, { kind: 'loading', domain })
       return { ...baseData, ...(await lookup(domain)) }
     }
   }
