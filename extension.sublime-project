@@ -7,13 +7,7 @@
       "file_exclude_patterns": ["*.sublime-workspace", "yarn.lock"]
     }
   ],
-  "settings": {
-    "trim_trailing_white_space_on_save": true,
-    "translate_tabs_to_spaces": true,
-    "word_wrap": true,
-    "word_wrap_width": "auto",
-    "rulers": [80]
-  },
+  "settings": {},
   "build_systems": [
     {
       "name": "lint 🕵",
