@@ -16,7 +16,7 @@ Requires `node@18`, `yarn@1.22` and `jake`.
 # allows require-ing globally installed packages
 export NODE_PATH=`npm -g root` >> ~/.profile
 
-npm -g install yarn jake
+npm -g install yarn jake [prettier]
 yarn install
 ```
 
