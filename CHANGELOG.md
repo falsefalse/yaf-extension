@@ -1,3 +1,13 @@
+### 1.2.0
+
+- Support dark mode 🌚
+- Capitalize extension name
+- Tech
+  - DRY package scripts
+  - reexport helpers
+- Store
+  - update screenshot, tileshot and description
+
 ### 1.1.9.1
 
 - Show relative date in the IP address hint
@@ -22,7 +32,7 @@
 - Fix: centering of non-rectangular flags (🇳🇵)
 - Tech
   - document data types
-  - add specs, collect coverage, github workflow
+  - add specs 🧪, collect coverage, github workflow
   - build task for extension source packaging
   - simplify package scripts
   - update readme
