@@ -55,15 +55,27 @@
 
 /* variables */
 :root {
+  --base-background-color: white;
   --base-color: #2d2d2d;
-  --hover-color: #d5e4ff;
-  --border-hover-color: #8492ac;
+  --hover-background-color: #d5e4ff;
+  --hover-border-color: #8492ac;
   --separator-color: #f6f6f6;
+
   --button-size: 26px;
   --button-bg-size: 14px 14px;
 
   --base-font-size: 14px;
   --header-font-size: 17px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --base-background-color: #0d1117;
+    --base-color: #e6edf3;
+    --hover-background-color: #261d39;
+    --hover-border-color: #473366;
+    --separator-color: #1d162c;
+  }
 }
 
 /* reset */
@@ -98,6 +110,7 @@ body {
   font-family: Calibri, 'Lucida Grande', Arial, sans-serif;
   font-size: var(--base-font-size);
   line-height: 1.5;
+  background-color: var(--base-background-color);
   color: var(--base-color);
 
   position: relative;
@@ -116,6 +129,7 @@ body.is-loading {
   cursor: pointer;
   width: var(--button-size);
   height: var(--button-size);
+  border: 1px solid transparent;
   border-radius: 50%;
   overflow: hidden;
   transition: background-color 0.2s, filter 0.2s;
@@ -125,7 +139,10 @@ body.is-loading {
   background-size: var(--button-bg-size);
 }
 .button:hover {
-  background-color: var(--hover-color);
+  background-color: var(--hover-background-color);
+}
+.button:active {
+  border-color: var(--hover-border-color);
 }
 
 ul.toolbar {
@@ -143,7 +160,7 @@ ul.toolbar li.marklocal {
   background-image: url(/img/local_resource.png);
 }
 ul.toolbar li.marked {
-  background-color: var(--hover-color);
+  background-color: var(--hover-background-color);
   filter: brightness(90%);
 }
 
@@ -181,8 +198,8 @@ ul.result li.service a {
   background: 6px center no-repeat;
 }
 ul.result li.service a:hover {
-  border-color: var(--border-hover-color);
-  background-color: var(--hover-color);
+  border-color: var(--hover-border-color);
+  background-color: var(--hover-background-color);
 }
 ul.result li.service a.whois {
   background-image: url(/img/domaintools.svg);
