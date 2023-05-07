@@ -101,11 +101,19 @@ const action = {
 
 const resolve = chromeBox.stub()
 
+const chromeEventsBox = sinon.createSandbox({
+  properties: ['stub']
+})
+
 const tabs = {
-  onUpdated: { addListener: chromeBox.stub() },
-  onActivated: { addListener: chromeBox.stub() },
+  onUpdated: { addListener: chromeEventsBox.stub() },
+  onActivated: { addListener: chromeEventsBox.stub() },
   get: chromeBox.stub(),
   query: chromeBox.stub()
+}
+
+const runtime = {
+  onInstalled: { addListener: chromeEventsBox.stub() }
 }
 
 /* fetch, Headers */
@@ -155,6 +163,7 @@ Object.assign(global, {
   chrome: {
     storage: { local },
     action,
+    runtime,
     tabs
   }
 })
@@ -186,6 +195,7 @@ export const mochaHooks = {
     canvasBox.reset()
     chromeBox.reset()
     fetchBox.reset()
+    // do not reset chromeEvents box, it is global for the whole chrome runtime
   }
 }
 
