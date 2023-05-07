@@ -234,15 +234,18 @@ namespace('src', () => {
     this.needZip = true
   }
 
-  packageTask(`${pkgName}-src`, version, ['build[🦊]', 'build:package'], define)
+  packageTask(`${pkgName}-src`, version, [], define)
 })
 
 const tasks = ['build', 'build:package', 'manifest:clean']
-task('onlyzip', () => rmRf(`pkg/${pkgName}-${version}`))
+task('onlyzip', () => {
+  rmRf(`pkg/${pkgName}-${version}`)
+  rmRf(`pkg-src/${pkgName}-src-${version}`)
+})
 
 const [, ...rest] = tasks
 desc('Build & package for 🦊')
-task('firefox', ['build[🦊]', ...rest, 'onlyzip'])
+task('firefox', ['build[🦊]', ...rest, 'src:package', 'onlyzip'])
 
 desc('Build & package')
 task('default', tasks)
