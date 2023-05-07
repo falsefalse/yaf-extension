@@ -10,6 +10,7 @@
     "prerelease": "git stash -q && yarn -s lint && yarn -s test -R dot",
     "release": "jake -q clean ${TASK:-default} && open ./pkg",
     "release:firefox": "TASK=firefox yarn -s release",
+    "release:tag": "v=$npm_package_version ; git tag -a -m 🏷 $v HEAD && git push --tags 2>&1 | grep $v",
     "build": "DEV=1 jake -q clean ${TASK:-default}",
     "build:firefox": "TASK=firefox yarn -s build",
     "typecheck": "tsc --noEmit -p ts.base.json",

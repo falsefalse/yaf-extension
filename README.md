@@ -63,12 +63,14 @@ Open `extension.sublime-project` as a Project and press <kbd>Cmd</kbd>+<kbd>Shif
 
 ### Release
 
-- Bump version in `package.json`
-- Add changelog entry
-- Build release packages
+- bump version in `package.json`
+- add changelog entry
+- Build, upload and tag the release
   ```bash
-  yarn release
-  yarn release:firefox
+  git commit -am "Bump"
+  yarn release # upload to webstore, submit for review
+  yarn release:firefox # upload to AMO
+  yarn release:tag
   ```
 
 #### Fix `jake -T`
@@ -84,14 +86,6 @@ cd jake && npm i && npm link
 ```
 
 See jakejs/jake#417, jakejs/jake#420.
-
-#### Package sources
-
-AMO sometimes requires full source code to be submitted along with the build (because of compiled templates). Use this task to prepare source code archive.
-
-```bash
-jake -q src:package
-```
 
 [Chrome]: https://chrome.google.com/webstore/detail/dmchcmgddbhmbkakammmklpoonoiiomk
 [Firefox]: https://addons.mozilla.org/en-US/firefox/addon/yet-another-flags/
