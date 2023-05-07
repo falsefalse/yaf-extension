@@ -1,3 +1,7 @@
+### 1.2.1
+
+- Resolve and render the flag right after the install
+
 ### 1.2.0
 
 - Support dark mode 🌚
