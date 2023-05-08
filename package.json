@@ -25,6 +25,10 @@
     "coverage:ci": "c8 -o . -r json-summary yarn -s test",
     "report:ci": "c8 -o . -r text report"
   },
+  "engines": {
+    "node": "~18",
+    "yarn": "~1.22"
+  },
   "devDependencies": {
     "@types/chai": "^4.3.5",
     "@types/chai-dom": "^1.11.0",

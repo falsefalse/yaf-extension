@@ -28,6 +28,13 @@ See <a href="https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d
 
 </details>
 
+<details>
+  <summary>Why global <code>jake</code>?</summary>
+
+Shorter this way — don't have to <code>npx jake</code> when you can <code>jake</code> 🐈
+
+</details>
+
 ## Development
 
 ```bash
@@ -37,12 +44,9 @@ yarn build[:firefox]
 # production build: minified, points to https://geoip.furman.im
 jake -q [firefox]
 
-# specs
-yarn test[:watch]
-# generate coverage
-yarn coverage
-# compile html report and open it in the default browser
-yarn report
+yarn test # specs
+yarn coverage # generate coverage
+yarn report # compile html report and open it in the default browser
 ```
 
 ### Run development build
@@ -63,15 +67,19 @@ Open `extension.sublime-project` as a Project and press <kbd>Cmd</kbd>+<kbd>Shif
 
 ### Release
 
-- bump version in `package.json`
-- add changelog entry
-- Build, upload and tag the release
-  ```bash
-  git commit -am "Bump"
-  yarn release # upload to webstore, submit for review
-  yarn release:firefox # upload to AMO
-  yarn release:tag
-  ```
+1. bump version in `package.json`
+2. add `CHANGELOG.md` entry
+3. ```bash
+   git commit -am "Bump"
+
+   yarn release
+   # - upload pkg to webstore, submit draft for review
+
+   yarn release:firefox
+   # - upload pkg and pkg-src to AMO
+
+   yarn release:tag
+   ```
 
 #### Fix `jake -T`
 
