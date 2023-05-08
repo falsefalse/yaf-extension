@@ -9,9 +9,7 @@ async function onUpdated(
   if (status) await setFlag(tab)
 }
 
-async function onActivated({
-  tabId
-}: Pick<chrome.tabs.TabActiveInfo, 'tabId'>) {
+async function onActivated({ tabId }: { tabId: number }) {
   try {
     const tab = await chrome.tabs.get(tabId)
     if (tab?.url) await setFlag(tab)
@@ -20,9 +18,8 @@ async function onActivated({
   }
 }
 
-async function onInstalled({
-  reason
-}: Pick<chrome.runtime.InstalledDetails, 'reason'>) {
+type Reason = chrome.runtime.OnInstalledReason
+async function onInstalled({ reason }: { reason: Reason }) {
   if (reason != 'install') return
 
   const [currentTab] = await chrome.tabs.query({
