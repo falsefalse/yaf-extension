@@ -23,7 +23,7 @@ jobs:
           yarn global add jake
           yarn install --frozen-lockfile
 
-      - name: Specs
+      - name: Run specs 🧪
         env:
           NODE_PATH: ${{env.NODE_PATH}}
         run: |

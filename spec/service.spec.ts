@@ -111,7 +111,7 @@ describe('service.ts', () => {
       expect(chrome.action.setIcon).not.called
     })
 
-    it('does when there is no active tab', async () => {
+    it('does nothing when there is no active tab', async () => {
       await onInstalled({ reason: 'install' as Reason })
 
       expect(chrome.action.setTitle).not.called
