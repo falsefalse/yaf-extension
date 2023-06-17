@@ -28,7 +28,7 @@ See <a href="https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d
 <details>
   <summary>I don't want global <code>jake</code></summary>
 
-No problem, you can [link local package](https://github.com/falsefalse/yaf-extension/blob/master/.github/workflows/specs.yml#L21). 🐈
+No problem, you can [link local package](https://github.com/falsefalse/yaf-extension/blob/master/.github/workflows/specs.yml#L21) or `npx` your way to glory 🐈
 
 </details>
 
@@ -36,10 +36,10 @@ No problem, you can [link local package](https://github.com/falsefalse/yaf-exten
 
 ```bash
 # development build: un-minified, points to http://localhost:8080
-yarn build[:firefox]
+jake -q [firefox]
 
 # production build: minified, points to https://geoip.furman.im
-jake -q [firefox]
+jake -q release[:firefox]
 
 yarn test # specs
 yarn coverage # generate coverage

@@ -36,7 +36,7 @@
 
     {
       "name": "build 👷",
-      "cmd": ["yarn", "-s", "build"],
+      "cmd": ["jake", "-q"],
       "auto_close": true,
 
       "working_dir": "$project_path",
@@ -45,7 +45,7 @@
 
     {
       "name": "build:ff 🦊",
-      "cmd": ["yarn", "-s", "build:firefox"],
+      "cmd": ["jake", "-q", "firefox"],
       "auto_close": true,
 
       "working_dir": "$project_path",

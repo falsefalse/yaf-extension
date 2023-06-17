@@ -2,8 +2,6 @@
 
 const { version } = require('./package.json')
 
-const name = DEV => ['Yet Another Flags', DEV && '🚧'].filter(Boolean).join(' ')
-
 const eventPage = {
   page: 'src/module.html'
 }
@@ -19,22 +17,24 @@ const firefoxSettings = {
 
 const permissions = ['tabs', 'storage']
 
-module.exports = ({ forFirefox, DEV } = {}) => ({
+const name = release => (release ? 'Yet Another Flags' : 'Yet Another Flags 🚧')
+
+module.exports = ({ firefox, release } = {}) => ({
   manifest_version: 3,
 
-  name: name(DEV),
+  name: name(release),
   short_name: 'YAFlags',
   description: 'Shows country flag for the website near the location bar.',
 
-  ...(forFirefox && firefoxSettings),
+  ...(firefox && firefoxSettings),
 
   version,
 
   background: {
-    ...(forFirefox ? eventPage : serviceModule)
+    ...(firefox ? eventPage : serviceModule)
   },
 
-  permissions: forFirefox ? ['dns', ...permissions] : permissions,
+  permissions: firefox ? ['dns', ...permissions] : permissions,
 
   icons: {
     128: 'img/icon/128.png',
@@ -48,7 +48,7 @@ module.exports = ({ forFirefox, DEV } = {}) => ({
       16: 'img/icon/16.png',
       32: 'img/icon/32.png'
     },
-    default_title: name(DEV),
+    default_title: name(release),
     default_popup: 'src/popup.html'
   }
 })

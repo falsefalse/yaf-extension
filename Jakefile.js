@@ -25,8 +25,6 @@ const readFile = path => readFileSync(path, 'utf-8')
 const { basename, join } = require('path')
 const { execSync: exec } = require('child_process')
 
-const DEV = Boolean(process.env.DEV)
-
 const log = (...[first, ...rest]) => console.log(...[`→ ${first}`, ...rest])
 
 const stringify = json => JSON.stringify(json, null, 2)
@@ -47,7 +45,7 @@ const blue = s => `\x1b[34m${s}\x1b[0m`
 const grey = s => `\x1b[90m${s}\x1b[0m`
 /* eslint-enable no-unused-vars */
 
-function minify(srcPath, beautify = false) {
+function minify(srcPath, { beautify = false }) {
   const srcSize = size(srcPath)
 
   const config = {
@@ -91,18 +89,60 @@ const SCRIPTS = new FileList().include(`${BUILD_DIR}/**/*.js`)
 directory(BUILD_DIR)
 
 const manifest = require('./manifest.json.js')
-const { version, name } = manifest({ DEV })
-const pkgName = name.toLowerCase().replaceAll(' ', '-')
+
+const ENV = {}
+desc('Set build env, create package tasks')
+task('set_env', (release, firefox) => {
+  release = Boolean(release)
+  firefox = Boolean(firefox)
+
+  const { name, version } = manifest({ release, firefox })
+  const pkgName = name.toLowerCase().replaceAll(' ', '-')
+
+  Object.assign(ENV, { release, firefox, pkgName, version })
+
+  namespace('build', () => {
+    packageTask(pkgName, version, ['build'], function () {
+      this.packageFiles.include([
+        'manifest.json',
+        'build/**',
+        'img/**',
+        'src/*.html',
+        'src/*.css'
+      ])
+      if (!firefox) this.packageFiles.exclude('src/module.html')
+
+      this.needZip = true
+      // otherwise firefox just can't
+      this.archiveNoBaseDir = true
+    })
+  })
+
+  namespace('src', () => {
+    packageTask(`${pkgName}-src`, version, [], function () {
+      this.packageFiles.include([
+        'build/**',
+        'img/**',
+        'src/**',
+        'spec/**',
+        'pkg/**',
+        '*.*'
+      ])
+      this.packageDir = './pkg-src'
+      this.needZip = true
+    })
+  })
+})
 
 desc(`Generate ${MANIFEST}`)
-task('manifest', (forFirefox = false) => {
-  const monefest = stringify(manifest({ DEV, forFirefox }))
-  writeFile(MANIFEST, monefest)
+task('manifest', () => {
+  const { release, firefox, version } = ENV
+  writeFile(MANIFEST, stringify(manifest({ release, firefox })))
 
   log(
     'Created manifest %s %s',
-    DEV ? yellow(version) + ' 🚧' : blue(version),
-    forFirefox ? '🦊' : ''
+    !release ? yellow(version) + ' 🚧' : blue(version),
+    firefox ? '🦊' : ''
   )
 })
 namespace('manifest', () => {
@@ -112,12 +152,13 @@ namespace('manifest', () => {
 
 desc('Typecheck & emit sources')
 task('typescript', [BUILD_DIR], () => {
+  const { release } = ENV
   log('🦜 Typechecking, emitting...')
 
   try {
-    exec('yarn -s tsc', { stdio: [0, DEV ? null : 1] })
+    exec('yarn -s tsc', { stdio: [0, release ? 1 : null] })
   } catch (error) {
-    if (!DEV) throw error
+    if (release) throw error
     log('❌ Typecheck %s!', red('failed'))
   }
 })
@@ -126,28 +167,26 @@ const API_ENDPOINT = 'https://geoip.furman.im'
 const DEV_ENDPOINT = 'http://localhost:8080'
 const DOH_ENDPOINT = 'https://dns.google/resolve'
 desc(`Generate config`)
-task('config', [BUILD_DIR], (forSpecs = false) => {
-  const forDev = forSpecs || DEV
-  const apiUrl = forDev ? DEV_ENDPOINT : API_ENDPOINT
-  const dohApiUrl = DOH_ENDPOINT
+task('config', [BUILD_DIR], (/*prettier-ignore*/ specs) => {
+  const { release, version } = ENV
 
   const config = `export default ${stringify({
-    apiUrl,
-    dohApiUrl,
+    apiUrl: release ? API_ENDPOINT : DEV_ENDPOINT,
+    dohApiUrl: DOH_ENDPOINT,
     version
   })}`
 
-  const path = forSpecs ? SPEC_CONFIG : CONFIG
-  writeFile(path, config)
+  writeFile(specs ? SPEC_CONFIG : CONFIG, config)
 
   log(
-    'Created %s config',
-    forDev ? yellow('development 🚧') : blue('production 🌍')
+    'Created %s config %s',
+    !release || specs ? yellow('development 🚧') : blue('production 🌍'),
+    !release || specs ? yellow(version) : blue(version)
   )
 })
 
 desc('Compile templates')
-task('templates', [BUILD_DIR], (forSpecs = false) => {
+task('templates', [BUILD_DIR], (/*prettier-ignore*/ specs) => {
   const sources = EJS.toArray()
   const compiled = sources.reduce((_, tp) => {
     const name = basename(tp).replace('.ejs.html', '')
@@ -158,12 +197,13 @@ task('templates', [BUILD_DIR], (forSpecs = false) => {
     return _ + `export const ${name} = ${source}\n`
   }, '')
 
-  const path = forSpecs ? SPEC_TEMPLATES : TEMPLATES
+  const path = specs ? SPEC_TEMPLATES : TEMPLATES
   writeFile(path, compiled)
 
   log(`Compiled %s templates → %s`, yellow(sources.length), grey(size(path)))
 
-  if (forSpecs) minify(path, true)
+  // cut dead code from complited templates
+  if (specs) minify(path, { beautify: true })
 })
 
 // otherwise ts-node can not import anything
@@ -175,77 +215,46 @@ task('module', () => {
 })
 
 desc('Minify')
-task('minify', ['typescript', 'config', 'templates'], (forFirefox = false) => {
-  if (DEV) return
-  SCRIPTS.toArray().forEach(file => minify(file, forFirefox))
-})
-
-desc('Build all')
-task('build', (forFirefox = false) => {
-  if (!forFirefox) packageFiles.exclude('src/module.html')
-  ;['manifest', 'minify'].forEach(name => Task[name].invoke(forFirefox))
-})
-
-desc('Remove all')
-task(
-  'clean',
-  ['manifest:clean', 'build:clobber', 'src:clobber'],
-  (onlySpecs = false) => {
-    if (!onlySpecs) rmRf(BUILD_DIR)
-    rmRf(SPEC_CONFIG)
-    rmRf(SPEC_TEMPLATES)
-    rmRf('src/package.json')
-    rmRf('spec/package.json')
-    rmRf('coverage/')
-  }
+task('minify', [BUILD_DIR], () =>
+  SCRIPTS.toArray().forEach(file => minify(file, { beautify: ENV.firefox }))
 )
 
-let packageFiles
-namespace('build', () => {
-  function define() {
-    packageFiles = this.packageFiles
+desc('Build all')
+task(
+  'build',
+  ['manifest', 'config', 'typescript', 'templates'],
+  () => ENV.release && Task['minify'].invoke()
+)
 
-    this.packageFiles.include([
-      'manifest.json',
-      'build/**',
-      'img/**',
-      'src/*.html',
-      'src/*.css'
-    ])
-    this.needZip = true
-    // otherwise firefox just can't
-    this.archiveNoBaseDir = true
+desc('Remove all')
+task('clean', ['manifest:clean'], (/*prettier-ignore*/ specs) => {
+  if (!specs) {
+    rmRf(BUILD_DIR)
+    rmRf('pkg/')
+    rmRf('pkg-src/')
   }
-
-  packageTask(pkgName, version, [], define)
+  rmRf(SPEC_CONFIG)
+  rmRf(SPEC_TEMPLATES)
+  rmRf('src/package.json')
+  rmRf('spec/package.json')
+  rmRf('coverage/')
 })
 
-namespace('src', () => {
-  function define() {
-    this.packageFiles.include([
-      'build/**',
-      'img/**',
-      'src/**',
-      'spec/**',
-      'pkg/**',
-      '*.*'
-    ])
-    this.packageDir = './pkg-src'
-    this.needZip = true
-  }
-
-  packageTask(`${pkgName}-src`, version, [], define)
-})
-
-const tasks = ['build', 'build:package', 'manifest:clean']
 task('onlyzip', () => {
-  rmRf(`pkg/${pkgName}-${version}`)
-  rmRf(`pkg-src/${pkgName}-src-${version}`)
+  rmRf(`pkg/${ENV.pkgName}-${ENV.version}`)
+  rmRf(`pkg-src/${ENV.pkgName}-src-${ENV.version}`)
 })
 
-const [, ...rest] = tasks
-desc('Build & package for 🦊')
-task('firefox', ['build[🦊]', ...rest, 'src:package', 'onlyzip'])
+namespace('release', () => {
+  desc('Release package 🦊')
+  task('firefox', ['set_env[🌍,🦊]', 'build:package', 'src:package', 'onlyzip'])
+})
 
-desc('Build & package')
-task('default', tasks)
+desc('Release package')
+task('release', ['set_env[🌍,]', 'build:package'])
+
+desc('Dev package 🦊')
+task('firefox', ['set_env[,🦊]', 'build:package', 'manifest:clean', 'onlyzip'])
+
+desc('Dev package')
+task('default', ['set_env', 'build:package', 'manifest:clean'])
