@@ -17,15 +17,10 @@ jobs:
 
       - name: Install
         run: |
-          yarn_global_modules=`yarn global dir`/node_modules
-          echo "NODE_PATH=$yarn_global_modules" >> $GITHUB_ENV
-
-          yarn global add jake
           yarn install --frozen-lockfile
+          cd node_modules/jake && yarn link
 
       - name: Run specs 🧪
-        env:
-          NODE_PATH: ${{env.NODE_PATH}}
         run: |
           yarn coverage:ci
 

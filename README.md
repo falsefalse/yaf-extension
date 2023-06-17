@@ -13,9 +13,6 @@ Take a look at [server code] as well.
 Requires `node@18`, `yarn@1.22` and `jake`.
 
 ```bash
-# allows require-ing globally installed packages
-export NODE_PATH=`npm -g root` >> ~/.profile
-
 npm -g install yarn jake [prettier]
 yarn install
 ```
@@ -29,9 +26,9 @@ See <a href="https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d
 </details>
 
 <details>
-  <summary>Why global <code>jake</code>?</summary>
+  <summary>I don't want global <code>jake</code></summary>
 
-Shorter this way — don't have to <code>npx jake</code> when you can <code>jake</code> 🐈
+No problem, you can [link local package](https://github.com/falsefalse/yaf-extension/blob/master/.github/workflows/specs.yml#L21). 🐈
 
 </details>
 
@@ -80,20 +77,6 @@ Open `extension.sublime-project` as a Project and press <kbd>Cmd</kbd>+<kbd>Shif
 
    yarn release:tag
    ```
-
-#### Fix `jake -T`
-
-The command is broken in the latest release, but already fixed in master.
-
-```bash
-# remove global jake
-npm -g rm jake
-# get latest master and link it globally
-git clone git@github.com:jakejs/jake.git
-cd jake && npm i && npm link
-```
-
-See jakejs/jake#417, jakejs/jake#420.
 
 [Chrome]: https://chrome.google.com/webstore/detail/dmchcmgddbhmbkakammmklpoonoiiomk
 [Firefox]: https://addons.mozilla.org/en-US/firefox/addon/yet-another-flags/
