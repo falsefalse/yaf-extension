@@ -1,6 +1,12 @@
 import { expect } from 'chai'
+import sinon, { type SinonFakeTimers } from 'sinon'
 
-import { getDomain, isLocal, resolvedAtHint } from '../../src/helpers/index.js'
+import {
+  daysAgo,
+  getDomain,
+  isLocal,
+  resolvedAtHint
+} from '../../src/helpers/index.js'
 
 describe('helpers.ts', () => {
   describe('isLocal', () => {
@@ -61,6 +67,42 @@ describe('helpers.ts', () => {
       expect(getDomain('gopher://old')).to.be.undefined
       expect(getDomain('chrome://new-tab')).to.be.undefined
       expect(getDomain('magnet://h.a.s.h')).to.be.undefined
+    })
+  })
+
+  describe('daysAgo', () => {
+    let clock: SinonFakeTimers
+    before(() => {
+      const now = new Date('2023-04-14T04:20:00.000Z') // April
+      clock = sinon.useFakeTimers({ now, toFake: ['Date'] })
+    })
+    after(() => clock.restore())
+
+    it('returns relative date', () => {
+      const fourteenDaysAgo = new Date('2023-03-31T04:20:00.000Z') // March
+      const agos = []
+      while (agos.length <= 14) {
+        agos.push(daysAgo(fourteenDaysAgo.getTime()))
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() + 1)
+      }
+
+      expect(agos).to.deep.eq([
+        '2 weeks ago',
+        'last week',
+        'last week',
+        'last week',
+        'last week',
+        'last week',
+        'last week',
+        'last week',
+        '6 days ago',
+        '5 days ago',
+        '4 days ago',
+        '3 days ago',
+        '2 days ago',
+        'yesterday',
+        'today'
+      ])
     })
   })
 

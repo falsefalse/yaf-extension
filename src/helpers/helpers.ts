@@ -59,27 +59,30 @@ const passedMoreThanMinute = (sinceEpoch: number) =>
 
 export { passedMoreThanWeek, passedMoreThanDay, passedMoreThanMinute }
 
-const relative = new Intl.RelativeTimeFormat('en', {
-  numeric: 'auto',
-  style: 'long'
-})
+export function daysAgo(epochTime: number) {
+  const relative = new Intl.RelativeTimeFormat('en', {
+    numeric: 'auto',
+    style: 'long'
+  })
 
-export function resolvedAtHint(resolvedAtEpoch: number) {
   const now = new Date()
-  const resolved = new Date(resolvedAtEpoch)
+  const then = new Date(epochTime)
 
-  // relative past
-  const passedDays = (now.getTime() - resolved.getTime()) / DAY
+  const passedDays = (now.getTime() - then.getTime()) / DAY
   const [passed, unit]: [number, Intl.RelativeTimeFormatUnit] =
     passedDays >= 30
       ? [passedDays / 30, 'month']
       : passedDays >= 7
       ? [passedDays / 7, 'week']
       : [passedDays, 'day']
+  // discard fractions instead of rounding, we care about full days only
+  return relative.format(-1 * ~~passed, unit)
+}
 
-  const agoRelative = relative.format(-1 * Math.round(passed), unit)
+export function resolvedAtHint(resolvedAtEpoch: number) {
+  const resolved = new Date(resolvedAtEpoch)
+  const agoRelative = daysAgo(resolvedAtEpoch)
 
-  // clock
   const clocks = {
     0: ['🕛', '🕧'],
     1: ['🕐', '🕜'],

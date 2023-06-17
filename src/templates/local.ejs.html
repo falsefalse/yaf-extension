@@ -3,5 +3,5 @@
 <li class="header">Local resource</li>
 <li><%= domain %></li>
 <% if (ip) { %>
-  <li title="<%= resolved_at_hint %>" class="resolved"><%= ip %></li>
+  <li title="<%= resolved_at_hint %>" class="resolved"><% print(ip) %></li>
 <% } %>

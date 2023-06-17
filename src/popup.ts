@@ -135,7 +135,10 @@ async function handleDomReady() {
   // mark
   delegatedEvent('click', 'marklocal', async () => {
     let data = await setFlag(currentTab)
-    if (!data) return
+    if (!data) {
+      window.close()
+      return
+    }
 
     // flip and save
     data = { ...data, is_local: !data.is_local }

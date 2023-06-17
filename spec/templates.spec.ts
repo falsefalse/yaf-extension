@@ -27,6 +27,16 @@ describe('templates/', () => {
         <li class="header">Local resource</li>
         <li>boo.op</li>
         <li title="I'm Muzzy I eat clocks" class="resolved">x.x.x.x</li>`)
+
+      r = local({
+        domain: 'boo.op',
+        ip: 'x.x.x.x'
+      })
+
+      expect(r).htmll.to.equal(`
+        <li class="header">Local resource</li>
+        <li>boo.op</li>
+        <li title="" class="resolved">x.x.x.x</li>`)
     })
 
     it('does not explode without data', () => {
@@ -43,7 +53,7 @@ describe('templates/', () => {
     it('renders domain and error', () => {
       r = not_found({ domain: 'ooo.op', error: 'nope!' })
 
-      expect(r).htmll.to.equal(`<li class="header">ooo.op</li><li>nope!</li>`)
+      expect(r).htmll.to.equal('<li class="header">ooo.op</li><li>nope!</li>')
     })
 
     it('does not explode without data', () => {
@@ -153,7 +163,7 @@ describe('templates/', () => {
       r = toolbar({ is_local: true, has_mark_button: true })
 
       expect(r).htmll.to.equal(
-        `<li class="button marklocal marked" title="Unmark domain as local" />`
+        '<li class="button marklocal marked" title="Unmark domain as local" />'
       )
     })
 

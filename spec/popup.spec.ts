@@ -275,6 +275,27 @@ describe('popup.ts', () => {
       )
   })
 
+  it('closes popup instead of marking when tab url has become wronk', async () => {
+    const currentTab = { url: 'http://not.resolved', id: 88 }
+    queryStub.resolves([currentTab])
+    getStub.resolves({
+      'not.resolved': {
+        error: 'not found this one',
+        fetched_at: NOW.getTime()
+      }
+    })
+
+    await handleDomReady()
+
+    currentTab.url = 'gopher://not.resolved'
+
+    click(get('.button.marklocal'))
+    await new Promise(setImmediate)
+
+    expect(chrome.action.disable).calledOnceWith(88)
+    expect(window.close).calledOnce
+  })
+
   it('renders mark as local when domain is still not resolved after unmarking', async () => {
     queryStub.resolves([{ url: 'http://marked.as.local', id: 88 }])
 
