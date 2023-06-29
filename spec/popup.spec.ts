@@ -419,8 +419,8 @@ describe('popup.ts', () => {
       Object.assign(Math, { random })
     })
 
-    it('animates for 2s when dice rolls less than 1/4', async () => {
-      Math.random = () => 0.2
+    it('animates for 2s when dice rolls less than 1/16', async () => {
+      Math.random = () => 1 / 17
 
       await handleDomReady()
 
@@ -433,7 +433,7 @@ describe('popup.ts', () => {
       expect(get('.rotator')).to.be.null
     })
 
-    it('does not animate when dice rolls more than 1/4', async () => {
+    it('does not animate when dice rolls more than 1/16', async () => {
       Math.random = () => 1
 
       await handleDomReady()

@@ -3,7 +3,7 @@ import { setFlag } from './set_flag.js'
 import { getDomain, isLocal, resolvedAtHint, storage } from './helpers/index.js'
 import { toolbar, local, not_found, regular } from './templates.js'
 
-function animateRotator(duration = 2000, frequency = 4) {
+function animateRotator(duration = 2000, frequency = 16) {
   if (Math.random() > 1 / frequency) return
 
   document.documentElement.style.setProperty(
