@@ -4,7 +4,7 @@
     "type": "git",
     "url": "https://github.com/falsefalse/yaf-extension.git"
   },
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "scripts": {
     "prerelease": "git stash -q && yarn -s lint && yarn -s test -R dot",

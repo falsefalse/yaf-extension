@@ -1,3 +1,11 @@
+### 1.2.2
+
+- More accurate relative dates in IP address hint
+- Less frequent donation animation
+- Tech
+  - 100% specs coverage
+  - improve build system
+
 ### 1.2.1
 
 - Resolve and render the flag right after the install
