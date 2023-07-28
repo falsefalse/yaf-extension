@@ -1,3 +1,7 @@
+### 1.2.3
+
+- Do not blur flag icon when fetching geo data, render glyph instead
+
 ### 1.2.2
 
 - More accurate relative dates in IP address hint
