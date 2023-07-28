@@ -57,14 +57,6 @@ export class SquareCanvas {
     await this.drawUpscaled(path)
     this.addGlyph(glyph)
   }
-  async drawUpscaledWithBlur(path: string) {
-    this.blur()
-    await this.drawUpscaled(path)
-  }
-
-  private blur(radius = 2) {
-    this.ctx.filter = `blur(${radius}px)`
-  }
 
   private addGlyph(glyph: string) {
     const { size, ctx } = this

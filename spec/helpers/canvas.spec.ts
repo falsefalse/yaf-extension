@@ -1,6 +1,6 @@
 import sinon from 'sinon'
 import { expect } from 'chai'
-import { getGeoResponse, pickStub } from '../setup.js'
+import { pickStub } from '../setup.js'
 
 import { setPageAction, SquareCanvas } from '../../src/helpers/index.js'
 
@@ -10,7 +10,6 @@ describe('Canvasing  🎨', () => {
   const actionBox = sinon.createSandbox({ properties: ['spy'] })
   const drawSpy = actionBox.spy(SquareCanvas.prototype, 'drawUpscaled')
   const glyphSpy = actionBox.spy(SquareCanvas.prototype, 'addGlyph' as any)
-  const blurSpy = actionBox.spy(SquareCanvas.prototype, 'blur' as any)
 
   const { clearRect, drawImage, getImageData } = Context2dStub
 
@@ -53,8 +52,7 @@ describe('Canvasing  🎨', () => {
     it('renders 🔵 when loading', async () => {
       await setPageAction(123, { kind: 'loading', domain: 'is.loadi.ng' })
 
-      expect(drawSpy).calledBefore(glyphSpy)
-      expect(blurSpy).not.called
+      expect(glyphSpy).calledAfter(drawSpy)
       expect(fetchStub).calledWith('/img/icon/32.png')
       expect(fillTextStub).calledWith('🔵')
     })
@@ -67,32 +65,11 @@ describe('Canvasing  🎨', () => {
       })
 
       expect(glyphSpy).calledAfter(drawSpy)
-      expect(blurSpy).not.called
       expect(fetchStub).calledWith('/img/icon/32.png')
       expect(fillTextStub).calledWith('🔴')
     })
 
-    it('blurs existing icon when loading', async () => {
-      new FakeStorage({
-        'resolved.domain': {
-          icon: 'anything.png',
-          ...getGeoResponse('x.x.x.x')
-        }
-      })
-
-      await setPageAction(123, {
-        kind: 'error',
-        domain: 'resolved.domain',
-        error: 'nope!'
-      })
-
-      expect(blurSpy).calledBefore(drawSpy)
-      expect(glyphSpy).not.called
-      expect(fetchStub).calledWith('anything.png')
-      expect(fillTextStub).not.called
-    })
-
-    it('blurs local domain icon when loading', async () => {
+    it('renders 🔵 over local domain icon when loading', async () => {
       new FakeStorage({
         'local.domain': { is_local: true }
       })
@@ -111,10 +88,9 @@ describe('Canvasing  🎨', () => {
         domain: 'local.domain'
       })
 
-      expect(blurSpy).calledBefore(drawSpy)
-      expect(glyphSpy).not.called
+      expect(glyphSpy).calledAfter(drawSpy)
       expect(fetchStub).calledWithMatch('local_resource.png')
-      expect(fillTextStub).not.called
+      expect(fillTextStub).calledWith('🔵')
     })
 
     describe('Firefox', () => {
@@ -132,52 +108,6 @@ describe('Canvasing  🎨', () => {
         await setPageAction(123, { kind: 'loading', domain: 'is.loadi.ng' })
 
         expect(fetchStub).calledWith('/img/icon/32.png')
-        expect(fillTextStub).calledWith('🔵 q')
-      })
-
-      it('draws glyph on existing icon when loading', async () => {
-        new FakeStorage({
-          'resolved.domain': {
-            icon: 'flaggo.png',
-            ...getGeoResponse('x.x.x.x')
-          }
-        })
-
-        await setPageAction(123, {
-          kind: 'loading',
-          domain: 'resolved.domain'
-        })
-
-        expect(glyphSpy).calledAfter(drawSpy)
-        expect(blurSpy).not.called
-        expect(fetchStub).calledWith('flaggo.png')
-        expect(fillTextStub).calledWith('🔵 q')
-      })
-
-      it('draws glyph on existing icon for local domains', async () => {
-        new FakeStorage({
-          'local.domain': { is_local: true }
-        })
-
-        await setPageAction(123, {
-          kind: 'local',
-          domain: 'local.domain'
-        })
-
-        // initial draw — local_resource.png
-        expect(glyphSpy).not.called
-        expect(blurSpy).not.called
-        expect(fetchStub).not.called
-        expect(fillTextStub).not.called
-
-        await setPageAction(123, {
-          kind: 'loading',
-          domain: 'local.domain'
-        })
-
-        expect(glyphSpy).calledAfter(drawSpy)
-        expect(blurSpy).not.called
-        expect(fetchStub).calledWithMatch('local_resource.png')
         expect(fillTextStub).calledWith('🔵 q')
       })
     })

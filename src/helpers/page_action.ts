@@ -1,9 +1,9 @@
 /* Page actions rendering: flags, loading, errors */
 
 import { type GeoData } from '../lib/types.js'
-import { SquareCanvas, DEFAULT_ICON, isFirefox, storage } from './index.js'
+import { SquareCanvas, storage } from './index.js'
 
-async function setFlagIcon(tabId: number, domain: string, path: string) {
+async function setFlagIcon(tabId: number, path: string) {
   const square = new SquareCanvas()
 
   await square.drawUpscaled(path)
@@ -14,15 +14,7 @@ async function setProgressIcon(tabId: number, domain: string, glyph: string) {
   const path = await storage.getDomainIcon(domain)
   const square = new SquareCanvas()
 
-  // Firefox can not OffscreenCanvasRenderingContext2D.filter
-  // https://wpt.fyi/results/html/canvas/offscreen/manual/filter/offscreencanvas.filter.html
-  // so fall back to glyphs instead
-  if (path == DEFAULT_ICON || isFirefox()) {
-    await square.drawUpscaledWithGlyph(path, glyph)
-  } else {
-    await square.drawUpscaledWithBlur(path)
-  }
-
+  await square.drawUpscaledWithGlyph(path, glyph)
   square.setIconFromCanvas(tabId)
 }
 
@@ -63,7 +55,7 @@ export async function setPageAction(tabId: number, action: PageAction) {
     const { country_code } = action.data
     const path = `/img/flags/${country_code.toLowerCase()}.png`
 
-    await setFlagIcon(tabId, domain, path)
+    await setFlagIcon(tabId, path)
     // there is no way to read current image data back from page action 😥
     // save icon path, so we can draw a glyph over it
     await storage.saveDomainIcon(domain, path)
