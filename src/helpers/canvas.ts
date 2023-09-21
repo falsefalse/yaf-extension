@@ -1,11 +1,9 @@
 import { isFirefox } from './index.js'
 
-export interface SquareCanvas {
+export class SquareCanvas {
   size: number
   ctx: OffscreenCanvasRenderingContext2D
-}
 
-export class SquareCanvas {
   // local_resource.png is 64x64, globe is 32x32, flags 16px wide
   // so upscale everything to 64px
   constructor(size = 64) {

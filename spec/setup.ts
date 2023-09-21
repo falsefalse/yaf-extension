@@ -27,11 +27,9 @@ const canvasBox = sinon.createSandbox({
   properties: ['spy', 'stub']
 })
 
-interface OffscreenCanvasMock {
-  props: Record<string, unknown>
-}
-
 class OffscreenCanvasMock {
+  props: Record<string, unknown>
+
   constructor(width: number, height: number) {
     this.props = { width, height }
   }
@@ -67,11 +65,9 @@ const local = {
   clear: chromeBox.stub()
 }
 
-interface Storage {
-  store: Record<string, Record<string, unknown>>
-}
-
 class Storage {
+  store: Record<string, Record<string, unknown>>
+
   constructor(data: Storage['store']) {
     this.store = data
 

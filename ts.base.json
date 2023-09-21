@@ -10,7 +10,7 @@
 
     /* modules */
     "esModuleInterop": true,
-    "module": "es2022", // this makes mocha work with ESM
+    "module": "nodenext", // this makes mocha work with ESM
     "target": "es2021", // modern chrome and firefox
     "moduleResolution": "nodenext" // this makes other peoples d.ts pass
   }
