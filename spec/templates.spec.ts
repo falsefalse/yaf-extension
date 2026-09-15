@@ -5,7 +5,7 @@ import { local, not_found, regular, toolbar } from '../src/templates.js'
 describe('templates/', () => {
   let r: string
 
-  describe('local.ejs', () => {
+  describe('local', () => {
     it('renders domain', () => {
       r = local({
         domain: 'bo.op'
@@ -49,7 +49,7 @@ describe('templates/', () => {
     })
   })
 
-  describe('not_found.ejs', () => {
+  describe('not_found', () => {
     it('renders domain and error', () => {
       r = not_found({ domain: 'ooo.op', error: 'nope!' })
 
@@ -64,7 +64,7 @@ describe('templates/', () => {
     })
   })
 
-  describe('regular.ejs', () => {
+  describe('regular', () => {
     it('renders 📍 when city, region and postal code are present', () => {
       r = regular({
         domain: 'furman.im',
@@ -119,24 +119,15 @@ describe('templates/', () => {
         </li>`)
     })
 
-    it('does not explode without data', () => {
+    it('does not explode without data, skips whois link', () => {
       // @ts-expect-error: templates spec
       r = regular({})
 
-      expect(r).htmll.to.equal(`
-        <li class="header"></li>
-        <li></li>
-        <li class="separator" />
-        <li class="service">
-          <a class="whois" href="https://whois.domaintools.com/"
-            title="Open link in a new tab" target="_blank">
-            Whois
-          </a>
-        </li>`)
+      expect(r).htmll.to.equal('<li class="header"></li><li></li>')
     })
   })
 
-  describe('toolbar.ejs', () => {
+  describe('toolbar', () => {
     it('renders reload button', () => {
       r = toolbar({ is_local: false, has_mark_button: false })
 

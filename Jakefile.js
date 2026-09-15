@@ -12,7 +12,6 @@ const {
   FileList,
   Task
 } = require('jake')
-const template = require('lodash.template')
 const { minify: uglify } = require('uglify-js')
 
 const {
@@ -22,7 +21,7 @@ const {
   readFileSync
 } = require('fs')
 const readFile = path => readFileSync(path, 'utf-8')
-const { basename, join } = require('path')
+const { join } = require('path')
 const { execSync: exec } = require('child_process')
 
 const log = (...[first, ...rest]) => console.log(...[`→ ${first}`, ...rest])
@@ -73,11 +72,6 @@ function minify(srcPath, { beautify = false }) {
 const BUILD_DIR = './build'
 const SRC_DIR = './src'
 
-// templates sources
-const EJS = new FileList().include('src/templates/*.ejs.html')
-// compiled templates
-const TEMPLATES = join(BUILD_DIR, 'templates.js')
-const SPEC_TEMPLATES = join(SRC_DIR, 'templates.js')
 // generated config
 const CONFIG = join(BUILD_DIR, 'config.js')
 const SPEC_CONFIG = join(SRC_DIR, 'config.js')
@@ -185,27 +179,6 @@ task('config', [BUILD_DIR], (/*prettier-ignore*/ specs) => {
   )
 })
 
-desc('Compile templates')
-task('templates', [BUILD_DIR], (/*prettier-ignore*/ specs) => {
-  const sources = EJS.toArray()
-  const compiled = sources.reduce((_, tp) => {
-    const name = basename(tp).replace('.ejs.html', '')
-    const { source } = template(readFile(tp), {
-      variable: 'locals'
-    })
-
-    return _ + `export const ${name} = ${source}\n`
-  }, '')
-
-  const path = specs ? SPEC_TEMPLATES : TEMPLATES
-  writeFile(path, compiled)
-
-  log(`Compiled %s templates → %s`, yellow(sources.length), grey(size(path)))
-
-  // cut dead code from complited templates
-  if (specs) minify(path, { beautify: true })
-})
-
 // otherwise ts-node can not import anything
 desc('Pretend src/ and spec/ are modules')
 task('module', () => {
@@ -222,7 +195,7 @@ task('minify', [BUILD_DIR], () =>
 desc('Build all')
 task(
   'build',
-  ['manifest', 'config', 'typescript', 'templates'],
+  ['manifest', 'config', 'typescript'],
   () => ENV.release && Task['minify'].invoke()
 )
 
@@ -234,7 +207,6 @@ task('clean', ['manifest:clean'], (/*prettier-ignore*/ specs) => {
     rmRf('pkg-src/')
   }
   rmRf(SPEC_CONFIG)
-  rmRf(SPEC_TEMPLATES)
   rmRf('src/package.json')
   rmRf('spec/package.json')
   rmRf('coverage/')

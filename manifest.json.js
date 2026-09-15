@@ -34,6 +34,13 @@ module.exports = ({ firefox, release } = {}) => ({
     ...(firefox ? eventPage : serviceModule)
   },
 
+  /*
+    https://developer.chrome.com/docs/extensions/reference/api/dns
+    > This API is only available in Chrome Dev.
+    > There are no foreseeable plans to move this API
+    > from the dev channel into Chrome stable
+  */
+
   permissions: firefox ? ['dns', ...permissions] : permissions,
 
   icons: {

@@ -42,21 +42,6 @@
         "@typescript-eslint/no-explicit-any": "off",
         "no-only-tests/no-only-tests": "error"
       }
-    },
-    {
-      // has to be .html, plugin has a hardcoded check for it
-      "files": "*.ejs.html",
-      "extends": [
-        "eslint:recommended",
-        "plugin:lodash-template/recommended-with-html"
-      ],
-      "globals": { "locals": "readonly" },
-      "rules": {
-        "lodash-template/max-attributes-per-line": [
-          "error",
-          { "singleline": 2, "multiline": { "max": 2, "allowFirstLine": true } }
-        ]
-      }
     }
   ]
 }
