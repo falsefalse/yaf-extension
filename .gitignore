@@ -8,12 +8,11 @@ pkg/
 pkg-src/
 
 # generated files
-src/config.js
 manifest.json
 
-# make ts-node happy to run specs
-src/package.json
-spec/package.json
+# local overrides of .env
+.env*.local
 
-# coverage report
+# coverage report, vitest attachments
 coverage*/
+.vitest/

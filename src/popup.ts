@@ -1,3 +1,4 @@
+import type { Browser } from '@wxt-dev/browser'
 import type { Data } from './lib/types.js'
 import { setFlag } from './set_flag.js'
 import { getDomain, isLocal, resolvedAtHint, storage } from './helpers/index.js'
@@ -82,7 +83,7 @@ const Loading = {
   }
 }
 
-async function fetchAndRender(domain: string, tab: chrome.tabs.Tab) {
+async function fetchAndRender(domain: string, tab: Browser.tabs.Tab) {
   Loading.set()
   const data = await setFlag(tab, { refetch: true })
   Loading.unset()
@@ -90,12 +91,13 @@ async function fetchAndRender(domain: string, tab: chrome.tabs.Tab) {
   if (data) renderPopup(domain, data)
 }
 
-function delegatedEvent<K extends keyof WindowEventMap>(
+function delegatedEvent<K extends keyof HTMLElementEventMap>(
+  container: HTMLElement,
   eventName: K,
   className: string,
-  listener: (event: WindowEventMap[K]) => unknown
+  listener: (event: HTMLElementEventMap[K]) => unknown
 ) {
-  window.addEventListener(eventName, event => {
+  container.addEventListener(eventName, event => {
     if (
       event.target instanceof Element &&
       !event.target.classList.contains(className)
@@ -132,8 +134,13 @@ async function handleDomReady() {
   renderPopup(domain, data)
   animateRotator()
 
+  const toolbarEl = document.querySelector<HTMLElement>('.toolbar')
+  const resultEl = document.querySelector<HTMLElement>('.result')
+  // popup.html always has both, specs may not
+  if (!toolbarEl || !resultEl) return
+
   // mark
-  delegatedEvent('click', 'marklocal', async () => {
+  delegatedEvent(toolbarEl, 'click', 'marklocal', async () => {
     let data = await setFlag(currentTab)
     if (!data) {
       window.close()
@@ -154,7 +161,7 @@ async function handleDomReady() {
   })
 
   // reload
-  delegatedEvent('click', 'reload', async ({ metaKey }) => {
+  delegatedEvent(toolbarEl, 'click', 'reload', async ({ metaKey }) => {
     if (metaKey) {
       window.open(DONATION, '_blank', 'noopener,noreferrer')
       window.close()
@@ -165,9 +172,9 @@ async function handleDomReady() {
   })
 
   // service link click, timeout somehow makes firefox open link in a new tab
-  delegatedEvent('click', 'whois', () => setTimeout(() => window.close(), 50))
+  delegatedEvent(resultEl, 'click', 'whois', () =>
+    setTimeout(() => window.close(), 50)
+  )
 }
 
 window.addEventListener('DOMContentLoaded', handleDomReady)
-
-export { handleDomReady }

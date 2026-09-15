@@ -1,38 +1,17 @@
-/* eslint-env node */
-
 /* BUILD ALL THE THINGS */
 
-const {
-  namespace,
-  desc,
-  task,
-  packageTask,
-  directory,
-  rmRf,
-  FileList,
-  Task
-} = require('jake')
-const { minify: uglify } = require('uglify-js')
+import jake from 'jake'
+import { build, loadEnv } from 'vite'
+import { writeFileSync as writeFile } from 'node:fs'
 
-const {
-  existsSync: exists,
-  statSync: stat,
-  writeFileSync: writeFile,
-  readFileSync
-} = require('fs')
-const readFile = path => readFileSync(path, 'utf-8')
-const { join } = require('path')
-const { execSync: exec } = require('child_process')
+import manifest, { version } from './manifest.json.js'
+
+// jake is CommonJS with a runtime-built `module.exports`, Node sees no named exports
+const { namespace, desc, task, packageTask, rmRf } = jake
 
 const log = (...[first, ...rest]) => console.log(...[`→ ${first}`, ...rest])
 
 const stringify = json => JSON.stringify(json, null, 2)
-
-function size(path) {
-  if (!exists(path)) return 'N/A'
-  const { size } = stat(path)
-  return size < 1024 ? size + 'B' : (size / 1024).toFixed(1) + 'KB'
-}
 
 /* eslint-disable no-unused-vars */
 const green = s => `\x1b[32m${s}\x1b[0m`
@@ -44,45 +23,11 @@ const blue = s => `\x1b[34m${s}\x1b[0m`
 const grey = s => `\x1b[90m${s}\x1b[0m`
 /* eslint-enable no-unused-vars */
 
-function minify(srcPath, { beautify = false }) {
-  const srcSize = size(srcPath)
-
-  const config = {
-    module: true,
-    ...(beautify && {
-      compress: { dead_code: true },
-      mangle: false,
-      output: {
-        beautify: true,
-        indent_level: 1,
-        quote_style: 3,
-        comments: false
-      }
-    })
-  }
-
-  const { code } = uglify(readFile(srcPath), config)
-  writeFile(srcPath, code)
-
-  log(beautify ? '💅🏼' : '🗜', srcPath, grey(srcSize), '→', blue(size(srcPath)))
-}
-
 // lesssgoo!
 
 const BUILD_DIR = './build'
-const SRC_DIR = './src'
-
-// generated config
-const CONFIG = join(BUILD_DIR, 'config.js')
-const SPEC_CONFIG = join(SRC_DIR, 'config.js')
 // generated manifest
 const MANIFEST = 'manifest.json'
-// generated and emitted scripts
-const SCRIPTS = new FileList().include(`${BUILD_DIR}/**/*.js`)
-
-directory(BUILD_DIR)
-
-const manifest = require('./manifest.json.js')
 
 const ENV = {}
 desc('Set build env, create package tasks')
@@ -90,10 +35,10 @@ task('set_env', (release, firefox) => {
   release = Boolean(release)
   firefox = Boolean(firefox)
 
-  const { name, version } = manifest({ release, firefox })
+  const { name } = manifest({ release, firefox })
   const pkgName = name.toLowerCase().replaceAll(' ', '-')
 
-  Object.assign(ENV, { release, firefox, pkgName, version })
+  Object.assign(ENV, { release, firefox, pkgName })
 
   namespace('build', () => {
     packageTask(pkgName, version, ['build'], function () {
@@ -130,7 +75,7 @@ task('set_env', (release, firefox) => {
 
 desc(`Generate ${MANIFEST}`)
 task('manifest', () => {
-  const { release, firefox, version } = ENV
+  const { release, firefox } = ENV
   writeFile(MANIFEST, stringify(manifest({ release, firefox })))
 
   log(
@@ -144,77 +89,41 @@ namespace('manifest', () => {
   task('clean', () => rmRf(MANIFEST))
 })
 
-desc('Typecheck & emit sources')
-task('typescript', [BUILD_DIR], () => {
-  const { release } = ENV
-  log('🦜 Typechecking, emitting...')
-
-  try {
-    exec('yarn -s tsc', { stdio: [0, release ? 1 : null] })
-  } catch (error) {
-    if (release) throw error
-    log('❌ Typecheck %s!', red('failed'))
-  }
-})
-
-const API_ENDPOINT = 'https://geoip.furman.im'
-const DEV_ENDPOINT = 'http://localhost:8080'
-const DOH_ENDPOINT = 'https://dns.google/resolve'
-desc(`Generate config`)
-task('config', [BUILD_DIR], (/*prettier-ignore*/ specs) => {
-  const { release, version } = ENV
-
-  const config = `export default ${stringify({
-    apiUrl: release ? API_ENDPOINT : DEV_ENDPOINT,
-    dohApiUrl: DOH_ENDPOINT,
-    version
-  })}`
-
-  writeFile(specs ? SPEC_CONFIG : CONFIG, config)
+desc('Bundle sources')
+task('bundle', async () => {
+  const { release, firefox } = ENV
+  const mode = release ? 'production' : 'development'
+  // same resolution vite uses when inlining, including shell overrides
+  const { VITE_API_URL } = loadEnv(mode, process.cwd())
 
   log(
-    'Created %s config %s',
-    !release || specs ? yellow('development 🚧') : blue('production 🌍'),
-    !release || specs ? yellow(version) : blue(version)
+    '📦 Bundling %s → %s',
+    release ? blue(mode) : yellow(`${mode} 🚧`),
+    grey(VITE_API_URL)
   )
-})
 
-// otherwise ts-node can not import anything
-desc('Pretend src/ and spec/ are modules')
-task('module', () => {
-  const typeModule = stringify({ type: 'module' })
-  writeFile('src/package.json', typeModule)
-  writeFile('spec/package.json', typeModule)
+  await build({
+    mode,
+    logLevel: release ? 'info' : 'warn',
+    // AMO reviewers get a readable bundle
+    ...(firefox && { build: { minify: false } })
+  })
 })
-
-desc('Minify')
-task('minify', [BUILD_DIR], () =>
-  SCRIPTS.toArray().forEach(file => minify(file, { beautify: ENV.firefox }))
-)
 
 desc('Build all')
-task(
-  'build',
-  ['manifest', 'config', 'typescript'],
-  () => ENV.release && Task['minify'].invoke()
-)
+task('build', ['manifest', 'bundle'])
 
 desc('Remove all')
-task('clean', ['manifest:clean'], (/*prettier-ignore*/ specs) => {
-  if (!specs) {
-    rmRf(BUILD_DIR)
-    rmRf('pkg/')
-    rmRf('pkg-src/')
-  }
-  rmRf(SPEC_CONFIG)
-  rmRf('src/package.json')
-  rmRf('spec/package.json')
+task('clean', ['manifest:clean'], () => {
+  rmRf(BUILD_DIR)
+  rmRf('pkg/')
+  rmRf('pkg-src/')
   rmRf('coverage/')
 })
 
 task('onlyzip', () => {
-  rmRf(`pkg/${ENV.pkgName}-${ENV.version}`)
-  rmRf(`pkg-src/${ENV.pkgName}-src-${ENV.version}`)
+  rmRf(`pkg/${ENV.pkgName}-${version}`)
+  rmRf(`pkg-src/${ENV.pkgName}-src-${version}`)
 })
 
 namespace('release', () => {

@@ -1,7 +1,9 @@
 /* local storage */
 
-import { type Data } from '../lib/types.js'
+import type { Data } from '../lib/types.js'
 import { DEFAULT_ICON } from './index.js'
+
+type Stored = Data & { icon?: string }
 
 class Storage {
   private async set(key: string, value: unknown) {
@@ -15,7 +17,8 @@ class Storage {
   }
 
   private async get(key: string) {
-    return ((await chrome.storage.local.get(key)) || {})[key]
+    const data = (await chrome.storage.local.get(key)) || {}
+    return data[key] as Stored | undefined
   }
 
   async saveDomain(domain: string, value: Data) {

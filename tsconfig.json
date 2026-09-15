@@ -1,9 +1,22 @@
 {
-  "extends": "./ts.base.json",
-
-  "include": ["src/"],
-
   "compilerOptions": {
-    "outDir": "build/"
-  }
+    "noErrorTruncation": true, // no (...) in errors
+
+    /* typechecking */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    // do not skipLibCheck, we want our d.ts validated
+
+    /* modules: vite transforms and bundles, tsc only typechecks */
+    "noEmit": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": true,
+    "target": "es2022", // modern chrome and firefox
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "types": ["node", "firefox-webext-browser", "vite/client"]
+  },
+
+  "include": ["src", "vite.config.ts"]
 }

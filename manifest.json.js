@@ -1,6 +1,5 @@
-/* eslint-env node */
-
-const { version } = require('./package.json')
+import pkg from './package.json' with { type: 'json' }
+export const { version } = pkg
 
 const eventPage = {
   page: 'src/module.html'
@@ -19,7 +18,7 @@ const permissions = ['tabs', 'storage']
 
 const name = release => (release ? 'Yet Another Flags' : 'Yet Another Flags 🚧')
 
-module.exports = ({ firefox, release } = {}) => ({
+export default ({ firefox, release } = {}) => ({
   manifest_version: 3,
 
   name: name(release),

@@ -1,6 +1,5 @@
 /* Google DNS over HTTPS */
 
-import config from '../config.js'
 import type {
   DoHResponse,
   ErrorResponse,
@@ -21,7 +20,7 @@ export async function resolve(domain: string) {
     }
   }
 
-  const url = new URL(config.dohApiUrl)
+  const url = new URL(import.meta.env.VITE_DOH_API_URL)
   url.searchParams.set('type', '1')
   url.searchParams.set('name', domain)
 
@@ -50,13 +49,13 @@ export async function lookup(
   // domain resolves to local IP
   if (isLocal(ip)) return { ip, is_local: true }
 
-  const url = new URL(config.apiUrl)
+  const url = new URL(import.meta.env.VITE_API_URL)
   // fallback to server-side resolving
   url.pathname = ip || domain
 
   const headers = new Headers({
     Accept: 'application/json',
-    'x-client-version': config.version
+    'x-client-version': chrome.runtime.getManifest().version
   })
 
   let response

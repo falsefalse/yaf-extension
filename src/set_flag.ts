@@ -1,3 +1,4 @@
+import type { Browser } from '@wxt-dev/browser'
 import type { Data } from './lib/types.js'
 import {
   lookup,
@@ -79,7 +80,7 @@ async function getCachedResponse(
 }
 
 export async function setFlag(
-  { id: tabId, url }: Pick<chrome.tabs.Tab, 'id' | 'url'>,
+  { id: tabId, url }: Pick<Browser.tabs.Tab, 'id' | 'url'>,
   { refetch = false } = {}
 ): Promise<Data | undefined> {
   if (!tabId) return

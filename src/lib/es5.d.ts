@@ -19,13 +19,13 @@ export type OverloadedReturnType<T> = T extends {
 }
   ? R
   : T extends {
-      (...args: any[]): infer R
-      (...args: any[]): infer R
-      (...args: any[]): infer R
-    }
-  ? R
-  : T extends { (...args: any[]): infer R; (...args: any[]): infer R }
-  ? R
-  : T extends (...args: any[]) => infer R
-  ? R
-  : any
+        (...args: any[]): infer R
+        (...args: any[]): infer R
+        (...args: any[]): infer R
+      }
+    ? R
+    : T extends { (...args: any[]): infer R; (...args: any[]): infer R }
+      ? R
+      : T extends (...args: any[]) => infer R
+        ? R
+        : any

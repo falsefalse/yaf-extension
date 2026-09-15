@@ -73,8 +73,8 @@ export function daysAgo(epochTime: number) {
     passedDays >= 30
       ? [passedDays / 30, 'month']
       : passedDays >= 7
-      ? [passedDays / 7, 'week']
-      : [passedDays, 'day']
+        ? [passedDays / 7, 'week']
+        : [passedDays, 'day']
   // discard fractions instead of rounding, we care about full days only
   return relative.format(-1 * ~~passed, unit)
 }

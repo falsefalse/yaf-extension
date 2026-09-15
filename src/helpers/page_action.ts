@@ -1,6 +1,6 @@
 /* Page actions rendering: flags, loading, errors */
 
-import { type GeoData } from '../lib/types.js'
+import type { GeoData } from '../lib/types.js'
 import { SquareCanvas, storage } from './index.js'
 
 async function setFlagIcon(tabId: number, path: string) {

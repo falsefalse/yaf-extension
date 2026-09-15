@@ -1,5 +1,0 @@
-{
-  "extends": "../ts.base.json",
-
-  "include": ["."]
-}

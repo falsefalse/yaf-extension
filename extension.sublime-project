@@ -24,7 +24,7 @@
 
     {
       "name": "tc 🦜",
-      "cmd": ["yarn", "typecheck"],
+      "cmd": ["yarn", "tsc"],
       // tsc errors
       "file_regex": "^(\\S+):(\\d+):(\\d+).*(error.*)$",
       "auto_close": true,
