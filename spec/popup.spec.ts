@@ -1,136 +1,123 @@
-import sinon, { type SinonFakeTimers } from 'sinon'
-import { expect } from 'chai'
+import popupHtml from '../src/popup.html?raw'
+import {
+  currentTab,
+  dohUrl,
+  geoUrl,
+  getGeoResponse,
+  json,
+  requested,
+  respond,
+  tab
+} from './setup.js'
 
-import { readFileSync as readFile } from 'fs'
-import jsdom from 'jsdom-global'
+import '../src/popup.js'
 
-import { pickStub, getGeoResponse } from './setup.js'
-import { handleDomReady } from '../src/popup.js'
+const get = (selector: string) => document.querySelector(selector)
+const texts = (selector: string) =>
+  Array.from(document.querySelectorAll(selector), el => el.textContent?.trim())
+const click = (el: Element | null, init: MouseEventInit = {}) =>
+  el?.dispatchEvent(new MouseEvent('click', { bubbles: true, ...init }))
 
-const get = (s: string) => document.querySelector(s)
-const getAll = (s: string) => document.querySelectorAll(s)
-const click = (el: Element | null, eventInit: MouseEventInit = {}) =>
-  el?.dispatchEvent(new MouseEvent('click', { bubbles: true, ...eventInit }))
-
-const queryStub = pickStub('query', chrome.tabs)
-const getStub = pickStub('get', chrome.storage.local)
-const setStub = pickStub('set', chrome.storage.local)
-const fetchStub = pickStub('fetch', global)
-const popupHtml = readFile('./src/popup.html', 'utf8')
+// popup.ts kicks off on DOMContentLoaded and nothing awaits the handler, wait for the outcome
+const domReady = (outcome: () => unknown) => {
+  window.dispatchEvent(new Event('DOMContentLoaded'))
+  return vi.waitFor(outcome)
+}
 
 const NOW = new Date('2023-04-20T04:20:00.000Z')
+const { body } = new DOMParser().parseFromString(popupHtml, 'text/html')
 
 describe('popup.ts', () => {
-  let clock: SinonFakeTimers
+  const close = vi.spyOn(window, 'close')
+  const open = vi.spyOn(window, 'open')
 
-  before(() => {
-    clock = sinon.useFakeTimers({ now: NOW, toFake: ['Date', 'setTimeout'] })
-  })
-
-  after(() => {
-    clock.restore()
-  })
+  beforeAll(() =>
+    vi.useFakeTimers({ now: NOW, toFake: ['Date', 'setTimeout'] })
+  )
+  afterAll(() => vi.useRealTimers())
 
   beforeEach(() => {
-    jsdom(popupHtml)
-
-    sinon.stub(window, 'open')
-    sinon.stub(window, 'close')
-  })
-
-  afterEach(() => {
-    jsdom()
+    document.body.innerHTML = body.innerHTML
+    close.mockImplementation(() => {})
+    open.mockImplementation(() => null)
   })
 
   it('closes popup if there is no tab', async () => {
-    await handleDomReady()
-
-    expect(window.close).calledOnce
+    await domReady(() => expect(close).toHaveBeenCalledOnce())
   })
 
   it('does not try to render into empty DOM', async () => {
-    jsdom('<nope>nothing</nope>')
-    queryStub.resolves([{ id: 99, url: 'http://something' }])
+    document.body.innerHTML = '<nope>nothing</nope>'
+    currentTab({ id: 99, url: 'http://something' })
+    respond('something', json({ error: 'nope' }))
 
-    let error
-    try {
-      await handleDomReady()
-    } catch (e) {
-      error = e
-    }
+    // icons come last in a page action, 🔵 while resolving and 🔴 for the error,
+    // nothing is awaited after them so the handler is through once both are set
+    await domReady(() => expect(chrome.action.setIcon).toHaveBeenCalledTimes(2))
 
-    expect(error).to.be.undefined
+    expect(chrome.action.setTitle).toHaveBeenCalledWith({
+      tabId: 99,
+      title: 'Error: nope'
+    })
+    expect(document.body.innerHTML).toBe('<nope>nothing</nope>')
+    expect(close).not.toHaveBeenCalled()
   })
 
   it('closes popup if tab has no id', async () => {
-    queryStub.resolves([{ url: 'http://no.tabid' }])
+    currentTab({ url: 'http://no.tabid' })
 
-    await handleDomReady()
-
-    expect(window.close).calledOnce
+    await domReady(() => expect(close).toHaveBeenCalledOnce())
   })
 
   it('closes popup and disables page action if URL is wronk', async () => {
-    queryStub.resolves([{ id: 99, url: 'wronk://url' }])
+    currentTab({ id: 99, url: 'wronk://url' })
 
-    await handleDomReady()
-
-    expect(window.close).calledOnce
-    expect(chrome.action.disable).calledOnceWith(99)
+    await domReady(() => expect(close).toHaveBeenCalledOnce())
+    expect(chrome.action.disable).toHaveBeenCalledExactlyOnceWith(99)
   })
 
   describe('Reload button', () => {
-    it('fetches new data when reload clicked', async () => {
-      queryStub.resolves([{ url: 'http://furman.im', id: 88 }])
-
-      getStub.resolves({
-        'furman.im': {
-          fetched_at: NOW.getTime(),
-          ...getGeoResponse('z.z.z.z')
-        }
+    beforeEach(async () => {
+      currentTab({ id: 88, url: 'http://furman.im' })
+      await chrome.storage.local.set({
+        'furman.im': { fetched_at: NOW.getTime(), ...getGeoResponse('z.z.z.z') }
       })
+    })
 
-      await handleDomReady()
-
-      expect(fetchStub).calledWith(sinon.match('flags/ua.png'))
+    it('fetches new data when reload clicked', async () => {
+      await domReady(() => expect(get('.header')).toHaveTextContent('Ukraine'))
+      expect(requested()).toContain('/img/flags/ua.png')
 
       click(get('.button.reload'))
-      await new Promise(setImmediate)
 
-      expect(fetchStub).calledWith(
-        sinon.match('dns.google').and(sinon.match('furman.im'))
+      // requests go out mid-flight, the popup is done only once loading is over
+      expect(document.body).toHaveClass('is-loading')
+      await vi.waitFor(() =>
+        expect(document.body).not.toHaveClass('is-loading')
       )
-      expect(fetchStub).calledWith(
-        sinon.match('localhost:8080').and(sinon.match('furman.im'))
-      )
+
+      expect(requested()).toContain(dohUrl('furman.im'))
+      expect(requested()).toContain(geoUrl('furman.im'))
     })
 
     it('opens donation link when reload is meta+clicked', async () => {
-      queryStub.resolves([{ url: 'http://furman.im', id: 88 }])
-      getStub.resolves({
-        'furman.im': {
-          fetched_at: NOW.getTime(),
-          ...getGeoResponse('z.z.z.z')
-        }
-      })
-
-      await handleDomReady()
+      await domReady(() => expect(get('.header')).toHaveTextContent('Ukraine'))
 
       click(get('.button.reload'), { metaKey: true })
-      await new Promise(setImmediate)
 
-      expect(window.open).calledWith(
-        sinon.match('savelife.in.ua/en'),
+      expect(open).toHaveBeenCalledExactlyOnceWith(
+        'https://savelife.in.ua/en/donate-en/#donate-army-card-once',
         '_blank',
-        sinon.match.string
+        'noopener,noreferrer'
       )
+      expect(close).toHaveBeenCalledOnce()
     })
   })
 
   describe('Resolved', () => {
     it('renders geo data handsomely', async () => {
-      queryStub.resolves([{ url: 'http://furman.im', id: 88 }])
-      getStub.resolves({
+      currentTab({ id: 88, url: 'http://furman.im' })
+      await chrome.storage.local.set({
         'furman.im': {
           fetched_at: NOW.getTime(),
           ...getGeoResponse('z.z.z.z', {
@@ -141,42 +128,59 @@ describe('popup.ts', () => {
         }
       })
 
-      await handleDomReady()
+      await domReady(() => expect(get('.header')).toHaveTextContent('Ukraine'))
 
-      expect(get('.button.marklocal')).to.be.null
-      expect(get('.button.reload')).to.exist
+      expect(get('.button.marklocal')).toBeNull()
+      expect(get('.button.reload')).not.toBeNull()
 
-      expect(get('.header')).to.have.text('Ukraine')
-      // prettier-ignore
-      expect(getAll('.result li:not(.service, .separator)'))
-        .to.have.trimmed.text([
-          'Ukraine',
-          'Kyiv, Kyiv City, 03453',
-          'z.z.z.z'
-        ])
-      expect(get('.located')).to.exist
+      expect(texts('.result li:not(.service, .separator)')).toEqual([
+        'Ukraine',
+        'Kyiv, Kyiv City, 03453',
+        'z.z.z.z'
+      ])
+      expect(get('.located')).not.toBeNull()
 
-      expect(get('a.whois')).to.have.attr(
+      expect(get('a.whois')).toHaveAttribute(
         'href',
         'https://whois.domaintools.com/furman.im'
       )
     })
+
+    it('closes popup after whois link is clicked', async () => {
+      currentTab({ id: 88, url: 'http://furman.im' })
+      await chrome.storage.local.set({
+        'furman.im': { fetched_at: NOW.getTime(), ...getGeoResponse('z.z.z.z') }
+      })
+
+      await domReady(() => expect(get('.header')).toHaveTextContent('Ukraine'))
+
+      // keep the link from actually opening a tab
+      window.addEventListener('click', event => event.preventDefault(), {
+        once: true
+      })
+      click(get('a.whois'))
+
+      // delayed so that firefox gets to open the link, see popup.ts
+      expect(close).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(50)
+      expect(close).toHaveBeenCalledOnce()
+    })
   })
 
   it('does not render toolbar for local domains', async () => {
-    queryStub.resolves([{ url: 'http://0.0.0.0', id: 88 }])
+    currentTab({ id: 88, url: 'http://0.0.0.0' })
 
-    await handleDomReady()
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('Local resource')
+    )
 
-    expect(get('.toolbar')).to.be.empty
-
-    expect(get('.header')).to.have.text('Local resource')
-    expect(getAll('.result li')).to.have.text(['Local resource', '0.0.0.0'])
+    expect(get('.toolbar')?.childElementCount).toBe(0)
+    expect(texts('.result li')).toEqual(['Local resource', '0.0.0.0'])
   })
 
   it('does not render toolbar for domains resolved to local IPs', async () => {
-    queryStub.resolves([{ url: 'http://resolved.local', id: 88 }])
-    getStub.resolves({
+    currentTab({ id: 88, url: 'http://resolved.local' })
+    await chrome.storage.local.set({
       'resolved.local': {
         fetched_at: NOW.getTime(),
         ip: '10.x.x.x',
@@ -184,261 +188,238 @@ describe('popup.ts', () => {
       }
     })
 
-    await handleDomReady()
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('Local resource')
+    )
 
-    expect(get('.toolbar')).to.be.empty
-
-    expect(get('.header')).to.have.text('Local resource')
-    expect(get('.resolved')).to.have.text('10.x.x.x')
+    expect(get('.toolbar')?.childElementCount).toBe(0)
+    expect(get('.resolved')).toHaveTextContent('10.x.x.x')
   })
 
-  describe('Formatted hint', async () => {
+  describe('Formatted hint', () => {
+    const local = (fetched_at: Date) => ({
+      fetched_at: fetched_at.getTime(),
+      ip: '192.168.x.x',
+      is_local: true
+    })
+
     beforeEach(() => {
-      queryStub.resolves([{ url: 'http://resolved.local', id: 88 }])
-    })
-
-    afterEach(() => {
-      expect(get('.header')).to.have.text('Local resource')
-      expect(get('.resolved')).to.have.text('192.168.x.x')
-    })
-
-    const local = (domain: string, fetched_at: Date) => ({
-      [domain]: {
-        fetched_at: fetched_at.getTime(),
-        ip: '192.168.x.x',
-        is_local: true
-      }
+      currentTab({ id: 88, url: 'http://resolved.local' })
     })
 
     it('month ago', async () => {
       const lastMonth = new Date('2023-03-10T16:35:35.000Z')
-      getStub.resolves(local('resolved.local', lastMonth))
+      await chrome.storage.local.set({ 'resolved.local': local(lastMonth) })
 
-      await handleDomReady()
+      await domReady(() =>
+        expect(get('.resolved')).toHaveTextContent('192.168.x.x')
+      )
 
-      // different locales produce different spaces for AM/PM
-      // github has ' ', macOS has \u202
-      expect(get('.resolved'))
-        .to.have.attr('title')
-        .that.includes('Resolved at 🕟 04:35')
-        .and.includes('PM last month')
+      // different ICU versions put different spaces before AM/PM
+      const title = get('.resolved')?.getAttribute('title')
+      expect(title).toContain('Resolved at 🕟 04:35')
+      expect(title).toContain('PM last month')
     })
 
     it('week ago', async () => {
       const lastWeek = new Date('2023-04-10T16:25:35.000Z')
-      getStub.resolves(local('resolved.local', lastWeek))
+      await chrome.storage.local.set({ 'resolved.local': local(lastWeek) })
 
-      await handleDomReady()
+      await domReady(() =>
+        expect(get('.resolved')).toHaveTextContent('192.168.x.x')
+      )
 
-      expect(get('.resolved'))
-        .to.have.attr('title')
-        .that.includes('Resolved at 🕓 04:25')
-        .and.includes('PM last week')
+      const title = get('.resolved')?.getAttribute('title')
+      expect(title).toContain('Resolved at 🕓 04:25')
+      expect(title).toContain('PM last week')
     })
   })
 
   it('allows to mark unresolved domain as local', async () => {
-    queryStub.resolves([{ url: 'http://not.resolved', id: 88 }])
-    getStub.resolves({
-      'not.resolved': {
-        error: 'not found this one',
-        fetched_at: NOW.getTime()
-      }
+    currentTab({ id: 88, url: 'http://not.resolved' })
+    await chrome.storage.local.set({
+      'not.resolved': { error: 'not found this one', fetched_at: NOW.getTime() }
     })
 
-    await handleDomReady()
-
-    expect(get('.button.marklocal')).to.have.attr(
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('not.resolved')
+    )
+    expect(get('.button.marklocal')).toHaveAttribute(
       'title',
       'Mark domain as local'
     )
 
     click(get('.button.marklocal'))
-    await new Promise(setImmediate)
 
-    expect(setStub).calledWith({
-      'not.resolved': sinon.match({
-        is_local: true
-      })
+    await vi.waitFor(() =>
+      expect(get('.button.marklocal')).toHaveClass('marked')
+    )
+    expect(get('.button.marklocal')).toHaveAttribute(
+      'title',
+      'Unmark domain as local'
+    )
+
+    // flipped, error kept, local icon remembered
+    expect(await chrome.storage.local.get('not.resolved')).toEqual({
+      'not.resolved': {
+        error: 'not found this one',
+        fetched_at: NOW.getTime(),
+        is_local: true,
+        icon: '/img/local_resource.png'
+      }
     })
-
-    expect(get('.button.marklocal'))
-      .to.have.class('marked')
-      .attr('title', 'Unmark domain as local')
-
-    expect(fetchStub)
-      .not.calledWith(
-        sinon.match('dns.google').and(sinon.match('not.resolved'))
-      )
-      .not.calledWith(
-        sinon.match('localhost:8080').and(sinon.match('not.resolved'))
-      )
+    expect(requested()).not.toContain(dohUrl('not.resolved'))
+    expect(requested()).not.toContain(geoUrl('not.resolved'))
   })
 
   it('closes popup instead of marking when tab url has become wronk', async () => {
-    const currentTab = { url: 'http://not.resolved', id: 88 }
-    queryStub.resolves([currentTab])
-    getStub.resolves({
-      'not.resolved': {
-        error: 'not found this one',
-        fetched_at: NOW.getTime()
-      }
+    const current = tab({ id: 88, url: 'http://not.resolved' })
+    vi.spyOn(chrome.tabs, 'query').mockImplementation(async () => [current])
+    await chrome.storage.local.set({
+      'not.resolved': { error: 'not found this one', fetched_at: NOW.getTime() }
     })
 
-    await handleDomReady()
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('not.resolved')
+    )
 
-    currentTab.url = 'gopher://not.resolved'
-
+    current.url = 'gopher://not.resolved'
     click(get('.button.marklocal'))
-    await new Promise(setImmediate)
 
-    expect(chrome.action.disable).calledOnceWith(88)
-    expect(window.close).calledOnce
+    await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
+    expect(chrome.action.disable).toHaveBeenCalledExactlyOnceWith(88)
   })
 
   it('renders mark as local when domain is still not resolved after unmarking', async () => {
-    queryStub.resolves([{ url: 'http://marked.as.local', id: 88 }])
-
-    new FakeStorage({
+    currentTab({ id: 88, url: 'http://marked.as.local' })
+    await chrome.storage.local.set({
       'marked.as.local': {
         fetched_at: NOW.getTime(),
         is_local: true,
         error: 'not resolved at first'
       }
     })
+    respond('marked.as.local', json({ error: 'nope, not resolved still' }))
 
-    fetchStub.withArgs(sinon.match('marked.as.local')).resolves({
-      ok: true,
-      json: () => Promise.resolve({ error: 'nope, not resolved still' })
-    })
-
-    await handleDomReady()
-
-    expect(get('.button.marklocal'))
-      .to.have.class('marked')
-      .to.have.attr('title', 'Unmark domain as local')
-
-    expect(getAll('.result li')).to.have.text([
-      'Local resource',
-      'marked.as.local'
-    ])
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('Local resource')
+    )
+    expect(get('.button.marklocal')).toHaveClass('marked')
+    expect(get('.button.marklocal')).toHaveAttribute(
+      'title',
+      'Unmark domain as local'
+    )
+    expect(texts('.result li')).toEqual(['Local resource', 'marked.as.local'])
 
     click(get('.button.marklocal'))
-    await new Promise(setImmediate)
 
-    expect(fetchStub)
-      .calledWith(sinon.match('dns.google').and(sinon.match('marked.as.local')))
-      .calledWith(
-        sinon.match('localhost:8080').and(sinon.match('marked.as.local'))
-      )
+    await vi.waitFor(() =>
+      expect(get('.header')).toHaveTextContent('marked.as.local')
+    )
+    expect(requested()).toContain(dohUrl('marked.as.local'))
+    expect(requested()).toContain(geoUrl('marked.as.local'))
 
-    expect(getAll('.result li')).to.have.text([
+    expect(texts('.result li')).toEqual([
       'marked.as.local',
       'nope, not resolved still'
     ])
-
-    expect(get('.button.marklocal')).not.to.have.class('marked')
-    expect(get('.button.marklocal')).to.have.attr(
+    expect(get('.button.marklocal')).not.toHaveClass('marked')
+    expect(get('.button.marklocal')).toHaveAttribute(
       'title',
       'Mark domain as local'
     )
   })
 
   it('hides mark button when domain resolves after unmarking', async () => {
-    queryStub.resolves([{ url: 'http://unresolved.at.first', id: 88 }])
-
-    fetchStub
-      .withArgs(sinon.match('unresolved.at.first'))
-      .onFirstCall()
-      .resolves({
-        ok: true,
-        json: () => Promise.resolve({ error: 'not resolved at first' })
-      })
-      .withArgs(sinon.match('unresolved.at.first'))
-      .onSecondCall()
-      .resolves({
-        ok: true,
-        json: () => Promise.resolve(getGeoResponse('x.x.x.x'))
-      })
-
-    new FakeStorage({
+    currentTab({ id: 88, url: 'http://unresolved.at.first' })
+    await chrome.storage.local.set({
       'unresolved.at.first': {
         fetched_at: NOW.getTime(),
         is_local: true,
         error: 'not resolved at first'
       }
     })
+    respond(geoUrl('unresolved.at.first'), json(getGeoResponse('x.x.x.x')))
 
-    await handleDomReady()
-
-    expect(get('.button.marklocal'))
-      .to.have.class('marked')
-      .to.have.attr('title', 'Unmark domain as local')
-
-    expect(getAll('.result li')).to.have.text([
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('Local resource')
+    )
+    expect(get('.button.marklocal')).toHaveClass('marked')
+    expect(texts('.result li')).toEqual([
       'Local resource',
       'unresolved.at.first'
     ])
 
     click(get('.button.marklocal'))
-    await new Promise(setImmediate)
 
-    expect(fetchStub).calledWith(
-      sinon.match('dns.google').and(sinon.match('unresolved.at.first'))
-    )
-    expect(fetchStub).calledWith(
-      sinon.match('localhost:8080').and(sinon.match('unresolved.at.first'))
-    )
+    await vi.waitFor(() => expect(get('.header')).toHaveTextContent('Ukraine'))
+    expect(requested()).toContain(dohUrl('unresolved.at.first'))
+    expect(requested()).toContain(geoUrl('unresolved.at.first'))
 
-    expect(get('.header')).to.have.text('Ukraine')
-    expect(getAll('.result li:not(.separator)')).to.have.trimmed.text([
+    expect(texts('.result li:not(.separator)')).toEqual([
       'Ukraine',
       'Boyarka, Kyiv Metro Area',
       'x.x.x.x',
       'Whois'
     ])
+    expect(get('.button.marklocal')).toBeNull()
+  })
 
-    expect(get('.button.marklocal')).to.be.null
+  it('renders only the toolbar when there is nothing to render', async () => {
+    currentTab({ id: 88, url: 'http://nothing.to.show' })
+    await chrome.storage.local.set({
+      'nothing.to.show': { fetched_at: NOW.getTime(), is_local: false }
+    })
+
+    await domReady(() => expect(get('.button.reload')).not.toBeNull())
+
+    expect(get('.header')).toHaveTextContent('Loading...')
+  })
+
+  it('keeps the popup as is when tab url has become wronk on reload', async () => {
+    const current = tab({ id: 88, url: 'http://furman.im' })
+    vi.spyOn(chrome.tabs, 'query').mockImplementation(async () => [current])
+    await chrome.storage.local.set({
+      'furman.im': { fetched_at: NOW.getTime(), ...getGeoResponse('z.z.z.z') }
+    })
+
+    await domReady(() => expect(get('.header')).toHaveTextContent('Ukraine'))
+
+    current.url = 'gopher://furman.im'
+    click(get('.button.reload'))
+
+    expect(document.body).toHaveClass('is-loading')
+    await vi.waitFor(() => expect(document.body).not.toHaveClass('is-loading'))
+
+    expect(chrome.action.disable).toHaveBeenCalledExactlyOnceWith(88)
+    expect(get('.header')).toHaveTextContent('Ukraine')
   })
 
   describe('Donation animation', () => {
-    const random = { Math }
-
-    beforeEach(() => {
-      queryStub.resolves([{ url: 'http://furman.im', id: 88 }])
-
-      getStub.resolves({
-        'furman.im': {
-          fetched_at: NOW.getTime(),
-          ...getGeoResponse('z.z.z.z')
-        }
+    beforeEach(async () => {
+      currentTab({ id: 88, url: 'http://furman.im' })
+      await chrome.storage.local.set({
+        'furman.im': { fetched_at: NOW.getTime(), ...getGeoResponse('z.z.z.z') }
       })
     })
 
-    afterEach(() => {
-      Object.assign(Math, { random })
-    })
-
     it('animates for 2s when dice rolls less than 1/16', async () => {
-      Math.random = () => 1 / 17
+      vi.spyOn(Math, 'random').mockReturnValue(1 / 17)
 
-      await handleDomReady()
-
+      await domReady(() => expect(get('.rotator')).not.toBeNull())
       expect(
         document.documentElement.style.getPropertyValue('--js-rotator-duration')
-      ).to.eq('2000ms')
+      ).toBe('2000ms')
 
-      expect(get('.rotator')).not.to.be.null
-      clock.tick(2000)
-      expect(get('.rotator')).to.be.null
+      vi.advanceTimersByTime(2000)
+      expect(get('.rotator')).toBeNull()
     })
 
     it('does not animate when dice rolls more than 1/16', async () => {
-      Math.random = () => 1
+      vi.spyOn(Math, 'random').mockReturnValue(1)
 
-      await handleDomReady()
-
-      expect(get('.rotator')).to.be.null
+      await domReady(() => expect(get('.header')).toHaveTextContent('Ukraine'))
+      expect(get('.rotator')).toBeNull()
     })
   })
 })

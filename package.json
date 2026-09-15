@@ -8,46 +8,34 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prerelease": "git stash -q && yarn -s tsc && yarn -s lint && yarn -s test -R dot",
+    "prerelease": "git stash -q && yarn -s tsc && yarn -s lint && yarn -s test --reporter=dot",
     "release": "jake -q clean ${TASK:-release} && open ./pkg",
     "release:firefox": "TASK=release:firefox yarn -s release",
     "release:tag": "v=$npm_package_version ; git tag -a -m 🏷 $v HEAD && git push --tags 2>&1 | grep $v",
     "lint": "yarn -s prettier --check & p=$! ; oxlint ||s=1 ; wait $p||s=1 ; exit $s",
     "prettier": "prettier -u --log-level warn --ignore-path .gitignore .",
-    "test": "TZ=utc mocha",
-    "coverage": "c8 yarn -s test -R dot",
-    "report": "c8 -r html report && open coverage/index.html",
-    "coverage:ci": "c8 -o . -r json-summary yarn -s test",
-    "report:ci": "c8 -o . -r text report"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage --reporter=dot",
+    "report": "yarn -s coverage && open coverage/index.html"
   },
   "engines": {
     "node": ">=26",
     "yarn": "~1.22"
   },
   "devDependencies": {
-    "@types/chai": "^4.3.5",
-    "@types/chai-dom": "^1.11.0",
     "@types/firefox-webext-browser": "^143.0.0",
-    "@types/jsdom": "^21.1.1",
-    "@types/jsdom-global": "^3.0.4",
-    "@types/mocha": "^10.0.1",
     "@types/node": "^26.5.1",
-    "@types/sinon": "^10.0.13",
-    "@types/sinon-chai": "^3.2.9",
+    "@vitest/browser-playwright": "^5.0.1",
+    "@vitest/coverage-v8": "^5.0.1",
+    "@webext-core/fake-browser": "^2.0.1",
     "@wxt-dev/browser": "^0.2.9",
-    "c8": "^8.0.1",
-    "chai": "^4.3.7",
-    "chai-dom": "^1.11.0",
-    "chai-html": "^2.1.0",
     "jake": "^12.10.1",
-    "jsdom": "^22.0.0",
-    "jsdom-global": "^3.0.2",
-    "mocha": "^10.2.0",
     "oxlint": "^1.83.0",
+    "playwright": "^1.63.0",
     "prettier": "^3.9.6",
-    "sinon": "^16.0.0",
-    "sinon-chai": "^3.7.0",
     "typescript": "^7.0.2",
-    "vite": "^8.3.0"
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
   }
 }

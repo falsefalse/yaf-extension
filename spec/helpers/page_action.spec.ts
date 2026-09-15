@@ -1,41 +1,35 @@
-import sinon from 'sinon'
-import { expect } from 'chai'
-
 import { setPageAction, storage } from '../../src/helpers/index.js'
 
 describe('setPageAction', () => {
-  const saveIconSpy = sinon.spy(storage, 'saveDomainIcon')
-
-  afterEach(() => {
-    saveIconSpy.resetHistory()
-  })
+  const saveIcon = vi.spyOn(storage, 'saveDomainIcon')
+  const { setTitle, setIcon } = chrome.action
 
   it('sets local domain action icon and title', async () => {
     await setPageAction(99, { kind: 'local', domain: 'do.main' })
 
-    expect(chrome.action.setTitle).calledOnceWith({
+    expect(setTitle).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
-      title: `do.main is a local resource`
+      title: 'do.main is a local resource'
     })
-    expect(chrome.action.setIcon).calledOnceWith({
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
-      path: sinon.match('local_resource.png')
+      path: '/img/local_resource.png'
     })
-    expect(saveIconSpy).calledWith('do.main', '/img/local_resource.png')
+    expect(saveIcon).toHaveBeenCalledWith('do.main', '/img/local_resource.png')
   })
 
   it('sets loading action icon and title', async () => {
     await setPageAction(99, { kind: 'loading', domain: 'do.main' })
 
-    expect(chrome.action.setTitle).calledOnceWith({
+    expect(setTitle).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
-      title: `Resolving do.main …`
+      title: 'Resolving do.main …'
     })
-    expect(chrome.action.setIcon).calledOnceWith({
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
-      imageData: { 64: sinon.match.any }
+      imageData: { 64: expect.any(ImageData) }
     })
-    expect(saveIconSpy).not.called
+    expect(saveIcon).not.toHaveBeenCalled()
   })
 
   it('sets error action icon and title', async () => {
@@ -45,15 +39,15 @@ describe('setPageAction', () => {
       error: 'bonk!'
     })
 
-    expect(chrome.action.setTitle).calledOnceWith({
+    expect(setTitle).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
       title: 'Error: bonk!'
     })
-    expect(chrome.action.setIcon).calledOnceWith({
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
-      imageData: { 64: sinon.match.any }
+      imageData: { 64: expect.any(ImageData) }
     })
-    expect(saveIconSpy).not.called
+    expect(saveIcon).not.toHaveBeenCalled()
   })
 
   it('sets resolved flag action icon and title', async () => {
@@ -66,29 +60,21 @@ describe('setPageAction', () => {
       }
     })
 
-    expect(chrome.action.setTitle).calledOnceWith({
+    expect(setTitle).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
-      title: `nepal ftw`
+      title: 'nepal ftw'
     })
-    expect(chrome.action.setIcon).calledOnceWith({
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
-      imageData: { 64: sinon.match.any }
+      imageData: { 64: expect.any(ImageData) }
     })
-    expect(saveIconSpy).calledWith('do.main', '/img/flags/np.png')
+    expect(saveIcon).toHaveBeenCalledWith('do.main', '/img/flags/np.png')
   })
 
   it('throws if impossible path was reached', async () => {
-    let error
-    try {
+    await expect(
       // @ts-expect-error: assertNever spec
-      await setPageAction(99, { kind: 'impossible-kind' })
-    } catch (e) {
-      error = e
-    }
-
-    expect(error).to.have.property(
-      'message',
-      "Unreachable path reached with 'impossible-kind'"
-    )
+      setPageAction(99, { kind: 'impossible-kind' })
+    ).rejects.toThrow("Unreachable path reached with 'impossible-kind'")
   })
 })

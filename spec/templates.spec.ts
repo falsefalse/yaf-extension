@@ -1,172 +1,196 @@
-import { expect } from 'chai'
+import { format } from 'prettier/standalone'
+import * as htmlPlugin from 'prettier/plugins/html'
 
 import { local, not_found, regular, toolbar } from '../src/templates.js'
 
-describe('templates/', () => {
-  let r: string
+// same quotes, closing tags and whitespace for every template
+const html = (markup: string) =>
+  format(markup, { parser: 'html', plugins: [htmlPlugin] })
 
+describe('templates', () => {
   describe('local', () => {
-    it('renders domain', () => {
-      r = local({
-        domain: 'bo.op'
-      })
-
-      expect(r).htmll.to.equal(
-        '<li class="header">Local resource</li><li>bo.op</li>'
-      )
+    it('renders domain', async () => {
+      expect(await html(local({ domain: 'bo.op' }))).toMatchInlineSnapshot(`
+        "<li class="header">Local resource</li>
+        <li>bo.op</li>
+        "
+      `)
     })
 
-    it('renders IP address', () => {
-      r = local({
-        domain: 'boo.op',
-        ip: 'x.x.x.x',
-        resolved_at_hint: "I'm Muzzy I eat clocks"
-      })
-
-      expect(r).htmll.to.equal(`
-        <li class="header">Local resource</li>
+    it('renders IP address', async () => {
+      expect(
+        await html(
+          local({
+            domain: 'boo.op',
+            ip: 'x.x.x.x',
+            resolved_at_hint: "I'm Muzzy I eat clocks"
+          })
+        )
+      ).toMatchInlineSnapshot(`
+        "<li class="header">Local resource</li>
         <li>boo.op</li>
-        <li title="I'm Muzzy I eat clocks" class="resolved">x.x.x.x</li>`)
+        <li title="I'm Muzzy I eat clocks" class="resolved">x.x.x.x</li>
+        "
+      `)
 
-      r = local({
-        domain: 'boo.op',
-        ip: 'x.x.x.x'
-      })
-
-      expect(r).htmll.to.equal(`
-        <li class="header">Local resource</li>
+      expect(await html(local({ domain: 'boo.op', ip: 'x.x.x.x' })))
+        .toMatchInlineSnapshot(`
+        "<li class="header">Local resource</li>
         <li>boo.op</li>
-        <li title="" class="resolved">x.x.x.x</li>`)
+        <li title="" class="resolved">x.x.x.x</li>
+        "
+      `)
     })
 
-    it('does not explode without data', () => {
+    it('does not explode without data', async () => {
       // @ts-expect-error: templates spec
-      r = local({})
-
-      expect(r).htmll.to.equal(
-        '<li class="header">Local resource</li><li></li>'
-      )
+      expect(await html(local({}))).toMatchInlineSnapshot(`
+        "<li class="header">Local resource</li>
+        <li></li>
+        "
+      `)
     })
   })
 
   describe('not_found', () => {
-    it('renders domain and error', () => {
-      r = not_found({ domain: 'ooo.op', error: 'nope!' })
-
-      expect(r).htmll.to.equal('<li class="header">ooo.op</li><li>nope!</li>')
+    it('renders domain and error', async () => {
+      expect(await html(not_found({ domain: 'ooo.op', error: 'nope!' })))
+        .toMatchInlineSnapshot(`
+        "<li class="header">ooo.op</li>
+        <li>nope!</li>
+        "
+      `)
     })
 
-    it('does not explode without data', () => {
+    it('does not explode without data', async () => {
       // @ts-expect-error: templates spec
-      r = not_found({})
-
-      expect(r).htmll.to.equal('<li class="header"></li><li></li>')
+      expect(await html(not_found({}))).toMatchInlineSnapshot(`
+        "<li class="header"></li>
+        <li></li>
+        "
+      `)
     })
   })
 
   describe('regular', () => {
-    it('renders 📍 when city, region and postal code are present', () => {
-      r = regular({
-        domain: 'furman.im',
-        ip: 'z.z.z.z',
-        country_name: 'Ukraine',
-        city: 'Kyiv',
-        region: 'Kyiv City',
-        postal_code: '03453',
-        resolved_at_hint: "I'm Muzzy I eat clocks"
-      })
-
-      expect(r).htmll.to.equal(`
-        <li class="header"><span title='Country'>Ukraine</span></li>
+    it('renders 📍 when city, region and postal code are present', async () => {
+      expect(
+        await html(
+          regular({
+            domain: 'furman.im',
+            ip: 'z.z.z.z',
+            country_name: 'Ukraine',
+            city: 'Kyiv',
+            region: 'Kyiv City',
+            postal_code: '03453',
+            resolved_at_hint: "I'm Muzzy I eat clocks"
+          })
+        )
+      ).toMatchInlineSnapshot(`
+        "<li class="header"><span title="Country">Ukraine</span></li>
         <li>
-          <span title='City'>Kyiv</span>, <span title='Region'>Kyiv City</span>, <span title='Postal Code'>03453</span><span class="located" title="Located!" /></li>
-
-        <li><span title='I'm Muzzy I eat clocks'>z.z.z.z</span></li>
-
+          <span title="City">Kyiv</span>, <span title="Region">Kyiv City</span>,
+          <span title="Postal Code">03453</span
+          ><span class="located" title="Located!" />
+        </li>
+        <li><span title="I'm Muzzy I eat clocks">z.z.z.z</span></li>
         <li class="separator" />
-
         <li class="service">
-          <a class="whois" href="https://whois.domaintools.com/furman.im"
-            title="Open link in a new tab" target="_blank">
+          <a
+            class="whois"
+            href="https://whois.domaintools.com/furman.im"
+            title="Open link in a new tab"
+            target="_blank"
+          >
             Whois
           </a>
-        </li>`)
+        </li>
+        "
+      `)
     })
 
-    it('renders geo data', () => {
-      r = regular({
-        domain: 'geo.furman.im',
-        ip: 'yyy.yyy.yyy.yyy',
-        country_name: 'Romania',
-        postal_code: '88014',
-        resolved_at_hint: "I'm Muzzy I eat clocks"
-      })
-
-      expect(r).htmll.to.equal(`
-        <li class="header"><span title='Country'>Romania</span></li>
-        <li>
-          <span title='Postal Code'>88014</span></li>
-
-        <li><span title='I'm Muzzy I eat clocks'>yyy.yyy.yyy.yyy</span></li>
-
+    it('renders geo data', async () => {
+      expect(
+        await html(
+          regular({
+            domain: 'geo.furman.im',
+            ip: 'yyy.yyy.yyy.yyy',
+            country_name: 'Romania',
+            postal_code: '88014',
+            resolved_at_hint: "I'm Muzzy I eat clocks"
+          })
+        )
+      ).toMatchInlineSnapshot(`
+        "<li class="header"><span title="Country">Romania</span></li>
+        <li><span title="Postal Code">88014</span></li>
+        <li><span title="I'm Muzzy I eat clocks">yyy.yyy.yyy.yyy</span></li>
         <li class="separator" />
-
         <li class="service">
-          <a class="whois" href="https://whois.domaintools.com/geo.furman.im"
-            title="Open link in a new tab" target="_blank">
+          <a
+            class="whois"
+            href="https://whois.domaintools.com/geo.furman.im"
+            title="Open link in a new tab"
+            target="_blank"
+          >
             Whois
           </a>
-        </li>`)
+        </li>
+        "
+      `)
     })
 
-    it('does not explode without data, skips whois link', () => {
+    it('does not explode without data, skips whois link', async () => {
       // @ts-expect-error: templates spec
-      r = regular({})
+      expect(await html(regular({}))).toMatchInlineSnapshot(`
+        "<li class="header"></li>
 
-      expect(r).htmll.to.equal('<li class="header"></li><li></li>')
+        <li></li>
+        "
+      `)
     })
   })
 
   describe('toolbar', () => {
-    it('renders reload button', () => {
-      r = toolbar({ is_local: false, has_mark_button: false })
-
-      expect(r).htmll.to.equal(`
-        <li
-          class="button reload animate"
-          title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click"
-        />`)
-    })
-
-    it('renders mark button', () => {
-      r = toolbar({ is_local: false, has_mark_button: true })
-
-      expect(r).htmll.to.equal(
-        `<li
+    it('renders reload button', async () => {
+      expect(await html(toolbar({ is_local: false, has_mark_button: false })))
+        .toMatchInlineSnapshot(`
+        "<li
           class="button reload animate"
           title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click"
         />
-        <li class="button marklocal" title="Mark domain as local" />`
-      )
+        "
+      `)
     })
 
-    it('renders unmark button', () => {
-      r = toolbar({ is_local: true, has_mark_button: true })
-
-      expect(r).htmll.to.equal(
-        '<li class="button marklocal marked" title="Unmark domain as local" />'
-      )
-    })
-
-    it('does not explode and renders reload button without data', () => {
-      // @ts-expect-error: templates spec
-      r = toolbar({})
-
-      expect(r).htmll.to.equal(`
-        <li
+    it('renders mark button', async () => {
+      expect(await html(toolbar({ is_local: false, has_mark_button: true })))
+        .toMatchInlineSnapshot(`
+        "<li
           class="button reload animate"
           title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click"
-        />`)
+        />
+        <li class="button marklocal" title="Mark domain as local" />
+        "
+      `)
+    })
+
+    it('renders unmark button', async () => {
+      expect(await html(toolbar({ is_local: true, has_mark_button: true })))
+        .toMatchInlineSnapshot(`
+        "<li class="button marklocal marked" title="Unmark domain as local" />
+        "
+      `)
+    })
+
+    it('does not explode and renders reload button without data', async () => {
+      // @ts-expect-error: templates spec
+      expect(await html(toolbar({}))).toMatchInlineSnapshot(`
+        "<li
+          class="button reload animate"
+          title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click"
+        />
+        "
+      `)
     })
   })
 })

@@ -1,98 +1,99 @@
-import { expect } from 'chai'
+import { fakeBrowser } from '@webext-core/fake-browser'
+import { currentTab, tab } from './setup.js'
 
-import { pickStub } from './setup.js'
-
-import { onActivated, onInstalled, onUpdated } from '../src/service.js'
-
-const getTabStub = pickStub('get', chrome.tabs)
-const queryStub = pickStub('query', chrome.tabs)
-const getStub = pickStub('get', chrome.storage.local)
+import '../src/service.js'
 
 const TAB_ID = 1312
 
+const { setTitle, setIcon } = chrome.action
+const { onUpdated, onActivated } = fakeBrowser.tabs
+const { onInstalled } = fakeBrowser.runtime
+
+// same callback overload story as `tabs.query`, see setup
+const tabById = (fields: Parameters<typeof tab>[0]) =>
+  vi.spyOn(chrome.tabs, 'get').mockImplementation(async () => tab(fields))
+
 describe('service.ts', () => {
   it('assigns event listeners', () => {
-    expect(chrome.tabs.onUpdated.addListener).calledOnceWith(onUpdated)
-    expect(chrome.tabs.onActivated.addListener).calledOnceWith(onActivated)
-    expect(chrome.runtime.onInstalled.addListener).calledOnceWith(onInstalled)
+    expect(onUpdated.hasListeners()).toBe(true)
+    expect(onActivated.hasListeners()).toBe(true)
+    expect(onInstalled.hasListeners()).toBe(true)
   })
 
-  describe('onActivated', async () => {
+  describe('onActivated', () => {
+    const activate = () => onActivated.trigger({ tabId: TAB_ID, windowId: 1 })
+
     it('sets the flag', async () => {
-      getTabStub.resolves({ id: TAB_ID, url: 'http://tab.bo' })
-      getStub.resolves({
-        'tab.bo': {
-          fetched_at: new Date().getTime(),
-          is_local: true
-        }
+      tabById({ id: TAB_ID, url: 'http://tab.bo' })
+      await chrome.storage.local.set({
+        'tab.bo': { fetched_at: Date.now(), is_local: true }
       })
 
-      await onActivated({ tabId: TAB_ID })
+      await activate()
 
-      expect(chrome.action.setIcon).calledWith({
+      expect(setIcon).toHaveBeenCalledWith({
         tabId: TAB_ID,
         path: '/img/local_resource.png'
       })
-      expect(chrome.action.setTitle).calledWith({
+      expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
         title: 'tab.bo is a local resource'
       })
     })
 
     it('does nothing if tab is not there', async () => {
-      getTabStub.resolves()
+      // chrome rejects instead, but the code guards against both
+      vi.spyOn(chrome.tabs, 'get').mockResolvedValue(undefined)
 
-      await onActivated({ tabId: TAB_ID })
+      await activate()
 
-      expect(chrome.action.setIcon).not.called
-      expect(chrome.action.setTitle).not.called
+      expect(setIcon).not.toHaveBeenCalled()
+      expect(setTitle).not.toHaveBeenCalled()
     })
 
-    it('does nothing if tabs.getTab throws', async () => {
-      getTabStub.throws()
+    it('does nothing if tabs.get throws', async () => {
+      vi.spyOn(chrome.tabs, 'get').mockRejectedValue(new Error('No tab'))
 
-      await onActivated({ tabId: TAB_ID })
+      await activate()
 
-      expect(chrome.action.setIcon).not.called
-      expect(chrome.action.setTitle).not.called
+      expect(setIcon).not.toHaveBeenCalled()
+      expect(setTitle).not.toHaveBeenCalled()
     })
 
     it('does nothing if tab has no url', async () => {
-      getTabStub.throws({ id: TAB_ID })
+      tabById({ id: TAB_ID })
 
-      await onActivated({ tabId: TAB_ID })
+      await activate()
 
-      expect(chrome.action.setIcon).not.called
-      expect(chrome.action.setTitle).not.called
+      expect(setIcon).not.toHaveBeenCalled()
+      expect(setTitle).not.toHaveBeenCalled()
     })
   })
 
   describe('onUpdated', () => {
-    it('sets flag', async () => {
-      await onUpdated(0, { status: undefined }, {} as chrome.tabs.Tab)
+    it('does nothing if status is undefined', async () => {
+      await onUpdated.trigger(0, { status: undefined }, tab({}))
 
-      expect(chrome.action.setIcon).not.called
-      expect(chrome.action.setTitle).not.called
+      expect(setIcon).not.toHaveBeenCalled()
+      expect(setTitle).not.toHaveBeenCalled()
     })
 
-    it('does nothing if status is undefined', async () => {
-      getStub.resolves({
-        'tabber.tab': {
-          fetched_at: new Date().getTime(),
-          is_local: true
-        }
+    it('sets flag', async () => {
+      await chrome.storage.local.set({
+        'tabber.tab': { fetched_at: Date.now(), is_local: true }
       })
 
-      await onUpdated(0, { status: 'is defined' }, {
-        id: TAB_ID,
-        url: 'http://tabber.tab'
-      } as chrome.tabs.Tab)
+      await onUpdated.trigger(
+        TAB_ID,
+        { status: 'complete' },
+        tab({ id: TAB_ID, url: 'http://tabber.tab' })
+      )
 
-      expect(chrome.action.setIcon).calledWith({
+      expect(setIcon).toHaveBeenCalledWith({
         tabId: TAB_ID,
         path: '/img/local_resource.png'
       })
-      expect(chrome.action.setTitle).calledWith({
+      expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
         title: 'tabber.tab is a local resource'
       })
@@ -100,40 +101,35 @@ describe('service.ts', () => {
   })
 
   describe('onInstalled', () => {
-    type Reason = chrome.runtime.OnInstalledReason
-
     it('does nothing when fired with other reason', async () => {
-      queryStub.resolves([{ id: TAB_ID, url: 'http://tabber.tab' }])
+      currentTab({ id: TAB_ID, url: 'http://tabber.tab' })
 
-      await onInstalled({ reason: 'chrome_update' as Reason })
+      await onInstalled.trigger({ reason: 'chrome_update' })
 
-      expect(chrome.action.setTitle).not.called
-      expect(chrome.action.setIcon).not.called
+      expect(setTitle).not.toHaveBeenCalled()
+      expect(setIcon).not.toHaveBeenCalled()
     })
 
     it('does nothing when there is no active tab', async () => {
-      await onInstalled({ reason: 'install' as Reason })
+      await onInstalled.trigger({ reason: 'install' })
 
-      expect(chrome.action.setTitle).not.called
-      expect(chrome.action.setIcon).not.called
+      expect(setTitle).not.toHaveBeenCalled()
+      expect(setIcon).not.toHaveBeenCalled()
     })
 
-    it('sets flag when reason is `installed`', async () => {
-      getStub.resolves({
-        'tabber.tab': {
-          fetched_at: new Date().getTime(),
-          is_local: true
-        }
+    it('sets flag when reason is `install`', async () => {
+      await chrome.storage.local.set({
+        'tabber.tab': { fetched_at: Date.now(), is_local: true }
       })
-      queryStub.resolves([{ id: TAB_ID, url: 'http://tabber.tab' }])
+      currentTab({ id: TAB_ID, url: 'http://tabber.tab' })
 
-      await onInstalled({ reason: 'install' as Reason })
+      await onInstalled.trigger({ reason: 'install' })
 
-      expect(chrome.action.setTitle).calledWith({
+      expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
         title: 'tabber.tab is a local resource'
       })
-      expect(chrome.action.setIcon).calledWith({
+      expect(setIcon).toHaveBeenCalledWith({
         tabId: TAB_ID,
         path: '/img/local_resource.png'
       })

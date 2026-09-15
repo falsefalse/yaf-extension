@@ -15,8 +15,14 @@
     "verbatimModuleSyntax": true,
     "target": "es2022", // modern chrome and firefox
     "lib": ["esnext", "dom", "dom.iterable"],
-    "types": ["node", "firefox-webext-browser", "vite/client"]
+    "types": [
+      "node",
+      "firefox-webext-browser",
+      "vite/client",
+      "vitest/globals",
+      "@vitest/browser/matchers"
+    ]
   },
 
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "spec", "vite.config.ts"]
 }
