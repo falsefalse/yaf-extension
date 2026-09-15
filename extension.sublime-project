@@ -12,9 +12,8 @@
     {
       "name": "lint 🕵",
       "cmd": ["yarn", "lint"],
-      // eslint and prettier errors
-      "file_regex": "^(?:\\[.*\\] )?(\\S+)\\s*?$",
-      "line_regex": "^\\s+(\\d+):(\\d+)\\s+(.*)$",
+      // oxlint `file:line:col: message` and prettier `[warn] file`
+      "file_regex": "^(?:\\[warn\\] )?(\\S+?)(?::(\\d+):(\\d+): (.*))?$",
       "auto_close": true,
       "focus": true,
 
@@ -64,8 +63,8 @@
     {
       "name": "test 🧪",
       "cmd": ["yarn", "-s", "test"],
-      // mocha spec errors
-      "file_regex": "^.*file://(.*?):(\\d+):(\\d+)(.*)$",
+      // vitest stack frames, `❯ [fn] file:line:col`, skipping node_modules
+      "file_regex": "^\\s*❯ (?:\\S+ )?((?!node_modules)\\S+?):(\\d+):(\\d+)$",
       "auto_close": false,
       "focus": true,
 

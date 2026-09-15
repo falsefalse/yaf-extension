@@ -13,6 +13,7 @@ manifest.json
 # local overrides of .env
 .env*.local
 
-# coverage report, vitest attachments
+# coverage report, CI log of it, vitest attachments
 coverage*/
+coverage.log
 .vitest/
