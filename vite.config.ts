@@ -28,6 +28,8 @@ export default defineConfig(({ mode }) => ({
       headless: true,
       screenshotFailures: false,
       provider: playwright({
+        // installed Chrome stable, nothing to download
+        launchOptions: { channel: 'chrome' },
         // what TZ=utc was for mocha, plus stable AM/PM formatting
         contextOptions: { timezoneId: 'UTC', locale: 'en-US' }
       }),

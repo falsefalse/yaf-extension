@@ -1,48 +1,54 @@
 name: Specs
-on:
-  push:
-    branches: [master]
+on: push
 
 jobs:
   specs-and-coverage:
     name: Coverage
     runs-on: ubuntu-latest
+    env:
+      # plain text for the step summary
+      NO_COLOR: 1
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v7
         with:
-          node-version: '18.x'
-          cache: 'yarn'
+          node-version-file: package.json
+
+      # yarn 1 fetches every platform's native binaries into its cache, node_modules keeps only ours;
+      # install still runs on a hit, yarn sees the lockfile is satisfied and exits at once
+      - uses: actions/cache@v5
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('yarn.lock') }}
 
       - name: Install
-        run: |
-          yarn install --frozen-lockfile
-          cd node_modules/jake && yarn link
+        run: yarn install --frozen-lockfile
 
-      - name: Run specs 🧪
+      - name: Typecheck 🦜
+        run: yarn tsc
+
+      - name: Lint 🕵
+        run: yarn lint
+
+      - name: Specs 🧪
         run: |
-          yarn coverage:ci
+          set -o pipefail
+          yarn -s coverage | tee coverage.log
 
       - name: Reports
         run: |
-          function code_block() { echo '```'; echo -e "$1" ; echo '```' ; }
-
-          echo "badge_total=`node -pe "Object.entries(require('./coverage-summary.json').total).filter(([key]) => key != 'branchesTrue').reduce((a, [,{ pct }], _, { length }) => a + pct / length, 0).toFixed(2)"`" >> $GITHUB_ENV
-
-          summary=$(node -pe 'Object.entries(require("./coverage-summary.json").total).filter(([key]) => key != "branchesTrue").map(([key, {covered, total}]) => [" " + key.replace(/^./, m => m.toUpperCase()).padEnd(11, " "), " |", covered.toString().padStart(5, " "), " |", total.toString().padStart(5, " ")].join("")).join("\n")')
-          line="-------------|------|------"
-          code_block "$line\n$summary\n$line" >> $GITHUB_STEP_SUMMARY
-
-          code_block "$(yarn -s report:ci)" >> $GITHUB_STEP_SUMMARY
+          { echo '```'; sed -n '/Coverage report/,$p' coverage.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          echo "badge_total=$(jq '[.total | del(.branchesTrue) | .[].pct] | add / length * 100 | round / 100' coverage/coverage-summary.json)" >> "$GITHUB_ENV"
 
       - name: Update badge
-        uses: schneegans/dynamic-badges-action@v1.6.0
+        if: github.ref == 'refs/heads/master'
+        uses: schneegans/dynamic-badges-action@v1.9.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: 5f76f3b771603857432300417fcb90e0
           filename: badge.json
-          namedLogo: chai
+          namedLogo: vitest
           logoColor: white
           logoWidth: 12
           label: coverage

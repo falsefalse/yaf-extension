@@ -1,3 +1,11 @@
+### 1.2.4
+
+- Tech
+  - Node 26, TypeScript 7 for typechecking only, ESM everywhere
+  - vite builds the extension, no more generated config and templates
+  - vitest runs specs in headless Chrome, `@webext-core/fake-browser` stands in for `chrome`
+  - oxlint replaces ESLint
+
 ### 1.2.3
 
 - Do not blur flag icon when fetching geo data, render glyph instead

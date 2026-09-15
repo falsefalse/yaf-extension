@@ -10,7 +10,7 @@ Take a look at [server code] as well.
 
 ## Prerequisites
 
-Requires `node@18`, `yarn@1.22` and `jake`.
+Requires `node@26`, `yarn@1.22` and `jake`. Specs run in the installed Chrome, headless.
 
 ```bash
 npm -g install yarn jake [prettier]
@@ -28,7 +28,7 @@ See <a href="https://github.com/falsefalse/yaf-extension/commit/037b18f21422707d
 <details>
   <summary>I don't want global <code>jake</code></summary>
 
-No problem, you can [link local package](https://github.com/falsefalse/yaf-extension/blob/master/.github/workflows/specs.yml#L21) or `npx` your way to glory 🐈
+No problem, `yarn jake` runs the local one 🐈
 
 </details>
 
@@ -41,8 +41,10 @@ jake -q [firefox]
 # production build: minified, points to https://geoip.furman.im
 jake -q release[:firefox]
 
-yarn test # specs
-yarn coverage # generate coverage
+yarn tsc # typecheck
+yarn lint # oxlint and prettier
+yarn test # specs, `yarn test:watch` to keep them running
+yarn coverage # specs with coverage
 yarn report # compile html report and open it in the default browser
 ```
 
