@@ -9,7 +9,7 @@ import manifest, { version } from './manifest.json.js'
 // jake is CommonJS with a runtime-built `module.exports`, Node sees no named exports
 const { namespace, desc, task, packageTask, rmRf } = jake
 
-const log = (...[first, ...rest]) => console.log(...[`→ ${first}`, ...rest])
+const log = (first, ...rest) => console.log(`→ ${first}`, ...rest)
 
 const stringify = json => JSON.stringify(json, null, 2)
 

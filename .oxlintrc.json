@@ -1,0 +1,18 @@
+{
+  "categories": { "correctness": "error" },
+  "rules": {
+    "prefer-const": "error",
+    "object-shorthand": "error",
+    "arrow-body-style": "error",
+    "no-unused-vars": "error",
+    "typescript/no-non-null-assertion": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-import-type-side-effects": "error"
+  },
+  "overrides": [
+    {
+      "files": ["spec/**"],
+      "rules": { "no-unused-expressions": "off" }
+    }
+  ]
+}

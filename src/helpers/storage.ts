@@ -10,7 +10,7 @@ class Storage {
     const data = { [key]: value }
     try {
       await chrome.storage.local.set(data)
-    } catch (error) {
+    } catch {
       await chrome.storage.local.clear()
       await chrome.storage.local.set(data)
     }

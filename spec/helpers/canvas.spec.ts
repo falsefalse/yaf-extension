@@ -9,6 +9,7 @@ const TAB_ID = 14
 describe('Canvasing  🎨', () => {
   const actionBox = sinon.createSandbox({ properties: ['spy'] })
   const drawSpy = actionBox.spy(SquareCanvas.prototype, 'drawUpscaled')
+  // eslint-disable-next-line typescript/no-explicit-any
   const glyphSpy = actionBox.spy(SquareCanvas.prototype, 'addGlyph' as any)
 
   const { clearRect, drawImage, getImageData } = Context2dStub

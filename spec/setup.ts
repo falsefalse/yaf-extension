@@ -127,6 +127,7 @@ const fetchResult = {
 const fetch = fetchBox.stub()
 
 class HeadersMock {
+  // eslint-disable-next-line typescript/no-explicit-any
   constructor(headers: any) {
     return headers
   }
@@ -197,6 +198,7 @@ export const mochaHooks = {
 
 /* Helpers */
 
+/* eslint-disable typescript/no-explicit-any */
 export const pickStub = <
   O = any,
   K extends keyof O = keyof O,
@@ -211,6 +213,7 @@ export const pickStub = <
       ? Promise<Partial<I>[]>
       : Promise<Partial<TAwaitedReturn>>
   >
+/* eslint-enable typescript/no-explicit-any */
 
 export const getDohResponse = (ip: string): DoHResponse => ({
   Status: 0,

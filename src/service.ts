@@ -14,7 +14,7 @@ async function onActivated({ tabId }: { tabId: number }) {
   try {
     const tab = await chrome.tabs.get(tabId)
     if (tab?.url) await setFlag(tab)
-  } catch (error) {
+  } catch {
     return
   }
 }

@@ -15,7 +15,7 @@ export async function resolve(domain: string) {
         addresses: [ip]
       } = await browser.dns.resolve(domain, ['disable_ipv6'])
       return ip
-    } catch (e) {
+    } catch {
       // continue if firefox couldn't resolve domain
     }
   }
@@ -28,7 +28,7 @@ export async function resolve(domain: string) {
   try {
     response = await fetch(url.toString())
     data = (await response.json()) as DoHResponse | undefined
-  } catch (error) {
+  } catch {
     return
   }
 
@@ -84,7 +84,7 @@ export async function lookup(
     let serverError
     try {
       serverError = JSON.parse(errorText) as { error: string; ip?: string }
-    } catch (parseError) {
+    } catch {
       // error is not valid json therefore string
       serverError = { error: errorText }
     }
