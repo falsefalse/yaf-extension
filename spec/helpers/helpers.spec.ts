@@ -1,6 +1,3 @@
-import { expect } from 'chai'
-import sinon, { type SinonFakeTimers } from 'sinon'
-
 import {
   daysAgo,
   getDomain,
@@ -47,36 +44,35 @@ describe('helpers.ts', () => {
 
     cases.forEach(([expected, ip]) => {
       it(`${expected ? 'local' : 'global'}\t${ip}`, () => {
-        expect(isLocal(ip)).to.equal(expected)
+        expect(isLocal(ip)).toBe(expected)
       })
     })
   })
 
   describe('getDomain', () => {
     it('returns domain for http, https and ftp schemas', () => {
-      expect(getDomain('http://boop.doop')).to.eq('boop.doop')
+      expect(getDomain('http://boop.doop')).toBe('boop.doop')
       expect(
         getDomain('https://127.0.0.0.boop.com/welp?some=come&utm=sucks')
-      ).to.eq('127.0.0.0.boop.com')
-      expect(getDomain('ftp://scene')).to.eq('scene')
+      ).toBe('127.0.0.0.boop.com')
+      expect(getDomain('ftp://scene')).toBe('scene')
     })
 
     it('returns undefined for everything else', () => {
-      expect(getDomain('')).to.be.undefined
-      expect(getDomain(undefined)).to.be.undefined
-      expect(getDomain('gopher://old')).to.be.undefined
-      expect(getDomain('chrome://new-tab')).to.be.undefined
-      expect(getDomain('magnet://h.a.s.h')).to.be.undefined
+      expect(getDomain('')).toBeUndefined()
+      expect(getDomain(undefined)).toBeUndefined()
+      expect(getDomain('gopher://old')).toBeUndefined()
+      expect(getDomain('chrome://new-tab')).toBeUndefined()
+      expect(getDomain('magnet://h.a.s.h')).toBeUndefined()
     })
   })
 
   describe('daysAgo', () => {
-    let clock: SinonFakeTimers
-    before(() => {
+    beforeAll(() => {
       const now = new Date('2023-04-14T04:20:00.000Z') // April
-      clock = sinon.useFakeTimers({ now, toFake: ['Date'] })
+      vi.useFakeTimers({ now, toFake: ['Date'] })
     })
-    after(() => clock.restore())
+    afterAll(() => vi.useRealTimers())
 
     it('returns relative date', () => {
       const fourteenDaysAgo = new Date('2023-03-31T04:20:00.000Z') // March
@@ -86,7 +82,7 @@ describe('helpers.ts', () => {
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() + 1)
       }
 
-      expect(agos).to.deep.eq([
+      expect(agos).toEqual([
         '2 weeks ago',
         'last week',
         'last week',
@@ -138,11 +134,11 @@ describe('helpers.ts', () => {
       d30.setMinutes(30)
 
       it(`sets ${startGlyph} for ${hhMm(d00)}`, () => {
-        expect(resolvedAtHint(d00.getTime())).to.include(startGlyph)
+        expect(resolvedAtHint(d00.getTime())).toContain(startGlyph)
       })
 
       it(`sets ${endGlyph} for ${hhMm(d30)}`, () => {
-        expect(resolvedAtHint(d30.getTime())).to.include(endGlyph)
+        expect(resolvedAtHint(d30.getTime())).toContain(endGlyph)
       })
     })
   })

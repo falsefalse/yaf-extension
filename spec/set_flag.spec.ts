@@ -1,117 +1,119 @@
-import sinon, { type SinonFakeTimers } from 'sinon'
-import { expect } from 'chai'
-
-import { getDohResponse, getGeoResponse, pickStub } from './setup.js'
+import {
+  dohUrl,
+  fetchMock,
+  geoUrl,
+  getDohResponse,
+  getGeoResponse,
+  json,
+  requested,
+  respond
+} from './setup.js'
 
 import { setFlag } from '../src/set_flag.js'
 
 const TAB_ID = 88
 const NOW = new Date('2023-04-20T04:20:00.000Z')
 
-const getStub = pickStub('get', chrome.storage.local)
-const setStub = pickStub('set', chrome.storage.local)
-const fetchStub = pickStub('fetch', global)
+const { setTitle, setIcon, enable, disable } = chrome.action
+const { local } = chrome.storage
 
 describe('set_flag.ts', () => {
-  let clock: SinonFakeTimers
-
-  before(() => {
-    clock = sinon.useFakeTimers({ now: NOW, toFake: ['Date'] })
-  })
-
-  after(() => {
-    clock.restore()
-  })
+  beforeAll(() => vi.useFakeTimers({ now: NOW, toFake: ['Date'] }))
+  afterAll(() => vi.useRealTimers())
 
   it('does nothing if tabId is not there', async () => {
     await setFlag({})
 
-    expect(chrome.action.setTitle).not.called
-    expect(chrome.action.setIcon).not.called
-    expect(fetch).not.called
-    expect(getStub).not.called
-    expect(setStub).not.called
+    expect(setTitle).not.toHaveBeenCalled()
+    expect(setIcon).not.toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(await local.get(null)).toEqual({})
   })
 
   describe('Disable page action', () => {
-    afterEach(() => {
-      expect(chrome.action.disable).calledOnceWith(TAB_ID)
-
-      expect(chrome.action.setTitle).calledOnceWith({
-        tabId: TAB_ID,
-        title: '😴'
-      })
-      expect(chrome.action.setTitle).calledOnceWith({
-        tabId: TAB_ID,
-        title: '😴'
-      })
-    })
-
     it('if domain is not there', async () => {
       await setFlag({ id: TAB_ID })
+
+      expect(disable).toHaveBeenCalledExactlyOnceWith(TAB_ID)
+      expect(setTitle).toHaveBeenCalledExactlyOnceWith({
+        tabId: TAB_ID,
+        title: '😴'
+      })
     })
 
     it('if URL schema does not match', async () => {
       await setFlag({ id: TAB_ID, url: 'gopher://is.out.of.the.question' })
+
+      expect(disable).toHaveBeenCalledExactlyOnceWith(TAB_ID)
+      expect(setTitle).toHaveBeenCalledExactlyOnceWith({
+        tabId: TAB_ID,
+        title: '😴'
+      })
     })
   })
 
   describe('Errors', () => {
     it('sets page action when data has error', async () => {
-      getStub.resolves({
+      await local.set({
         'error.domain': {
           error: 'Errority error boop doop!',
           fetched_at: NOW.getTime()
         }
       })
+
       await setFlag({ id: TAB_ID, url: 'http://error.domain' })
 
-      expect(chrome.action.setTitle).calledWith({
+      expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
         title: 'Error: Errority error boop doop!'
       })
-      expect(chrome.action.setIcon).calledWith({
+      expect(setIcon).toHaveBeenCalledWith({
         tabId: TAB_ID,
-        imageData: { 64: sinon.match.any }
+        imageData: { 64: expect.any(ImageData) }
       })
     })
 
     it('falls back to domain resolution when IP was not resolved', async () => {
-      fetchResultStub.ok = false
-
       await setFlag({ id: TAB_ID, url: 'https://could.not.resolve' })
 
-      // first call is DoH
-      expect(fetchStub).calledWith(
-        sinon.match('localhost:8080').and(sinon.match('could.not.resolve'))
-      )
+      expect(requested()).toContain(dohUrl('could.not.resolve'))
+      expect(requested()).toContain(geoUrl('could.not.resolve'))
     })
+
     it('sets request parameters', async () => {
       await setFlag({ id: TAB_ID, url: 'https://head.e.rs' })
 
-      // first call is DoH
-      expect(fetchStub).calledWith(sinon.match('head.e.rs'), {
-        headers: {
-          Accept: 'application/json',
-          'x-client-version': sinon.match.string
-        },
+      expect(fetchMock).toHaveBeenCalledWith(geoUrl('head.e.rs'), {
+        headers: expect.any(Headers),
         credentials: 'omit',
         mode: 'cors'
+      })
+
+      const call = fetchMock.mock.calls.find(
+        ([url]) => url == geoUrl('head.e.rs')
+      )
+      const headers = new Headers(call?.[1]?.headers)
+
+      expect(Object.fromEntries(headers)).toEqual({
+        accept: 'application/json',
+        'x-client-version': 'x.y.z'
       })
     })
 
     describe('Network and server errors', () => {
       it('uses error json if it can', async () => {
-        fetchResultStub.ok = false
-        fetchResultStub.status = 404
-        fetchResultStub.text.resolves(
-          `{ "error": "say, domain wasn't resolved...",
-                 "ip": "x.x.x.x" }`
+        respond(
+          'json.error',
+          () =>
+            new Response(
+              `{ "error": "say, domain wasn't resolved...", "ip": "x.x.x.x" }`,
+              { status: 404 }
+            )
         )
 
         await setFlag({ id: TAB_ID, url: 'https://json.error' })
 
-        expect(setStub).calledWith({
+        expect(await local.get('json.error')).toEqual({
           'json.error': {
             fetched_at: NOW.getTime(),
             is_local: false,
@@ -123,13 +125,17 @@ describe('set_flag.ts', () => {
       })
 
       it('uses error text', async () => {
-        fetchResultStub.ok = false
-        fetchResultStub.status = 500
-        fetchResultStub.text.resolves('something went real wrong on the server')
+        respond(
+          'text.error',
+          () =>
+            new Response('something went real wrong on the server', {
+              status: 500
+            })
+        )
 
         await setFlag({ id: TAB_ID, url: 'https://text.error' })
 
-        expect(setStub).calledWith({
+        expect(await local.get('text.error')).toEqual({
           'text.error': {
             fetched_at: NOW.getTime(),
             is_local: false,
@@ -140,13 +146,13 @@ describe('set_flag.ts', () => {
       })
 
       it('handles failed to fetch error', async () => {
-        fetchStub
-          .withArgs(sinon.match('net.down'))
-          .throws(new Error('oopsie network down'))
+        respond('net.down', () => {
+          throw new Error('oopsie network down')
+        })
 
         await setFlag({ id: TAB_ID, url: 'https://net.down' })
 
-        expect(setStub).calledWith({
+        expect(await local.get('net.down')).toEqual({
           'net.down': {
             fetched_at: NOW.getTime(),
             is_local: false,
@@ -156,13 +162,13 @@ describe('set_flag.ts', () => {
       })
 
       it('returns unknown errors as is', async () => {
-        fetchStub.withArgs(sinon.match('what.even.is.this')).callsFake(() => {
+        respond('what.even.is.this', () => {
           throw 'not supposed to happen'
         })
 
         await setFlag({ id: TAB_ID, url: 'https://what.even.is.this' })
 
-        expect(setStub).calledWith({
+        expect(await local.get('what.even.is.this')).toEqual({
           'what.even.is.this': {
             fetched_at: NOW.getTime(),
             is_local: false,
@@ -174,74 +180,61 @@ describe('set_flag.ts', () => {
   })
 
   describe('Local IPs', () => {
-    afterEach(() => {
-      expect(chrome.action.enable).calledWith(TAB_ID)
-    })
-
     it('does not fetch neither geo nor DoH for local domains', async () => {
       await setFlag({ id: TAB_ID, url: 'http://localhost' })
-      expect(fetchStub).not.called
-
       await setFlag({ id: TAB_ID, url: 'https://0.0.0.0' })
-      expect(fetchStub).not.called
-
       await setFlag({ id: TAB_ID, url: 'https://127.0.0.1' })
-      expect(fetchStub).not.called
+
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(enable).toHaveBeenCalledTimes(3)
     })
 
     it('renders local resource title and icon', async () => {
       await setFlag({ id: TAB_ID, url: 'https://127.0.0.1' })
 
-      expect(chrome.action.setTitle).calledWith({
+      expect(enable).toHaveBeenCalledWith(TAB_ID)
+      expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
         title: '127.0.0.1 is a local resource'
       })
-      expect(chrome.action.setIcon).calledWith({
+      expect(setIcon).toHaveBeenCalledWith({
         tabId: TAB_ID,
         path: '/img/local_resource.png'
       })
     })
 
     it('does not fetch marked as local domains', async () => {
-      getStub.resolves({
-        'marked.as.local': {
-          fetched_at: NOW.getTime(),
-          is_local: true
-        }
+      await local.set({
+        'marked.as.local': { fetched_at: NOW.getTime(), is_local: true }
       })
 
       await setFlag({ id: TAB_ID, url: 'https://marked.as.local' })
 
-      expect(fetchStub).not.called
+      expect(enable).toHaveBeenCalledWith(TAB_ID)
+      expect(fetchMock).not.toHaveBeenCalled()
     })
 
     describe('Resolved to local IP', () => {
       beforeEach(() => {
-        fetchStub.withArgs(sinon.match('imma.local.dev')).resolves({
-          ok: true,
-          json: () => Promise.resolve(getDohResponse('10.0.0.0'))
-        })
+        respond('imma.local.dev', json(getDohResponse('10.0.0.0')))
       })
 
       it('does not fetch geo data', async () => {
         await setFlag({ id: TAB_ID, url: 'http://imma.local.dev' })
 
-        expect(fetchStub).calledWith(
-          sinon.match('dns.google').and(sinon.match('imma.local.dev'))
-        )
-        expect(fetchStub).not.calledWith(
-          sinon.match('localhost:8080').and(sinon.match('10.0.0.0'))
-        )
+        expect(requested()).toContain(dohUrl('imma.local.dev'))
+        expect(requested()).not.toContain(geoUrl('10.0.0.0'))
       })
 
       it('renders local resource title and icon', async () => {
         await setFlag({ id: TAB_ID, url: 'http://imma.local.dev' })
 
-        expect(chrome.action.setTitle).calledWith({
+        expect(enable).toHaveBeenCalledWith(TAB_ID)
+        expect(setTitle).toHaveBeenCalledWith({
           tabId: TAB_ID,
           title: 'imma.local.dev is a local resource'
         })
-        expect(chrome.action.setIcon).calledWith({
+        expect(setIcon).toHaveBeenCalledWith({
           tabId: TAB_ID,
           path: '/img/local_resource.png'
         })
@@ -254,90 +247,64 @@ describe('set_flag.ts', () => {
     const day = (minutesOffset = 0) => 24 * (60 + minutesOffset) * minute()
 
     const minutesAgo = (secondsOffset = 0) =>
-      new Date(NOW.getTime() - minute(secondsOffset)).getTime()
+      NOW.getTime() - minute(secondsOffset)
 
-    const dayAgo = (minutesOffset = 0) =>
-      new Date(NOW.getTime() - day(minutesOffset)).getTime()
+    const dayAgo = (minutesOffset = 0) => NOW.getTime() - day(minutesOffset)
 
-    const weekAgo = (daysOffset = 0) =>
-      new Date(NOW.getTime() - (7 + daysOffset) * day()).getTime()
+    const weekAgo = (daysOffset = 0) => NOW.getTime() - (7 + daysOffset) * day()
 
-    const networkError = (domain: string, fetched_at: number) => ({
-      [domain]: {
-        error: 'an error',
-        fetched_at
-      }
+    const networkError = (fetched_at: number) => ({
+      error: 'an error',
+      fetched_at
     })
 
-    const notFoundErorr = (domain: string, fetched_at: number) => ({
-      [domain]: {
-        error: 'an error',
-        status: 404,
-        fetched_at
-      }
+    const notFoundError = (fetched_at: number) => ({
+      error: 'an error',
+      status: 404,
+      fetched_at
     })
 
     it('refetches network errors after a minute', async () => {
-      const moreThanMinuteAgo = minutesAgo(+1)
-      getStub.resolves(networkError('no.network', moreThanMinuteAgo))
+      await local.set({ 'no.network': networkError(minutesAgo(+1)) })
 
       await setFlag({ id: TAB_ID, url: 'http://no.network' })
 
-      expect(fetchStub)
-        .calledWith(sinon.match('dns.google').and(sinon.match('no.network')))
-        .calledWith(
-          sinon.match('localhost:8080').and(sinon.match('no.network'))
-        )
+      expect(requested()).toContain(dohUrl('no.network'))
+      expect(requested()).toContain(geoUrl('no.network'))
     })
 
     it("doesn't refetch network errors until minute has passed", async () => {
-      const lessThanMinuteAgo = minutesAgo(-1)
-      getStub
-        .withArgs(sinon.match('no.network'))
-        .resolves(networkError('no.network', lessThanMinuteAgo))
+      await local.set({ 'no.network': networkError(minutesAgo(-1)) })
 
       await setFlag({ id: TAB_ID, url: 'http://no.network' })
 
-      expect(fetchStub)
-        .not.calledWith(sinon.match('dns.google').and(sinon.match('not.found')))
-        .not.calledWith(
-          sinon.match('localhost:8080').and(sinon.match('not.found'))
-        )
+      expect(requested()).not.toContain(dohUrl('no.network'))
+      expect(requested()).not.toContain(geoUrl('no.network'))
     })
 
     it('refetches not founds after a day', async () => {
-      const moreThanDayAgo = dayAgo(+1)
-      getStub
-        .withArgs(sinon.match('not.found'))
-        .resolves(notFoundErorr('not.found', moreThanDayAgo))
+      await local.set({ 'not.found': notFoundError(dayAgo(+1)) })
 
       await setFlag({ id: TAB_ID, url: 'http://not.found' })
 
-      expect(fetchStub)
-        .calledWith(sinon.match('dns.google').and(sinon.match('not.found')))
-        .calledWith(sinon.match('localhost:8080').and(sinon.match('not.found')))
+      expect(requested()).toContain(dohUrl('not.found'))
+      expect(requested()).toContain(geoUrl('not.found'))
     })
 
     it("doesn't refetch not founds until a day has passed", async () => {
-      const lessThanDayAgo = dayAgo(-1)
-      getStub
-        .withArgs(sinon.match('not.found'))
-        .resolves(notFoundErorr('not.found', lessThanDayAgo))
+      await local.set({ 'not.found': notFoundError(dayAgo(-1)) })
 
       await setFlag({ id: TAB_ID, url: 'http://not.found' })
 
-      expect(fetchStub)
-        .not.calledWith(sinon.match('dns.google').and(sinon.match('not.found')))
-        .not.calledWith(
-          sinon.match('localhost:8080').and(sinon.match('not.found'))
-        )
+      expect(requested()).not.toContain(dohUrl('not.found'))
+      expect(requested()).not.toContain(geoUrl('not.found'))
     })
 
     it('refetches the data if asked to', async () => {
-      getStub.resolves({
+      await local.set({
         'found.domain': {
           fetched_at: NOW.getTime(),
-          country_code: 'space'
+          ...getGeoResponse('x.x.x.x')
         }
       })
 
@@ -346,85 +313,87 @@ describe('set_flag.ts', () => {
         { refetch: true }
       )
 
-      expect(fetchStub)
-        .calledWith(sinon.match('dns.google').and(sinon.match('found.domain')))
-        .calledWith(
-          sinon.match('localhost:8080').and(sinon.match('found.domain'))
-        )
+      expect(requested()).toContain(dohUrl('found.domain'))
+      expect(requested()).toContain(geoUrl('found.domain'))
     })
 
     it('refetches data older than a week', async () => {
-      const moreThanWeekAgo = weekAgo(+1)
-      getStub.resolves({
+      await local.set({
         'eight.days.old': {
-          fetched_at: moreThanWeekAgo,
-          country_code: 'deep past'
+          fetched_at: weekAgo(+1),
+          ...getGeoResponse('x.x.x.x')
         }
       })
 
       await setFlag({ id: TAB_ID, url: 'http://eight.days.old' })
 
-      expect(fetchStub)
-        .calledWith(
-          sinon.match('dns.google').and(sinon.match('eight.days.old'))
-        )
-        .calledWith(
-          sinon.match('localhost:8080').and(sinon.match('eight.days.old'))
-        )
+      expect(requested()).toContain(dohUrl('eight.days.old'))
+      expect(requested()).toContain(geoUrl('eight.days.old'))
     })
 
     it("doesn't refetch until a week has passed", async () => {
-      const lessThanWeekAgo = weekAgo(-1)
-      getStub.resolves({
+      await local.set({
         'six.days.old': {
-          fetched_at: lessThanWeekAgo,
-          country_code: 'not so deep past'
+          fetched_at: weekAgo(-1),
+          ...getGeoResponse('x.x.x.x')
         }
       })
 
       await setFlag({ id: TAB_ID, url: 'http://six.days.old' })
 
-      // `not.called` won't do, it will `fetch` image blob from disk
-      expect(fetchStub)
-        .not.calledWithMatch('dns.google')
-        .not.calledWithMatch('localhost:8080')
+      expect(requested()).not.toContain(dohUrl('six.days.old'))
+      expect(requested()).not.toContain(geoUrl('six.days.old'))
+      // the flag is still drawn from the cached data
+      expect(requested()).toContain('/img/flags/ua.png')
+    })
+  })
+
+  it('leaves the page action loading when there is nothing to render', async () => {
+    respond(geoUrl('empty.response'), json({}))
+
+    await setFlag({ id: TAB_ID, url: 'http://empty.response' })
+
+    expect(setTitle).toHaveBeenCalledExactlyOnceWith({
+      tabId: TAB_ID,
+      title: 'Resolving empty.response …'
+    })
+    expect(await local.get('empty.response')).toEqual({
+      'empty.response': { fetched_at: NOW.getTime(), is_local: false }
     })
   })
 
   it('resolves IP, fetches geo data and renders the flag', async () => {
-    fetchStub.withArgs(sinon.match('proper.site.ua')).resolves({
-      ok: true,
-      json: () => Promise.resolve(getDohResponse('9.9.9.9'))
-    })
-
-    fetchStub.withArgs(sinon.match('9.9.9.9')).resolves({
-      ok: true,
-      json: () => Promise.resolve(getGeoResponse('9.9.9.9'))
-    })
-
-    Context2dStub.getImageData.returns('🇺🇦')
+    respond('proper.site.ua', json(getDohResponse('9.9.9.9')))
+    respond('9.9.9.9', json(getGeoResponse('9.9.9.9')))
 
     await setFlag({ id: TAB_ID, url: 'http://proper.site.ua' })
 
-    // resolve
-    expect(fetchStub).calledWithMatch('proper.site.ua')
-    // geo lookup
-    expect(fetchStub).calledWithMatch('9.9.9.9')
-    // load image
-    expect(fetchStub).calledWithMatch('/img/flags/ua.png')
+    // resolve, look up, load image
+    expect(requested()).toContain(dohUrl('proper.site.ua'))
+    expect(requested()).toContain(geoUrl('9.9.9.9'))
+    expect(requested()).toContain('/img/flags/ua.png')
 
-    expect(chrome.action.enable).calledOnceWith(TAB_ID)
-    expect(chrome.action.setTitle).calledWith({
+    expect(enable).toHaveBeenCalledExactlyOnceWith(TAB_ID)
+    expect(setTitle).toHaveBeenCalledWith({
       tabId: TAB_ID,
       title: 'Resolving proper.site.ua …'
     })
-    expect(chrome.action.setTitle).calledWith({
+    expect(setTitle).toHaveBeenCalledWith({
       tabId: TAB_ID,
       title: 'Ukraine → Kyiv Metro Area → Boyarka'
     })
-    expect(chrome.action.setIcon).calledWith({
+    expect(setIcon).toHaveBeenCalledWith({
       tabId: TAB_ID,
-      imageData: { '64': '🇺🇦' }
+      imageData: { 64: expect.any(ImageData) }
+    })
+
+    expect(await local.get('proper.site.ua')).toEqual({
+      'proper.site.ua': {
+        fetched_at: NOW.getTime(),
+        is_local: false,
+        ...getGeoResponse('9.9.9.9'),
+        icon: '/img/flags/ua.png'
+      }
     })
   })
 })

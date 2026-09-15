@@ -1,219 +1,89 @@
-/// <reference types="./chai-html.d.ts" />
-
-import sinon, { type SinonStub } from 'sinon'
-import chai from 'chai'
-import sinonChai from 'sinon-chai'
-import chaiDom from 'chai-dom'
-import chaiHtml from 'chai-html'
-
-import type { OverloadedReturnType } from '../src/lib/es5.js'
+import { fakeBrowser } from '@webext-core/fake-browser'
+import type { Browser } from '@wxt-dev/browser'
 import type { DoHResponse, GeoResponse } from '../src/lib/types.js'
 
-/* Matchers */
+/* chrome, browser */
 
-chai.use(sinonChai)
-chai.use(chaiDom)
-chai.use(chaiHtml)
+vi.stubGlobal('chrome', fakeBrowser)
+// firefox namespace, `'dns' in chrome` is what switches the code to it
+vi.stubGlobal('browser', { dns: { resolve: vi.fn() } })
 
-// both chai-dom and chai-html use .html, last one wins
-// to make 🦜 happy — alias the method and it's declaration
-chai.Assertion.addProperty('htmll', function () {
-  chai.util.flag(this, 'html', true)
+// spies stay installed across tests, `mockReset` only forgets calls and implementations
+vi.spyOn(chrome.action, 'setTitle')
+const setIcon = vi.spyOn(chrome.action, 'setIcon')
+const enable = vi.spyOn(chrome.action, 'enable')
+const disable = vi.spyOn(chrome.action, 'disable')
+const getManifest = vi.spyOn(chrome.runtime, 'getManifest')
+
+afterEach(() => {
+  fakeBrowser.storage.resetState()
+  fakeBrowser.action.resetState()
 })
 
-/* OffscreenCanvas, createImageBitmap */
+/* fetch */
 
-const canvasBox = sinon.createSandbox({
-  properties: ['spy', 'stub']
+const realFetch = globalThis.fetch
+
+type Responder = () => Response | Promise<Response>
+const routes: [pattern: string, respond: Responder][] = []
+
+export const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
+  const url = String(input)
+  const route = routes.find(([pattern]) => url.includes(pattern))
+  if (route) return route[1]()
+
+  // extension assets are served by vite as they are
+  if (url.startsWith('/')) return realFetch(input, init)
+
+  // network is down unless a spec says otherwise
+  return new Response(null, { status: 500 })
+})
+vi.stubGlobal('fetch', fetchMock)
+
+/** Answer requests whose URL includes `pattern`, the latest registered wins */
+export function respond(pattern: string, responder: Responder) {
+  routes.unshift([pattern, responder])
+}
+
+export const json = (body: unknown, init?: ResponseInit) => () =>
+  Response.json(body, init)
+
+/** URLs fetched so far, in order */
+export const requested = () =>
+  fetchMock.mock.calls.map(([input]) => String(input))
+
+/* Defaults, re-applied since `mockReset` wipes them before every test */
+
+beforeEach(() => {
+  routes.length = 0
+
+  // fake-browser implements only setTitle/getTitle for action, and no getManifest
+  setIcon.mockResolvedValue(undefined)
+  enable.mockResolvedValue(undefined)
+  disable.mockResolvedValue(undefined)
+  getManifest.mockReturnValue({
+    manifest_version: 3,
+    name: 'YAF',
+    version: 'x.y.z'
+  })
 })
 
-class OffscreenCanvasMock {
-  props: Record<string, unknown>
+/* URLs the code under test builds */
 
-  constructor(width: number, height: number) {
-    this.props = { width, height }
-  }
+export const dohUrl = (domain: string) =>
+  `${import.meta.env.VITE_DOH_API_URL}?type=1&name=${domain}`
 
-  getContext() {
-    return {
-      canvas: { ...this.props },
+export const geoUrl = (ipOrDomain: string) =>
+  `${import.meta.env.VITE_API_URL}/${ipOrDomain}`
 
-      ...Context2d
-    }
-  }
-}
+/* Fixtures */
 
-const Context2d = {
-  clearRect: canvasBox.spy(),
-  drawImage: canvasBox.spy(),
-  getImageData: canvasBox.stub(),
-  measureText: canvasBox.stub(),
-  fillText: canvasBox.stub()
-}
+export const tab = (fields: Partial<Browser.tabs.Tab>) =>
+  fields as Browser.tabs.Tab
 
-const createImageBitmap = canvasBox.stub()
-
-/* chrome */
-
-const chromeBox = sinon.createSandbox({
-  properties: ['stub']
-})
-
-const local = {
-  set: chromeBox.stub(),
-  get: chromeBox.stub(),
-  clear: chromeBox.stub()
-}
-
-class Storage {
-  store: Record<string, Record<string, unknown>>
-
-  constructor(data: Storage['store']) {
-    this.store = data
-
-    // @ts-expect-error: faking local storage
-    chrome.storage.local = this
-  }
-
-  async get(key: string) {
-    return Promise.resolve({ [key]: this.store[key] })
-  }
-
-  async set(toSet: Storage['store']) {
-    Object.entries(toSet).forEach(([key, value]) => {
-      this.store[key] = { ...this.store[key], ...value }
-    })
-
-    return Promise.resolve()
-  }
-}
-
-const action = {
-  setTitle: chromeBox.stub(),
-  setIcon: chromeBox.stub(),
-  disable: chromeBox.stub(),
-  enable: chromeBox.stub()
-}
-
-const resolve = chromeBox.stub()
-
-const chromeEventsBox = sinon.createSandbox({
-  properties: ['stub']
-})
-
-const tabs = {
-  onUpdated: { addListener: chromeEventsBox.stub() },
-  onActivated: { addListener: chromeEventsBox.stub() },
-  get: chromeBox.stub(),
-  query: chromeBox.stub()
-}
-
-const runtime = {
-  onInstalled: { addListener: chromeEventsBox.stub() }
-}
-
-/* fetch, Headers */
-
-const fetchBox = sinon.createSandbox({ properties: ['stub'] })
-
-const fetchResult = {
-  ok: false,
-  status: 0,
-  blob: fetchBox.stub(),
-  json: fetchBox.stub(),
-  text: fetchBox.stub()
-}
-
-const fetch = fetchBox.stub()
-
-class HeadersMock {
-  // eslint-disable-next-line typescript/no-explicit-any
-  constructor(headers: any) {
-    return headers
-  }
-}
-
-/* Assign to window */
-declare global {
-  /* eslint-disable no-var */
-  var Context2dStub: typeof Context2d
-  var fetchResultStub: typeof fetchResult
-  var FakeStorage: typeof Storage
-  /* eslint-enable no-var */
-}
-
-Object.assign(global, {
-  Context2dStub: Context2d,
-  fetchResultStub: fetchResult,
-  FakeStorage: Storage,
-
-  fetch,
-  Headers: HeadersMock,
-
-  OffscreenCanvas: OffscreenCanvasMock,
-  createImageBitmap,
-
-  browser: {
-    dns: { resolve }
-  },
-
-  chrome: {
-    storage: { local },
-    action,
-    runtime,
-    tabs
-  }
-})
-
-/* Reset implementations */
-
-export const mochaHooks = {
-  beforeEach() {
-    // restore storage back, in case of FakeStorage was used
-    Object.assign(chrome.storage, { local })
-
-    fetch.resolves(fetchResult)
-
-    createImageBitmap.resolves({
-      width: 'not set',
-      height: 'not set either',
-      close() {}
-    })
-
-    Context2d.measureText.returns({
-      width: 'text width not set',
-      actualBoundingBoxDescent: 'text descent not set'
-    })
-
-    tabs.query.resolves([])
-  },
-
-  afterEach() {
-    canvasBox.reset()
-    chromeBox.reset()
-    fetchBox.reset()
-    // do not reset chromeEvents box, it is global for the whole chrome runtime
-  }
-}
-
-/* Helpers */
-
-/* eslint-disable typescript/no-explicit-any */
-export const pickStub = <
-  O = any,
-  K extends keyof O = keyof O,
-  TAwaitedReturn = Awaited<OverloadedReturnType<O[K]>>
->(
-  key: K,
-  object: O
-) =>
-  object[key] as SinonStub<
-    any[],
-    TAwaitedReturn extends Array<infer I>
-      ? Promise<Partial<I>[]>
-      : Promise<Partial<TAwaitedReturn>>
-  >
-/* eslint-enable typescript/no-explicit-any */
+// `tabs.query` has a callback overload, `mockResolvedValue` picks it up and wants `void`
+export const currentTab = (fields: Partial<Browser.tabs.Tab>) =>
+  vi.spyOn(chrome.tabs, 'query').mockImplementation(async () => [tab(fields)])
 
 export const getDohResponse = (ip: string): DoHResponse => ({
   Status: 0,

@@ -1,61 +1,29 @@
-import sinon from 'sinon'
-import { expect } from 'chai'
-import { pickStub } from '../setup.js'
+import { fetchMock } from '../setup.js'
 
 import { setPageAction, SquareCanvas } from '../../src/helpers/index.js'
 
 const TAB_ID = 14
 
-describe('Canvasing  🎨', () => {
-  const actionBox = sinon.createSandbox({ properties: ['spy'] })
-  const drawSpy = actionBox.spy(SquareCanvas.prototype, 'drawUpscaled')
-  // eslint-disable-next-line typescript/no-explicit-any
-  const glyphSpy = actionBox.spy(SquareCanvas.prototype, 'addGlyph' as any)
+const pixels = ({ ctx, size }: SquareCanvas) =>
+  ctx.getImageData(0, 0, size, size).data
 
-  const { clearRect, drawImage, getImageData } = Context2dStub
+describe('Canvasing 🎨', () => {
+  const context = OffscreenCanvasRenderingContext2D.prototype
+  const drawImage = vi.spyOn(context, 'drawImage')
+  const fillText = vi.spyOn(context, 'fillText')
+  const createBitmap = vi.spyOn(globalThis, 'createImageBitmap')
 
-  const createImageBitmapStub = pickStub('createImageBitmap', global)
-  const closeBitmapStub = sinon.stub()
-
-  const stubImageRead = (width: number, height: number) =>
-    createImageBitmapStub
-      .onFirstCall()
-      .resolves({ width, height, close: closeBitmapStub })
-
-  const stubImageResize = () =>
-    createImageBitmapStub.onSecondCall().callsFake(
-      (_, { resizeWidth, resizeHeight }) =>
-        new Promise(resolve => {
-          setTimeout(() => {
-            resolve({
-              width: resizeWidth,
-              height: resizeHeight,
-              close: closeBitmapStub
-            })
-          }, 15)
-        })
-    )
-
-  beforeEach(() => {
-    fetchResultStub.blob.resolves('🖼')
-    getImageData.returns('🖼 from canvas')
-  })
-
-  afterEach(() => {
-    closeBitmapStub.resetHistory()
-    actionBox.reset()
-  })
-
-  describe('Progress icons ', () => {
-    const fillTextStub = pickStub('fillText', Context2dStub)
-    const fetchStub = pickStub('fetch', global)
-
+  describe('Progress icons', () => {
     it('renders 🔵 when loading', async () => {
       await setPageAction(123, { kind: 'loading', domain: 'is.loadi.ng' })
 
-      expect(glyphSpy).calledAfter(drawSpy)
-      expect(fetchStub).calledWith('/img/icon/32.png')
-      expect(fillTextStub).calledWith('🔵')
+      expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
+      expect(fillText).toHaveBeenCalledWith(
+        '🔵',
+        expect.any(Number),
+        expect.any(Number)
+      )
+      expect(fillText).toHaveBeenCalledAfter(drawImage)
     })
 
     it('renders 🔴 when errored out', async () => {
@@ -65,42 +33,54 @@ describe('Canvasing  🎨', () => {
         error: 'an error'
       })
 
-      expect(glyphSpy).calledAfter(drawSpy)
-      expect(fetchStub).calledWith('/img/icon/32.png')
-      expect(fillTextStub).calledWith('🔴')
+      expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
+      expect(fillText).toHaveBeenCalledWith(
+        '🔴',
+        expect.any(Number),
+        expect.any(Number)
+      )
+      expect(fillText).toHaveBeenCalledAfter(drawImage)
     })
 
     it('renders 🔵 over local domain icon when loading', async () => {
-      new FakeStorage({
-        'local.domain': { is_local: true }
+      await chrome.storage.local.set({
+        'local.domain': { fetched_at: 0, is_local: true }
       })
 
-      await setPageAction(123, {
-        kind: 'local',
-        domain: 'local.domain'
-      })
+      await setPageAction(123, { kind: 'local', domain: 'local.domain' })
 
-      // initial draw — local_resource.png
-      expect(fetchStub).not.called
-      expect(fillTextStub).not.called
+      // local resource icon is set by path, nothing is drawn
+      expect(fetchMock).not.toHaveBeenCalled()
+      expect(fillText).not.toHaveBeenCalled()
 
-      await setPageAction(123, {
-        kind: 'loading',
-        domain: 'local.domain'
-      })
+      await setPageAction(123, { kind: 'loading', domain: 'local.domain' })
 
-      expect(glyphSpy).calledAfter(drawSpy)
-      expect(fetchStub).calledWithMatch('local_resource.png')
-      expect(fillTextStub).calledWith('🔵')
+      expect(fetchMock).toHaveBeenCalledWith('/img/local_resource.png')
+      expect(fillText).toHaveBeenCalledWith(
+        '🔵',
+        expect.any(Number),
+        expect.any(Number)
+      )
+      expect(fillText).toHaveBeenCalledAfter(drawImage)
+    })
+
+    it('really paints the glyph', async () => {
+      const plain = new SquareCanvas()
+      await plain.drawUpscaled('/img/icon/32.png')
+
+      const glyphed = new SquareCanvas()
+      await glyphed.drawUpscaledWithGlyph('/img/icon/32.png', '🔵')
+
+      expect(pixels(glyphed)).not.toEqual(pixels(plain))
     })
 
     describe('Firefox', () => {
-      before(() => {
+      beforeAll(() => {
         // @ts-expect-error: let's pretend we are in firefox
         chrome.dns = 'is there'
       })
 
-      after(() => {
+      afterAll(() => {
         // @ts-expect-error: stop pretending we are in firefox
         delete chrome.dns
       })
@@ -108,104 +88,83 @@ describe('Canvasing  🎨', () => {
       it('adds character with overhang (q) to a glyph', async () => {
         await setPageAction(123, { kind: 'loading', domain: 'is.loadi.ng' })
 
-        expect(fetchStub).calledWith('/img/icon/32.png')
-        expect(fillTextStub).calledWith('🔵 q')
+        expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
+        expect(fillText).toHaveBeenCalledWith(
+          '🔵 q',
+          expect.any(Number),
+          expect.any(Number)
+        )
       })
     })
   })
 
   describe('Flags 🚩', () => {
     it('throws if could not get 2d context', async () => {
-      const stub = sinon
-        .stub(OffscreenCanvas.prototype, 'getContext')
-        .returns(null)
+      vi.spyOn(OffscreenCanvas.prototype, 'getContext').mockReturnValue(null)
 
-      let error
-      try {
-        await setPageAction(123, { kind: 'loading', domain: 'boo.p' })
-      } catch (e) {
-        error = e
-      }
-
-      expect(error)
-        .to.be.instanceOf(Error)
-        .to.have.property('message', 'Failed to get 2d canvas context')
-
-      stub.restore()
+      await expect(
+        setPageAction(123, { kind: 'loading', domain: 'boo.p' })
+      ).rejects.toThrow('Failed to get 2d canvas context')
     })
 
-    const expectResize = (
-      [width = 0, height = 0, scale = 0],
-      [pX = 0, pY = 0]
-    ) => {
-      // clear canvas
-      expect(clearRect).calledOnceWithExactly(0, 0, 64, 64)
-      // create bitmap from blob, read dimensions
-      expect(createImageBitmapStub.firstCall).calledWithExactly('🖼')
-      // upscale
-      expect(createImageBitmapStub.secondCall).calledWithExactly('🖼', {
-        resizeQuality: 'pixelated',
-        resizeWidth: width * scale,
-        resizeHeight: height * scale
-      })
-      // dispose of bitmaps
-      expect(closeBitmapStub).calledTwice
-      // center upscaled bitmap vertically in 64x64
-      expect(drawImage).calledOnceWithExactly(
-        sinon.match({ width: width * scale, height: height * scale }),
-        pX,
-        pY
-      )
-      // send to browser
-      expect(chrome.action.setIcon).calledWithExactly({
-        tabId: TAB_ID,
-        imageData: { '64': '🖼 from canvas' }
-      })
-    }
+    // real PNGs are decoded, their dimensions drive the upscale and the placement
+    it('upscales 16 × 11 🇺🇦 four times and centers it vertically', async () => {
+      await new SquareCanvas().drawUpscaled('/img/flags/ua.png')
 
-    it('upscales, centers and renders the flag', async () => {
-      stubImageRead(16, 11)
-      stubImageResize()
+      expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
+        resizeQuality: 'pixelated',
+        resizeWidth: 64,
+        resizeHeight: 44
+      })
+      expect(drawImage).toHaveBeenCalledExactlyOnceWith(
+        expect.any(ImageBitmap),
+        0,
+        10
+      )
+    })
+
+    it('centers narrow 9 × 11 🇳🇵 both ways', async () => {
+      await new SquareCanvas().drawUpscaled('/img/flags/np.png')
+
+      expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
+        resizeQuality: 'pixelated',
+        resizeWidth: 36,
+        resizeHeight: 44
+      })
+      expect(drawImage).toHaveBeenCalledExactlyOnceWith(
+        expect.any(ImageBitmap),
+        14,
+        10
+      )
+    })
+
+    it('scales everything else to fill the square', async () => {
+      await new SquareCanvas().drawUpscaled('/img/icon/32.png')
+
+      expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
+        resizeQuality: 'pixelated',
+        resizeWidth: 64,
+        resizeHeight: 64
+      })
+      expect(drawImage).toHaveBeenCalledExactlyOnceWith(
+        expect.any(ImageBitmap),
+        0,
+        0
+      )
+    })
+
+    it('sends the flag to the browser', async () => {
       await setPageAction(TAB_ID, {
         kind: 'geo',
         domain: 'boop.ua',
-        data: {
-          country_name: 'Ukraine',
-          country_code: 'UA'
-        }
+        data: { country_name: 'Ukraine', country_code: 'UA' }
       })
 
-      expectResize([16, 11, 4], [0, 10])
-    })
-
-    it('handles narrow 🇳🇵 flag', async () => {
-      stubImageRead(9, 11)
-      stubImageResize()
-      await setPageAction(TAB_ID, {
-        kind: 'geo',
-        domain: 'nepal.gov.np',
-        data: {
-          country_name: 'Nepal',
-          country_code: 'NP'
-        }
+      expect(fetchMock).toHaveBeenCalledWith('/img/flags/ua.png')
+      expect(chrome.action.setIcon).toHaveBeenCalledExactlyOnceWith({
+        tabId: TAB_ID,
+        imageData: { 64: expect.any(ImageData) }
       })
-
-      expectResize([9, 11, 4], [14, 10])
-    })
-
-    it("handles smol flag (don't have those but still)", async () => {
-      stubImageRead(4, 5)
-      stubImageResize()
-      await setPageAction(TAB_ID, {
-        kind: 'geo',
-        domain: 'nepal.gov.np',
-        data: {
-          country_name: 'Promes land',
-          country_code: 'boop'
-        }
-      })
-
-      expectResize([4, 5, 4], [24, 22])
     })
   })
 })

@@ -35,7 +35,7 @@ type Template<K extends AllKeys | void, L = unknown> = (
 const orEmpty = (value: string | undefined) => value ?? ''
 
 const hinted = (value: string | undefined, hint: string) =>
-  value ? `<span title='${hint}'>${value}</span>` : ''
+  value ? `<span title="${hint}">${value}</span>` : ''
 
 const RELOAD_TITLE =
   'Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click'

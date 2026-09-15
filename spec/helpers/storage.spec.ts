@@ -1,57 +1,45 @@
-import { expect } from 'chai'
-import { pickStub } from '../setup.js'
-
 import { storage } from '../../src/helpers/index.js'
 
 describe('storage', () => {
-  const setStub = pickStub('set', chrome.storage.local),
-    getStub = pickStub('get', chrome.storage.local),
-    clearStub = pickStub('clear', chrome.storage.local)
+  const { local } = chrome.storage
 
-  it('#set', () => {
-    storage.saveDomain('boop', {
-      fetched_at: 777,
-      ip: 'b.b.b.b',
-      is_local: true
-    })
+  it('#set', async () => {
+    const data = { fetched_at: 777, ip: 'b.b.b.b', is_local: true }
 
-    expect(setStub).calledOnceWith({
-      boop: { fetched_at: 777, ip: 'b.b.b.b', is_local: true }
-    })
+    await storage.saveDomain('boop', data)
+
+    expect(await local.get('boop')).toEqual({ boop: data })
   })
 
   it('#get', async () => {
-    getStub.resolves({
-      'a key': 'valooe',
-      'another key': 'another valooe'
-    })
+    await local.set({ 'a key': 'valooe', 'another key': 'another valooe' })
 
-    expect(await storage.getDomain('but a key')).to.be.undefined
-    expect(await storage.getDomain('a key')).to.eq('valooe')
-    expect(await storage.getDomain('another key')).to.eq('another valooe')
+    expect(await storage.getDomain('but a key')).toBeUndefined()
+    expect(await storage.getDomain('a key')).toBe('valooe')
+    expect(await storage.getDomain('another key')).toBe('another valooe')
   })
 
   it('#get returned undefined', async () => {
-    getStub.resolves(undefined)
+    // chrome never does this, but the code guards against it
+    vi.spyOn(local, 'get').mockResolvedValueOnce(undefined)
 
-    expect(await storage.getDomain('should not throw')).to.be.undefined
+    expect(await storage.getDomain('should not throw')).toBeUndefined()
   })
 
   it('clears itself when full and sets the data', async () => {
-    setStub.onFirstCall().throws()
-    setStub.onSecondCall().resolves()
+    const set = vi
+      .spyOn(local, 'set')
+      .mockRejectedValueOnce(new Error('QUOTA_BYTES quota exceeded'))
+    const clear = vi.spyOn(local, 'clear')
 
-    const data = {
-      fetched_at: 1,
-      error: 'smol but important',
-      is_local: false
-    }
+    const data = { fetched_at: 1, error: 'smol but important', is_local: false }
 
     await storage.saveDomain('smol', data)
 
-    expect(clearStub).calledOnce
-    expect(setStub).calledTwice
-    expect(setStub.firstCall).calledWith({ smol: data })
-    expect(setStub.secondCall).calledWith({ smol: data })
+    expect(clear).toHaveBeenCalledOnce()
+    expect(set).toHaveBeenCalledTimes(2)
+    expect(set).toHaveBeenNthCalledWith(1, { smol: data })
+    expect(set).toHaveBeenNthCalledWith(2, { smol: data })
+    expect(await local.get('smol')).toEqual({ smol: data })
   })
 })
