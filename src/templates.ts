@@ -8,30 +8,34 @@ type RenderData = GeoData &
 
 type AllKeys = keyof RenderData
 
-/*
-  K — string union of RenderData keys template is going to require
-  L — optional record, intersected with RenderData[K]
-
-  `K extends AllKeys | void`
-    this makes property autocomplete work for first type param
-    at the same time allows to pass `void` when you don't need to pick anything
-  [K] extends [AllKeys]
-    makes the result non distributed which is desired for `locals` parameter hints
-
-  Template<'is_local' | 'ip'>
-    pick `is_local` and `ip`, don't add anything
-
-  Template<'is_local', { has_mark_button: boolean }>
-    pick `is_local`, add `has_mark_button`
-
-  Template<void, { required: string; optional?: string }>
-    don't pick anything, use passed type only
-*/
+/**
+ * Render function of a template.
+ *
+ * `K extends AllKeys | void` makes property autocomplete work for the first type
+ * param and at the same time allows `void` when there is nothing to pick.
+ * `[K] extends [AllKeys]` keeps the result non distributed, which is what
+ * `locals` parameter hints need.
+ *
+ * @template K string union of RenderData keys the template is going to require
+ * @template L optional record, intersected with `Pick<RenderData, K>`
+ *
+ * @example
+ * // pick `is_local` and `ip`, don't add anything
+ * Template<'is_local' | 'ip'>
+ *
+ * @example
+ * // pick `is_local`, add `has_mark_button`
+ * Template<'is_local', { has_mark_button: boolean }>
+ *
+ * @example
+ * // don't pick anything, use the passed type only
+ * Template<void, { required: string; optional?: string }>
+ */
 type Template<K extends AllKeys | void, L = unknown> = (
   locals: [K] extends [AllKeys] ? Pick<RenderData, K> & L : L
 ) => string
 
-// render nothing for missing values, same as lodash.template did
+/** Render nothing for missing values, same as lodash.template did */
 const orEmpty = (value: string | undefined) => value ?? ''
 
 const hinted = (value: string | undefined, hint: string) =>

@@ -4,8 +4,10 @@ export class SquareCanvas {
   size: number
   ctx: OffscreenCanvasRenderingContext2D
 
-  // local_resource.png is 64x64, globe is 32x32, flags 16px wide
-  // so upscale everything to 64px
+  /**
+   * local_resource.png is 64x64, globe is 32x32, flags 16px wide,
+   * so upscale everything to 64px
+   */
   constructor(size = 64) {
     const ctx = new OffscreenCanvas(size, size).getContext('2d', {
       willReadFrequently: true
