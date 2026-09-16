@@ -91,7 +91,7 @@ namespace('manifest', () => {
 
 desc('Bundle sources')
 task('bundle', async () => {
-  const { release, firefox } = ENV
+  const { release } = ENV
   const mode = release ? 'production' : 'development'
   // same resolution vite uses when inlining, including shell overrides
   const { VITE_API_URL } = loadEnv(mode, process.cwd())
@@ -102,12 +102,7 @@ task('bundle', async () => {
     grey(VITE_API_URL)
   )
 
-  await build({
-    mode,
-    logLevel: release ? 'info' : 'warn',
-    // AMO reviewers get a readable bundle
-    ...(firefox && { build: { minify: false } })
-  })
+  await build({ mode, logLevel: release ? 'info' : 'warn' })
 })
 
 desc('Build all')

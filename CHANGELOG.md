@@ -6,6 +6,7 @@
   - vite builds the extension, no more generated config and templates
   - vitest runs specs in headless Chrome, `@webext-core/fake-browser` stands in for `chrome`
   - oxlint replaces ESLint
+  - 🦊 release bundle is minified like the Chrome one, AMO gets the sources in `pkg-src`
 
 ### 1.2.3
 
