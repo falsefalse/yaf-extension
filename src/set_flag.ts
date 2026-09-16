@@ -31,7 +31,7 @@ async function updatePageAction(tabId: number, domain: string, data: Data) {
   }
 }
 
-// 🔵 while looking up, awaited so that it can't land after the actual icon
+/** 🔵 while looking up, awaited so that it can't land after the actual icon */
 async function lookupWithProgress(tabId: number, domain: string) {
   const [, response] = await Promise.all([
     setPageAction(tabId, { kind: 'loading', domain }),

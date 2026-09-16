@@ -1,4 +1,4 @@
-// https://developers.google.com/speed/public-dns/docs/doh/json#dns_response_in_json
+/** @see https://developers.google.com/speed/public-dns/docs/doh/json#dns_response_in_json */
 export interface DoHResponse {
   /** Standard DNS response code (32 bit integer). */
   Status: number
