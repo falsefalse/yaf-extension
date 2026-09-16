@@ -234,7 +234,9 @@ describe('set_flag.ts', () => {
           tabId: TAB_ID,
           title: 'imma.local.dev is a local resource'
         })
-        expect(setIcon).toHaveBeenCalledWith({
+        // 🔵 is drawn while resolving, the local icon has to be the one that stays
+        expect(setIcon).toHaveBeenCalledTimes(2)
+        expect(setIcon).toHaveBeenLastCalledWith({
           tabId: TAB_ID,
           path: '/img/local_resource.png'
         })
@@ -356,6 +358,10 @@ describe('set_flag.ts', () => {
     expect(setTitle).toHaveBeenCalledExactlyOnceWith({
       tabId: TAB_ID,
       title: 'Resolving empty.response …'
+    })
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
+      tabId: TAB_ID,
+      imageData: { 64: expect.any(ImageData) }
     })
     expect(await local.get('empty.response')).toEqual({
       'empty.response': { fetched_at: NOW.getTime(), is_local: false }
