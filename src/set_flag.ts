@@ -31,6 +31,16 @@ async function updatePageAction(tabId: number, domain: string, data: Data) {
   }
 }
 
+// 🔵 while looking up, awaited so that it can't land after the actual icon
+async function lookupWithProgress(tabId: number, domain: string) {
+  const [, response] = await Promise.all([
+    setPageAction(tabId, { kind: 'loading', domain }),
+    lookup(domain)
+  ])
+
+  return response
+}
+
 async function getCachedResponse(
   tabId: number,
   domain: string,
@@ -45,10 +55,8 @@ async function getCachedResponse(
 
   const storedData = await storage.getDomain(domain)
 
-  if (!storedData?.fetched_at) {
-    setPageAction(tabId, { kind: 'loading', domain })
-    return { ...baseData, ...(await lookup(domain)) }
-  }
+  if (!storedData?.fetched_at)
+    return { ...baseData, ...(await lookupWithProgress(tabId, domain)) }
 
   // skip network for local and 'marked as local' domains
   if (storedData.is_local) return storedData
@@ -56,10 +64,8 @@ async function getCachedResponse(
   // handle stale data and refetch=true
   const { fetched_at } = storedData
 
-  if (refetch || passedMoreThanWeek(fetched_at)) {
-    setPageAction(tabId, { kind: 'loading', domain })
-    return { ...baseData, ...(await lookup(domain)) }
-  }
+  if (refetch || passedMoreThanWeek(fetched_at))
+    return { ...baseData, ...(await lookupWithProgress(tabId, domain)) }
 
   // handle http and network errors
   if ('error' in storedData) {
@@ -70,10 +76,8 @@ async function getCachedResponse(
       (status === 404 && passedMoreThanDay(fetched_at)) ||
       // refetch non-http errors often, maybe network is back
       (error && !status && passedMoreThanMinute(fetched_at))
-    ) {
-      setPageAction(tabId, { kind: 'loading', domain })
-      return { ...baseData, ...(await lookup(domain)) }
-    }
+    )
+      return { ...baseData, ...(await lookupWithProgress(tabId, domain)) }
   }
 
   return storedData

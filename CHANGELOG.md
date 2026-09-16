@@ -1,5 +1,6 @@
 ### 1.2.4
 
+- Fix: 🔵 loading icon could land after the flag or local icon on a fast lookup
 - Tech
   - Node 26, TypeScript 7 for typechecking only, ESM everywhere
   - vite builds the extension, no more generated config and templates
