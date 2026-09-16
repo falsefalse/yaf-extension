@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => ({
     outDir: 'build',
     emptyOutDir: true,
     target: 'es2022',
-    // readable bundle for development, jake passes --minify false for firefox release
+    // readable bundle for development, AMO gets the sources in pkg-src
     minify: mode === 'production',
     rollupOptions: {
       input: { service: 'src/service.ts', popup: 'src/popup.ts' },
