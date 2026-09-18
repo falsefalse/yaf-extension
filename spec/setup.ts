@@ -27,13 +27,15 @@ const realFetch = globalThis.fetch
 type Responder = () => Response | Promise<Response>
 const routes: [pattern: string, respond: Responder][] = []
 
-export const fetchMock = vi.fn<typeof fetch>(async (input, init) => {
-  const url = String(input)
+// the code under test only ever fetches string URLs, `typeof fetch` would allow `Request` too
+type Fetch = (url: string, init?: RequestInit) => Promise<Response>
+
+export const fetchMock = vi.fn<Fetch>(async (url, init) => {
   const route = routes.find(([pattern]) => url.includes(pattern))
   if (route) return route[1]()
 
   // extension assets are served by vite as they are
-  if (url.startsWith('/')) return realFetch(input, init)
+  if (url.startsWith('/')) return realFetch(url, init)
 
   // network is down unless a spec says otherwise
   return new Response(null, { status: 500 })

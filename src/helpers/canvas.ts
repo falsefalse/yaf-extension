@@ -1,5 +1,8 @@
 import { isFirefox } from './index'
 
+const center = (whole: number, part: number) =>
+  Math.round(Math.max(whole - part, 0) / 2)
+
 export class SquareCanvas {
   size: number
   ctx: OffscreenCanvasRenderingContext2D
@@ -20,12 +23,8 @@ export class SquareCanvas {
     this.ctx.clearRect(0, 0, size, size)
   }
 
-  private center(whole: number, part: number) {
-    return Math.round(Math.max(whole - part, 0) / 2)
-  }
-
   private async drawUpscaled(path: string) {
-    const { size, ctx, center } = this
+    const { size, ctx } = this
 
     // read image and its dimensions
     const imgBlob = await (await fetch(path)).blob()

@@ -9,7 +9,7 @@ async function setProgressIcon(tabId: number, domain: string, glyph: string) {
 }
 
 const unreachable = (k: never) => {
-  throw new Error(`Unreachable path reached with '${k}'`)
+  throw new Error(`Unreachable path reached with '${String(k)}'`)
 }
 
 type PageAction = (
