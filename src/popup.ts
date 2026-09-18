@@ -169,7 +169,7 @@ async function handleDomReady() {
       return
     }
 
-    fetchAndRender(domain, currentTab)
+    await fetchAndRender(domain, currentTab)
   })
 
   // service link click, timeout somehow makes firefox open link in a new tab
