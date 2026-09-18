@@ -23,7 +23,8 @@ const unreachable = (k: never) => {
 }
 
 type PageAction = (
-  | { kind: 'local' | 'loading' }
+  | { kind: 'local'; is_tailscale?: boolean }
+  | { kind: 'loading' }
   | { kind: 'error'; error: string }
   | {
       kind: 'geo'
@@ -34,7 +35,10 @@ type PageAction = (
 function title(action: PageAction) {
   const { domain, kind } = action
 
-  if (kind == 'local') return `${domain} is a local resource`
+  if (kind == 'local')
+    return action.is_tailscale
+      ? `${domain} is a Tailscale node`
+      : `${domain} is a local resource`
   if (kind == 'loading') return `Resolving ${domain} …`
   if (kind == 'error') return `Error: ${action.error}`
 
@@ -62,7 +66,9 @@ export async function setPageAction(tabId: number, action: PageAction) {
   }
 
   if (kind == 'local') {
-    const path = '/img/local_resource.png'
+    const path = action.is_tailscale
+      ? '/img/tailscale.png'
+      : '/img/local_resource.png'
 
     await chrome.action.setIcon({ tabId, path })
     await storage.saveDomainIcon(domain, path)

@@ -184,9 +184,11 @@ describe('set_flag.ts', () => {
       await setFlag({ id: TAB_ID, url: 'http://localhost' })
       await setFlag({ id: TAB_ID, url: 'https://0.0.0.0' })
       await setFlag({ id: TAB_ID, url: 'https://127.0.0.1' })
+      await setFlag({ id: TAB_ID, url: 'https://100.101.102.103' })
+      await setFlag({ id: TAB_ID, url: 'https://ma.chine.ts.net' })
 
       expect(fetchMock).not.toHaveBeenCalled()
-      expect(enable).toHaveBeenCalledTimes(3)
+      expect(enable).toHaveBeenCalledTimes(5)
     })
 
     it('renders local resource title and icon', async () => {
@@ -200,6 +202,27 @@ describe('set_flag.ts', () => {
       expect(setIcon).toHaveBeenCalledWith({
         tabId: TAB_ID,
         path: '/img/local_resource.png'
+      })
+    })
+
+    it('renders Tailscale node title and icon for tailnet IPs', async () => {
+      await setFlag({ id: TAB_ID, url: 'https://100.101.102.103:8080' })
+
+      expect(setTitle).toHaveBeenCalledWith({
+        tabId: TAB_ID,
+        title: '100.101.102.103 is a Tailscale node'
+      })
+      expect(setIcon).toHaveBeenCalledWith({
+        tabId: TAB_ID,
+        path: '/img/tailscale.png'
+      })
+      expect(await local.get('100.101.102.103')).toEqual({
+        '100.101.102.103': {
+          fetched_at: NOW.getTime(),
+          is_local: true,
+          is_tailscale: true,
+          icon: '/img/tailscale.png'
+        }
       })
     })
 
@@ -239,6 +262,33 @@ describe('set_flag.ts', () => {
         expect(setIcon).toHaveBeenLastCalledWith({
           tabId: TAB_ID,
           path: '/img/local_resource.png'
+        })
+      })
+    })
+
+    describe('Resolved to tailnet IP', () => {
+      beforeEach(() => {
+        respond('imma.tailnet.dev', json(getDohResponse('100.99.1.2')))
+      })
+
+      it('does not fetch geo data, renders Tailscale node title', async () => {
+        await setFlag({ id: TAB_ID, url: 'http://imma.tailnet.dev' })
+
+        expect(requested()).toContain(dohUrl('imma.tailnet.dev'))
+        expect(requested()).not.toContain(geoUrl('100.99.1.2'))
+
+        expect(setTitle).toHaveBeenCalledWith({
+          tabId: TAB_ID,
+          title: 'imma.tailnet.dev is a Tailscale node'
+        })
+        expect(await local.get('imma.tailnet.dev')).toEqual({
+          'imma.tailnet.dev': {
+            fetched_at: NOW.getTime(),
+            ip: '100.99.1.2',
+            is_local: true,
+            is_tailscale: true,
+            icon: '/img/tailscale.png'
+          }
         })
       })
     })

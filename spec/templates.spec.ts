@@ -17,6 +17,16 @@ describe('templates', () => {
       `)
     })
 
+    it('renders Tailscale node header', async () => {
+      expect(
+        await html(local({ domain: 'ma.chine.ts.net', is_tailscale: true }))
+      ).toMatchInlineSnapshot(`
+        "<li class="header">Tailscale node</li>
+        <li>ma.chine.ts.net</li>
+        "
+      `)
+    })
+
     it('renders IP address', async () => {
       expect(
         await html(

@@ -31,7 +31,7 @@ function renderPopup(domain: string, data: Data) {
 
   if (!toolbarEl || !resultEl) return
 
-  const { is_local, fetched_at } = data
+  const { is_local, is_tailscale, fetched_at } = data
   const resolved_at_hint = resolvedAtHint(fetched_at)
 
   // 'localhost' and alike domains don't need toolbar
@@ -47,6 +47,7 @@ function renderPopup(domain: string, data: Data) {
     resultEl.innerHTML = local({
       resolved_at_hint,
       domain,
+      is_tailscale,
       ip: 'ip' in data ? data.ip : ''
     })
     return

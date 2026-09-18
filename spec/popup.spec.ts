@@ -196,6 +196,37 @@ describe('popup.ts', () => {
     expect(get('.resolved')).toHaveTextContent('10.x.x.x')
   })
 
+  it('renders Tailscale node for tailnet IPs', async () => {
+    currentTab({ id: 88, url: 'http://100.101.102.103' })
+
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('Tailscale node')
+    )
+
+    expect(get('.toolbar')?.childElementCount).toBe(0)
+    expect(texts('.result li')).toEqual(['Tailscale node', '100.101.102.103'])
+    expect(requested()).toEqual([])
+  })
+
+  it('renders Tailscale node for domains resolved to tailnet IPs', async () => {
+    currentTab({ id: 88, url: 'http://resolved.tailnet' })
+    await chrome.storage.local.set({
+      'resolved.tailnet': {
+        fetched_at: NOW.getTime(),
+        ip: '100.x.x.x',
+        is_local: true,
+        is_tailscale: true
+      }
+    })
+
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('Tailscale node')
+    )
+
+    expect(get('.toolbar')?.childElementCount).toBe(0)
+    expect(get('.resolved')).toHaveTextContent('100.x.x.x')
+  })
+
   describe('Formatted hint', () => {
     const local = (fetched_at: Date) => ({
       fetched_at: fetched_at.getTime(),

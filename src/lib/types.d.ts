@@ -19,6 +19,8 @@ interface BaseData {
   fetched_at: number
   /** `true` for local domains, `false` otherwise. */
   is_local: boolean
+  /** `true` for Tailscale nodes, a flavor of local. */
+  is_tailscale?: boolean
 }
 
 export interface LocalResponse {
@@ -26,12 +28,14 @@ export interface LocalResponse {
   ip: string
   /** Always `true` for local IPs. */
   is_local: true
+  /** `true` for tailnet IPs. */
+  is_tailscale?: boolean
 }
 
 export interface ErrorResponse {
   /** `fetch` error or error message returned from server. */
   error: string
-  /** HTTP status of the latests request. */
+  /** HTTP status of the latest request. */
   status?: number
   /** IP returned from server, when geo lookup fails. */
   ip?: string

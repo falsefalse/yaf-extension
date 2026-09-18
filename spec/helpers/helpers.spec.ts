@@ -2,6 +2,7 @@ import {
   daysAgo,
   getDomain,
   isLocal,
+  isTailscale,
   resolvedAtHint
 } from '../../src/helpers/index.js'
 
@@ -31,6 +32,17 @@ describe('helpers.ts', () => {
       [false, '192.169.0.0'],
       [false, '191.168.0.0'],
 
+      [true,  '100.64.0.0'],
+      [true,  '100.100.100.100'],
+      [true,  '100.127.255.255'],
+      [false, '100.63.255.255'],
+      [false, '100.128.0.0'],
+      [true,  '[fd7a:115c:a1e0::1]'],
+      [false, '[fd7a:115c:a1e1::1]'],
+      [false, '[::1]'],
+      [true,  'machine.tailnet.ts.net'],
+      [false, 'ts.net.evil.com'],
+
       [false, '0.0'],
       [false, '....'],
       [false, undefined],
@@ -45,6 +57,40 @@ describe('helpers.ts', () => {
     cases.forEach(([expected, ip]) => {
       it(`${expected ? 'local' : 'global'}\t${ip}`, () => {
         expect(isLocal(ip)).toBe(expected)
+      })
+    })
+  })
+
+  describe('isTailscale', () => {
+    // prettier-ignore
+    const cases = [
+      [true,  '100.64.0.0'],
+      [true,  '100.100.100.100'],
+      [true,  '100.127.255.255'],
+      [false, '100.63.255.255'],
+      [false, '100.128.0.0'],
+      [false, '100.64.0'],
+
+      [true,  '[fd7a:115c:a1e0::1]'],
+      [true,  '[fd7a:115c:a1e0:ab12:4843:cd96:6258:1234]'],
+      [false, '[fd7a:115c:a1e1::1]'],
+      [false, '[::1]'],
+
+      [true,  'machine.tailnet.ts.net'],
+      [false, 'ts.net'],
+      [false, 'ts.net.evil.com'],
+      [false, 'tailscale.com'],
+
+      [false, 'localhost'],
+      [false, '127.0.0.1'],
+      [false, '10.0.0.1'],
+      [false, '8.8.8.8'],
+      [false, undefined],
+    ] as const
+
+    cases.forEach(([expected, host]) => {
+      it(`${expected ? 'tailnet' : 'not'}\t${host}`, () => {
+        expect(isTailscale(host)).toBe(expected)
       })
     })
   })

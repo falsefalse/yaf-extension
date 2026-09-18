@@ -6,7 +6,7 @@ import type {
   GeoResponse,
   LocalResponse
 } from '../lib/types.js'
-import { isFirefox, isLocal } from './index.js'
+import { isFirefox, isLocal, isTailscale } from './index.js'
 
 export async function resolve(domain: string) {
   if (isFirefox()) {
@@ -47,7 +47,12 @@ export async function lookup(
   const ip = await resolve(domain)
 
   // domain resolves to local IP
-  if (isLocal(ip)) return { ip, is_local: true }
+  if (isLocal(ip))
+    return {
+      ip,
+      is_local: true,
+      ...(isTailscale(ip) && { is_tailscale: true })
+    }
 
   const url = new URL(import.meta.env.VITE_API_URL)
   // fallback to server-side resolving
