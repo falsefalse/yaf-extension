@@ -1,4 +1,4 @@
-import type { GeoData, ErrorData } from './lib/types.js'
+import type { GeoData, ErrorData } from './lib/types'
 
 type RenderData = GeoData &
   ErrorData & {

@@ -1,4 +1,4 @@
-import { storage } from '../../src/helpers/index.js'
+import { storage } from '../../src/helpers'
 
 describe('storage', () => {
   const { local } = chrome.storage

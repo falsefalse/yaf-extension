@@ -1,6 +1,6 @@
-import { dohUrl, fetchMock, getDohResponse, json, respond } from '../setup.js'
+import { dohUrl, fetchMock, getDohResponse, json, respond } from '../setup'
 
-import { resolve } from '../../src/helpers/index.js'
+import { resolve } from '../../src/helpers'
 
 describe('resolve', () => {
   describe('Google DoH', () => {

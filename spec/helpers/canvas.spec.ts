@@ -1,6 +1,6 @@
-import { fetchMock } from '../setup.js'
+import { fetchMock } from '../setup'
 
-import { setPageAction, SquareCanvas } from '../../src/helpers/index.js'
+import { setPageAction, SquareCanvas } from '../../src/helpers'
 
 const TAB_ID = 14
 

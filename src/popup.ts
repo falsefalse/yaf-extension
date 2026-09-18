@@ -1,8 +1,8 @@
 import type { Browser } from '@wxt-dev/browser'
-import type { Data } from './lib/types.js'
-import { setFlag } from './set_flag.js'
-import { getDomain, isLocal, resolvedAtHint, storage } from './helpers/index.js'
-import { toolbar, local, not_found, regular } from './templates.js'
+import type { Data } from './lib/types'
+import { setFlag } from './set_flag'
+import { getDomain, isLocal, resolvedAtHint, storage } from './helpers'
+import { toolbar, local, not_found, regular } from './templates'
 
 function animateRotator(duration = 2000, frequency = 16) {
   if (Math.random() > 1 / frequency) return

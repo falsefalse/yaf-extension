@@ -1,4 +1,4 @@
-import { setPageAction, storage } from '../../src/helpers/index.js'
+import { setPageAction, storage } from '../../src/helpers'
 
 describe('setPageAction', () => {
   const saveIcon = vi.spyOn(storage, 'saveDomainIcon')
