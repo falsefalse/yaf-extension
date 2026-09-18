@@ -3,19 +3,9 @@
 import type { GeoData } from '../lib/types'
 import { SquareCanvas, storage } from './index'
 
-async function setFlagIcon(tabId: number, path: string) {
-  const square = new SquareCanvas()
-
-  await square.drawUpscaled(path)
-  await square.setIconFromCanvas(tabId)
-}
-
 async function setProgressIcon(tabId: number, domain: string, glyph: string) {
   const path = await storage.getDomainIcon(domain)
-  const square = new SquareCanvas()
-
-  await square.drawUpscaledWithGlyph(path, glyph)
-  square.setIconFromCanvas(tabId)
+  await new SquareCanvas().setIcon(tabId, path, glyph)
 }
 
 const unreachable = (k: never) => {
@@ -59,7 +49,7 @@ export async function setPageAction(tabId: number, action: PageAction) {
     const { country_code } = action.data
     const path = `/img/flags/${country_code.toLowerCase()}.png`
 
-    await setFlagIcon(tabId, path)
+    await new SquareCanvas().setIcon(tabId, path)
     // there is no way to read current image data back from page action 😥
     // save icon path, so we can draw a glyph over it
     await storage.saveDomainIcon(domain, path)

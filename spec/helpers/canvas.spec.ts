@@ -15,7 +15,7 @@ describe('Canvasing 🎨', () => {
 
   describe('Progress icons', () => {
     it('renders 🔵 when loading', async () => {
-      await setPageAction(123, { kind: 'loading', domain: 'is.loadi.ng' })
+      await setPageAction(TAB_ID, { kind: 'loading', domain: 'is.loadi.ng' })
 
       expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
       expect(fillText).toHaveBeenCalledWith(
@@ -27,7 +27,7 @@ describe('Canvasing 🎨', () => {
     })
 
     it('renders 🔴 when errored out', async () => {
-      await setPageAction(123, {
+      await setPageAction(TAB_ID, {
         kind: 'error',
         domain: 'nope.error',
         error: 'an error'
@@ -47,13 +47,13 @@ describe('Canvasing 🎨', () => {
         'local.domain': { fetched_at: 0, is_local: true }
       })
 
-      await setPageAction(123, { kind: 'local', domain: 'local.domain' })
+      await setPageAction(TAB_ID, { kind: 'local', domain: 'local.domain' })
 
       // local resource icon is set by path, nothing is drawn
       expect(fetchMock).not.toHaveBeenCalled()
       expect(fillText).not.toHaveBeenCalled()
 
-      await setPageAction(123, { kind: 'loading', domain: 'local.domain' })
+      await setPageAction(TAB_ID, { kind: 'loading', domain: 'local.domain' })
 
       expect(fetchMock).toHaveBeenCalledWith('/img/local_resource.png')
       expect(fillText).toHaveBeenCalledWith(
@@ -66,10 +66,10 @@ describe('Canvasing 🎨', () => {
 
     it('really paints the glyph', async () => {
       const plain = new SquareCanvas()
-      await plain.drawUpscaled('/img/icon/32.png')
+      await plain.setIcon(TAB_ID, '/img/icon/32.png')
 
       const glyphed = new SquareCanvas()
-      await glyphed.drawUpscaledWithGlyph('/img/icon/32.png', '🔵')
+      await glyphed.setIcon(TAB_ID, '/img/icon/32.png', '🔵')
 
       expect(pixels(glyphed)).not.toEqual(pixels(plain))
     })
@@ -86,7 +86,7 @@ describe('Canvasing 🎨', () => {
       })
 
       it('adds character with overhang (q) to a glyph', async () => {
-        await setPageAction(123, { kind: 'loading', domain: 'is.loadi.ng' })
+        await setPageAction(TAB_ID, { kind: 'loading', domain: 'is.loadi.ng' })
 
         expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
         expect(fillText).toHaveBeenCalledWith(
@@ -103,13 +103,13 @@ describe('Canvasing 🎨', () => {
       vi.spyOn(OffscreenCanvas.prototype, 'getContext').mockReturnValue(null)
 
       await expect(
-        setPageAction(123, { kind: 'loading', domain: 'boo.p' })
+        setPageAction(TAB_ID, { kind: 'loading', domain: 'boo.p' })
       ).rejects.toThrow('Failed to get 2d canvas context')
     })
 
     // real PNGs are decoded, their dimensions drive the upscale and the placement
     it('upscales 16 × 11 🇺🇦 four times and centers it vertically', async () => {
-      await new SquareCanvas().drawUpscaled('/img/flags/ua.png')
+      await new SquareCanvas().setIcon(TAB_ID, '/img/flags/ua.png')
 
       expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
         resizeQuality: 'pixelated',
@@ -124,7 +124,7 @@ describe('Canvasing 🎨', () => {
     })
 
     it('centers narrow 9 × 11 🇳🇵 both ways', async () => {
-      await new SquareCanvas().drawUpscaled('/img/flags/np.png')
+      await new SquareCanvas().setIcon(TAB_ID, '/img/flags/np.png')
 
       expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
         resizeQuality: 'pixelated',
@@ -139,7 +139,7 @@ describe('Canvasing 🎨', () => {
     })
 
     it('scales everything else to fill the square', async () => {
-      await new SquareCanvas().drawUpscaled('/img/icon/32.png')
+      await new SquareCanvas().setIcon(TAB_ID, '/img/icon/32.png')
 
       expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
         resizeQuality: 'pixelated',
