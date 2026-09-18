@@ -4,25 +4,14 @@ import { setFlag } from './set_flag'
 import { getDomain, isLocal, resolvedAtHint, storage } from './helpers'
 import { toolbar, local, not_found, regular } from './templates'
 
-function animateRotator(duration = 2000, frequency = 16) {
+function animateRotator(frequency = 16) {
   if (Math.random() > 1 / frequency) return
 
-  document.documentElement.style.setProperty(
-    '--js-rotator-duration',
-    `${duration}ms`
-  )
-
-  document
-    .querySelectorAll('.animate')
-    .forEach(({ classList }) => classList.add('rotator'))
-
-  setTimeout(
-    () =>
-      document
-        .querySelectorAll('.rotator')
-        .forEach(({ classList }) => classList.remove('rotator')),
-    duration
-  )
+  document.querySelectorAll('.animate').forEach(el => {
+    const stop = () => el.classList.remove('rotator')
+    el.addEventListener('animationend', stop, { once: true })
+    el.classList.add('rotator')
+  })
 }
 
 function renderPopup(domain: string, data: Data) {

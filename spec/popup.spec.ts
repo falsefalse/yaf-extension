@@ -1,4 +1,3 @@
-import popupHtml from '../src/popup.html?raw'
 import {
   currentTab,
   dohUrl,
@@ -10,6 +9,8 @@ import {
   tab
 } from './setup'
 
+import popupHtml from '../src/popup.html?raw'
+import '../src/popup.css'
 import '../src/popup'
 
 const get = (selector: string) => document.querySelector(selector)
@@ -40,6 +41,8 @@ describe('popup.ts', () => {
     document.body.innerHTML = body.innerHTML
     close.mockImplementation(() => {})
     open.mockImplementation(() => null)
+    // no donation animation unless a spec rolls the dice itself
+    vi.spyOn(Math, 'random').mockReturnValue(1)
   })
 
   it('closes popup if there is no tab', async () => {
@@ -434,15 +437,22 @@ describe('popup.ts', () => {
       })
     })
 
-    it('animates for 2s when dice rolls less than 1/16', async () => {
+    it('animates until the animation ends when dice rolls less than 1/16', async () => {
       vi.spyOn(Math, 'random').mockReturnValue(1 / 17)
 
       await domReady(() => expect(get('.rotator')).not.toBeNull())
-      expect(
-        document.documentElement.style.getPropertyValue('--js-rotator-duration')
-      ).toBe('2000ms')
 
-      vi.advanceTimersByTime(2000)
+      const animations = document
+        .getAnimations()
+        .filter(animation => animation instanceof CSSAnimation)
+      expect(animations.map(({ animationName }) => animationName)).toEqual([
+        'rotate',
+        'fade_out'
+      ])
+
+      // skip to the end, the browser sends `animationend` with the next rendering update
+      animations.forEach(animation => animation.finish())
+      await new Promise(requestAnimationFrame)
       expect(get('.rotator')).toBeNull()
     })
 
