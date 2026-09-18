@@ -24,7 +24,7 @@ export class SquareCanvas {
     return Math.round(Math.max(whole - part, 0) / 2)
   }
 
-  async drawUpscaled(path: string) {
+  private async drawUpscaled(path: string) {
     const { size, ctx, center } = this
 
     // read image and its dimensions
@@ -53,11 +53,6 @@ export class SquareCanvas {
     upscaled.close()
   }
 
-  async drawUpscaledWithGlyph(path: string, glyph: string) {
-    await this.drawUpscaled(path)
-    this.addGlyph(glyph)
-  }
-
   private addGlyph(glyph: string) {
     const { size, ctx } = this
 
@@ -77,7 +72,10 @@ export class SquareCanvas {
     ctx.fillText(glyph, size - textWidth, size - textDescent)
   }
 
-  async setIconFromCanvas(tabId: number) {
+  async setIcon(tabId: number, path: string, glyph?: string) {
+    await this.drawUpscaled(path)
+    if (glyph) this.addGlyph(glyph)
+
     const { size, ctx } = this
 
     await chrome.action.setIcon({
