@@ -4,7 +4,7 @@ import {
   isLocal,
   isTailscale,
   resolvedAtHint
-} from '../../src/helpers/index.js'
+} from '../../src/helpers'
 
 describe('helpers.ts', () => {
   describe('isLocal', () => {

@@ -5,8 +5,8 @@ import type {
   ErrorResponse,
   GeoResponse,
   LocalResponse
-} from '../lib/types.js'
-import { isFirefox, isLocal, isTailscale } from './index.js'
+} from '../lib/types'
+import { isFirefox, isLocal, isTailscale } from './index'
 
 export async function resolve(domain: string) {
   if (isFirefox()) {

@@ -1,7 +1,7 @@
 /* local storage */
 
-import type { Data } from '../lib/types.js'
-import { DEFAULT_ICON } from './index.js'
+import type { Data } from '../lib/types'
+import { DEFAULT_ICON } from './index'
 
 type Stored = Data & { icon?: string }
 

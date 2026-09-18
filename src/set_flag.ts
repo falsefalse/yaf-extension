@@ -1,5 +1,5 @@
 import type { Browser } from '@wxt-dev/browser'
-import type { Data } from './lib/types.js'
+import type { Data } from './lib/types'
 import {
   lookup,
   getDomain,
@@ -10,7 +10,7 @@ import {
   passedMoreThanWeek,
   setPageAction,
   storage
-} from './helpers/index.js'
+} from './helpers'
 
 async function updatePageAction(tabId: number, domain: string, data: Data) {
   // marked local, 'localhost' or a tailnet node

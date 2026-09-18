@@ -1,5 +1,5 @@
 import type { Browser } from '@wxt-dev/browser'
-import { setFlag } from './set_flag.js'
+import { setFlag } from './set_flag'
 
 async function onUpdated(
   _tabId: number,

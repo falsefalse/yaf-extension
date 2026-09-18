@@ -1,7 +1,7 @@
 import { format } from 'prettier/standalone'
 import * as htmlPlugin from 'prettier/plugins/html'
 
-import { local, not_found, regular, toolbar } from '../src/templates.js'
+import { local, not_found, regular, toolbar } from '../src/templates'
 
 // same quotes, closing tags and whitespace for every template
 const html = (markup: string) =>

@@ -1,6 +1,6 @@
 import { fakeBrowser } from '@webext-core/fake-browser'
 import type { Browser } from '@wxt-dev/browser'
-import type { DoHResponse, GeoResponse } from '../src/lib/types.js'
+import type { DoHResponse, GeoResponse } from '../src/lib/types'
 
 /* chrome, browser */
 

@@ -8,9 +8,9 @@ import {
   requested,
   respond,
   tab
-} from './setup.js'
+} from './setup'
 
-import '../src/popup.js'
+import '../src/popup'
 
 const get = (selector: string) => document.querySelector(selector)
 const texts = (selector: string) =>

@@ -4,7 +4,7 @@ import jake from 'jake'
 import { build, loadEnv } from 'vite'
 import { writeFileSync as writeFile } from 'node:fs'
 
-import manifest, { version } from './manifest.json.js'
+import manifest, { version } from './manifest.ts'
 
 // jake is CommonJS with a runtime-built `module.exports`, Node sees no named exports
 const { namespace, desc, task, packageTask, rmRf } = jake

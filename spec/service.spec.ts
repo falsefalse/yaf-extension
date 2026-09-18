@@ -1,7 +1,7 @@
 import { fakeBrowser } from '@webext-core/fake-browser'
-import { currentTab, tab } from './setup.js'
+import { currentTab, tab } from './setup'
 
-import '../src/service.js'
+import '../src/service'
 
 const TAB_ID = 1312
 
