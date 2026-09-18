@@ -1,5 +1,6 @@
 ### 1.2.4
 
+- Render tailnet IPs and MagicDNS hostnames as local, with the Tailscale icon
 - Fix: 🔵 loading icon could land after the flag or local icon on a fast lookup
 - Tech
   - Node 26, TypeScript 7 for typechecking only, ESM everywhere

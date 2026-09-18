@@ -59,10 +59,10 @@ export const toolbar: Template<'is_local', { has_mark_button: boolean }> = ({
 `
 
 export const local: Template<
-  'domain',
+  'domain' | 'is_tailscale',
   { ip?: string; resolved_at_hint?: string }
-> = ({ domain, ip, resolved_at_hint }) => `
-  <li class="header">Local resource</li>
+> = ({ domain, ip, is_tailscale, resolved_at_hint }) => `
+  <li class="header">${is_tailscale ? 'Tailscale node' : 'Local resource'}</li>
   <li>${orEmpty(domain)}</li>
   ${ip ? `<li title="${orEmpty(resolved_at_hint)}" class="resolved">${ip}</li>` : ''}
 `

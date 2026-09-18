@@ -4,6 +4,7 @@ import {
   lookup,
   getDomain,
   isLocal,
+  isTailscale,
   passedMoreThanDay,
   passedMoreThanMinute,
   passedMoreThanWeek,
@@ -12,9 +13,10 @@ import {
 } from './helpers/index.js'
 
 async function updatePageAction(tabId: number, domain: string, data: Data) {
-  // marked local or is 'localhost'
+  // marked local, 'localhost' or a tailnet node
   if (data.is_local || isLocal(domain)) {
-    await setPageAction(tabId, { kind: 'local', domain })
+    const { is_tailscale } = data
+    await setPageAction(tabId, { kind: 'local', domain, is_tailscale })
     return
   }
 
@@ -48,9 +50,10 @@ async function getCachedResponse(
 ): Promise<Data> {
   const baseData = {
     fetched_at: new Date().getTime(),
-    is_local: isLocal(domain)
+    is_local: isLocal(domain),
+    ...(isTailscale(domain) && { is_tailscale: true })
   }
-  // use forever-local mode for 'localhost' or local range IP domains
+  // use forever-local mode for 'localhost', local and tailnet domains
   if (baseData.is_local) return baseData
 
   const storedData = await storage.getDomain(domain)

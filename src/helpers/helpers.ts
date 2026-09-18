@@ -9,18 +9,41 @@ export function getDomain(url: string | undefined) {
   return hostname
 }
 
-export function isLocal(ip: string | undefined): ip is string {
-  if (!ip) return false
+function octets(host: string) {
+  const parts = host.split('.').map(o => parseInt(o, 10))
 
-  if (ip == 'localhost') return true
+  return parts.length == 4 && !parts.some(isNaN) ? parts : undefined
+}
 
-  const octets = ip.split('.').map(o => parseInt(o, 10))
-  if (octets.some(isNaN) || octets.length != 4) return false
+/** @see https://tailscale.com/docs/reference/ip-pool */
+export function isTailscale(host: string | undefined): host is string {
+  if (!host) return false
+
+  // MagicDNS names
+  if (host.endsWith('.ts.net')) return true
+
+  // fd7a:115c:a1e0::/48, URL keeps IPv6 hostnames bracketed and lowercased
+  if (host.startsWith('[fd7a:115c:a1e0:')) return true
+
+  const [first = 0, second = 0] = octets(host) ?? []
+  // 100.64.0.0 - 100.127.255.255
+  return first === 100 && second >= 64 && second <= 127
+}
+
+export function isLocal(host: string | undefined): host is string {
+  if (!host) return false
+
+  if (host == 'localhost') return true
+
+  if (isTailscale(host)) return true
+
+  const parts = octets(host)
+  if (!parts) return false
 
   // 0.0.0.0
-  if (octets.every(o => o === 0)) return true
+  if (parts.every(o => o === 0)) return true
 
-  const [first = 0, second = 0] = octets
+  const [first = 0, second = 0] = parts
   // 127.0.0.1 - 127.255.255.255
   if (first === 127) return true
   // 10.0.0.0 - 10.255.255.255

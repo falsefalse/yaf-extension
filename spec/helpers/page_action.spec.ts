@@ -18,6 +18,24 @@ describe('setPageAction', () => {
     expect(saveIcon).toHaveBeenCalledWith('do.main', '/img/local_resource.png')
   })
 
+  it('sets Tailscale node title and icon', async () => {
+    await setPageAction(99, {
+      kind: 'local',
+      domain: 'do.main',
+      is_tailscale: true
+    })
+
+    expect(setTitle).toHaveBeenCalledExactlyOnceWith({
+      tabId: 99,
+      title: 'do.main is a Tailscale node'
+    })
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
+      tabId: 99,
+      path: '/img/tailscale.png'
+    })
+    expect(saveIcon).toHaveBeenCalledWith('do.main', '/img/tailscale.png')
+  })
+
   it('sets loading action icon and title', async () => {
     await setPageAction(99, { kind: 'loading', domain: 'do.main' })
 
