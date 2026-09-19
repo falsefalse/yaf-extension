@@ -1,7 +1,14 @@
 import { format } from 'prettier/standalone'
 import * as htmlPlugin from 'prettier/plugins/html'
 
-import { local, not_found, regular, toolbar } from '../src/templates'
+import {
+  internal_page,
+  local,
+  not_found,
+  pin_guide,
+  regular,
+  toolbar
+} from '../src/templates'
 
 // same quotes, closing tags and whitespace for every template
 const html = (markup: string) =>
@@ -164,7 +171,7 @@ describe('templates', () => {
     it('renders reload button', async () => {
       expect(await html(toolbar({ is_local: false, has_mark_button: false })))
         .toMatchInlineSnapshot(`
-        "<li
+        "<a
           class="button reload animate"
           title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click"
         />
@@ -175,11 +182,11 @@ describe('templates', () => {
     it('renders mark button', async () => {
       expect(await html(toolbar({ is_local: false, has_mark_button: true })))
         .toMatchInlineSnapshot(`
-        "<li
+        "<a
           class="button reload animate"
           title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click"
         />
-        <li class="button marklocal" title="Mark domain as local" />
+        <a class="button marklocal" title="Mark domain as local" />
         "
       `)
     })
@@ -187,7 +194,7 @@ describe('templates', () => {
     it('renders unmark button', async () => {
       expect(await html(toolbar({ is_local: true, has_mark_button: true })))
         .toMatchInlineSnapshot(`
-        "<li class="button marklocal marked" title="Unmark domain as local" />
+        "<a class="button marklocal marked" title="Unmark domain as local" />
         "
       `)
     })
@@ -195,10 +202,32 @@ describe('templates', () => {
     it('does not explode and renders reload button without data', async () => {
       // @ts-expect-error: templates spec
       expect(await html(toolbar({}))).toMatchInlineSnapshot(`
-        "<li
+        "<a
           class="button reload animate"
           title="Click to refresh data&#10;&#10;To support 🇺🇦 Armed Forces of Ukraine&#10;Cmd/Win + Click"
         />
+        "
+      `)
+    })
+  })
+
+  describe('pin_guide', () => {
+    it('renders', async () => {
+      expect(await html(pin_guide())).toMatchInlineSnapshot(`
+        "<li>
+          <div>Click <strong class="pin_guide">puzzle piece icon</strong></div>
+          to pin the extension.
+        </li>
+        "
+      `)
+    })
+  })
+
+  describe('internal_page', () => {
+    it('renders', async () => {
+      expect(await html(internal_page())).toMatchInlineSnapshot(`
+        "<li class="header">Internal browser page</li>
+        <li>No geo data to show.</li>
         "
       `)
     })

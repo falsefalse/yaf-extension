@@ -14,7 +14,7 @@ import { setFlag } from '../src/set_flag'
 const TAB_ID = 88
 const NOW = new Date('2023-04-20T04:20:00.000Z')
 
-const { setTitle, setIcon, enable, disable } = chrome.action
+const { setTitle, setIcon } = chrome.action
 const { local } = chrome.storage
 
 describe('set_flag.ts', () => {
@@ -30,24 +30,30 @@ describe('set_flag.ts', () => {
     expect(await local.get(null)).toEqual({})
   })
 
-  describe('Disable page action', () => {
+  describe('Internal browser page action', () => {
     it('if domain is not there', async () => {
       await setFlag({ id: TAB_ID })
 
-      expect(disable).toHaveBeenCalledExactlyOnceWith(TAB_ID)
       expect(setTitle).toHaveBeenCalledExactlyOnceWith({
         tabId: TAB_ID,
-        title: '😴'
+        title: 'Internal browser page'
+      })
+      expect(setIcon).toHaveBeenCalledExactlyOnceWith({
+        tabId: TAB_ID,
+        imageData: { 64: expect.any(ImageData) }
       })
     })
 
     it('if URL schema does not match', async () => {
       await setFlag({ id: TAB_ID, url: 'gopher://is.out.of.the.question' })
 
-      expect(disable).toHaveBeenCalledExactlyOnceWith(TAB_ID)
       expect(setTitle).toHaveBeenCalledExactlyOnceWith({
         tabId: TAB_ID,
-        title: '😴'
+        title: 'Internal browser page'
+      })
+      expect(setIcon).toHaveBeenCalledExactlyOnceWith({
+        tabId: TAB_ID,
+        imageData: { 64: expect.any(ImageData) }
       })
     })
   })
@@ -188,13 +194,11 @@ describe('set_flag.ts', () => {
       await setFlag({ id: TAB_ID, url: 'https://ma.chine.ts.net' })
 
       expect(fetchMock).not.toHaveBeenCalled()
-      expect(enable).toHaveBeenCalledTimes(5)
     })
 
     it('renders local resource title and icon', async () => {
       await setFlag({ id: TAB_ID, url: 'https://127.0.0.1' })
 
-      expect(enable).toHaveBeenCalledWith(TAB_ID)
       expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
         title: '127.0.0.1 is a local resource'
@@ -233,7 +237,6 @@ describe('set_flag.ts', () => {
 
       await setFlag({ id: TAB_ID, url: 'https://marked.as.local' })
 
-      expect(enable).toHaveBeenCalledWith(TAB_ID)
       expect(fetchMock).not.toHaveBeenCalled()
     })
 
@@ -252,7 +255,6 @@ describe('set_flag.ts', () => {
       it('renders local resource title and icon', async () => {
         await setFlag({ id: TAB_ID, url: 'http://imma.local.dev' })
 
-        expect(enable).toHaveBeenCalledWith(TAB_ID)
         expect(setTitle).toHaveBeenCalledWith({
           tabId: TAB_ID,
           title: 'imma.local.dev is a local resource'
@@ -429,7 +431,6 @@ describe('set_flag.ts', () => {
     expect(requested()).toContain(geoUrl('9.9.9.9'))
     expect(requested()).toContain('/img/flags/ua.png')
 
-    expect(enable).toHaveBeenCalledExactlyOnceWith(TAB_ID)
     expect(setTitle).toHaveBeenCalledWith({
       tabId: TAB_ID,
       title: 'Resolving proper.site.ua …'

@@ -64,12 +64,32 @@ describe('Canvasing 🎨', () => {
       expect(fillText).toHaveBeenCalledAfter(drawImage)
     })
 
+    it('renders ⚙ glyph over default icon on internal pages', async () => {
+      await setPageAction(TAB_ID, { kind: 'settings_page' })
+
+      expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
+      expect(drawImage).toHaveBeenCalledExactlyOnceWith(
+        expect.any(ImageBitmap),
+        0,
+        0
+      )
+      expect(fillText).toHaveBeenCalledWith(
+        '⚙',
+        expect.any(Number),
+        expect.any(Number)
+      )
+    })
+
     it('really paints the glyph', async () => {
       const plain = new SquareCanvas()
-      await plain.setIcon(TAB_ID, '/img/icon/32.png')
+      await plain.setIcon({ tabId: TAB_ID, path: '/img/icon/32.png' })
 
       const glyphed = new SquareCanvas()
-      await glyphed.setIcon(TAB_ID, '/img/icon/32.png', '🔵')
+      await glyphed.setIcon({
+        tabId: TAB_ID,
+        path: '/img/icon/32.png',
+        glyph: '🔵'
+      })
 
       expect(pixels(glyphed)).not.toEqual(pixels(plain))
     })
@@ -109,7 +129,10 @@ describe('Canvasing 🎨', () => {
 
     // real PNGs are decoded, their dimensions drive the upscale and the placement
     it('upscales 16 × 11 🇺🇦 four times and centers it vertically', async () => {
-      await new SquareCanvas().setIcon(TAB_ID, '/img/flags/ua.png')
+      await new SquareCanvas().setIcon({
+        tabId: TAB_ID,
+        path: '/img/flags/ua.png'
+      })
 
       expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
         resizeQuality: 'pixelated',
@@ -124,7 +147,10 @@ describe('Canvasing 🎨', () => {
     })
 
     it('centers narrow 9 × 11 🇳🇵 both ways', async () => {
-      await new SquareCanvas().setIcon(TAB_ID, '/img/flags/np.png')
+      await new SquareCanvas().setIcon({
+        tabId: TAB_ID,
+        path: '/img/flags/np.png'
+      })
 
       expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
         resizeQuality: 'pixelated',
@@ -139,7 +165,10 @@ describe('Canvasing 🎨', () => {
     })
 
     it('scales everything else to fill the square', async () => {
-      await new SquareCanvas().setIcon(TAB_ID, '/img/icon/32.png')
+      await new SquareCanvas().setIcon({
+        tabId: TAB_ID,
+        path: '/img/icon/32.png'
+      })
 
       expect(createBitmap).toHaveBeenLastCalledWith(expect.any(Blob), {
         resizeQuality: 'pixelated',

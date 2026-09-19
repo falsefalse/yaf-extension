@@ -95,12 +95,9 @@ export async function setFlag(
   const domain = getDomain(url)
 
   if (!domain) {
-    await chrome.action.disable(tabId)
-    await chrome.action.setTitle({ tabId, title: '😴' })
+    await setPageAction(tabId, { kind: 'settings_page' })
 
     return
-  } else {
-    await chrome.action.enable(tabId)
   }
 
   const data = await getCachedResponse(tabId, domain, refetch)

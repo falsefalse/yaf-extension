@@ -19,9 +19,7 @@ async function onActivated({ tabId }: { tabId: number }) {
   }
 }
 
-async function onInstalled({ reason }: Browser.runtime.InstalledDetails) {
-  if (reason != 'install') return
-
+async function setCurrentTabFlag() {
   const [currentTab] = await chrome.tabs.query({
     active: true,
     currentWindow: true
@@ -39,4 +37,9 @@ chrome.tabs.onUpdated.addListener(onUpdated)
 chrome.tabs.onActivated.addListener(onActivated)
 
 // have we been just installed? update flag then
-chrome.runtime.onInstalled.addListener(onInstalled)
+chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  if (reason != 'install') return
+  await setCurrentTabFlag()
+})
+
+chrome.action.onUserSettingsChanged.addListener(setCurrentTabFlag)

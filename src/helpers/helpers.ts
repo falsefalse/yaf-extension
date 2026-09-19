@@ -134,3 +134,7 @@ export function resolvedAtHint(resolvedAtEpoch: number) {
 
   return `Resolved at ${clock} ${time} ${agoRelative}`
 }
+
+export async function isNotPinned() {
+  return !(await chrome.action.getUserSettings()).isOnToolbar
+}

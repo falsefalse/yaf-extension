@@ -1,7 +1,7 @@
 import { setPageAction, storage } from '../../src/helpers'
 
 describe('setPageAction', () => {
-  const saveIcon = vi.spyOn(storage, 'saveDomainIcon')
+  const saveDomainIcon = vi.spyOn(storage, 'saveDomainIcon')
   const { setTitle, setIcon } = chrome.action
 
   it('sets local domain action icon and title', async () => {
@@ -15,7 +15,10 @@ describe('setPageAction', () => {
       tabId: 99,
       path: '/img/local_resource.png'
     })
-    expect(saveIcon).toHaveBeenCalledWith('do.main', '/img/local_resource.png')
+    expect(saveDomainIcon).toHaveBeenCalledWith(
+      'do.main',
+      '/img/local_resource.png'
+    )
   })
 
   it('sets Tailscale node title and icon', async () => {
@@ -33,7 +36,7 @@ describe('setPageAction', () => {
       tabId: 99,
       path: '/img/tailscale.png'
     })
-    expect(saveIcon).toHaveBeenCalledWith('do.main', '/img/tailscale.png')
+    expect(saveDomainIcon).toHaveBeenCalledWith('do.main', '/img/tailscale.png')
   })
 
   it('sets loading action icon and title', async () => {
@@ -47,7 +50,7 @@ describe('setPageAction', () => {
       tabId: 99,
       imageData: { 64: expect.any(ImageData) }
     })
-    expect(saveIcon).not.toHaveBeenCalled()
+    expect(saveDomainIcon).not.toHaveBeenCalled()
   })
 
   it('sets error action icon and title', async () => {
@@ -65,7 +68,7 @@ describe('setPageAction', () => {
       tabId: 99,
       imageData: { 64: expect.any(ImageData) }
     })
-    expect(saveIcon).not.toHaveBeenCalled()
+    expect(saveDomainIcon).not.toHaveBeenCalled()
   })
 
   it('sets resolved flag action icon and title', async () => {
@@ -86,7 +89,21 @@ describe('setPageAction', () => {
       tabId: 99,
       imageData: { 64: expect.any(ImageData) }
     })
-    expect(saveIcon).toHaveBeenCalledWith('do.main', '/img/flags/np.png')
+    expect(saveDomainIcon).toHaveBeenCalledWith('do.main', '/img/flags/np.png')
+  })
+
+  it('sets internal page title and icon', async () => {
+    await setPageAction(99, { kind: 'settings_page' })
+
+    expect(setTitle).toHaveBeenCalledExactlyOnceWith({
+      tabId: 99,
+      title: 'Internal browser page'
+    })
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
+      tabId: 99,
+      imageData: { 64: expect.any(ImageData) }
+    })
+    expect(saveDomainIcon).not.toHaveBeenCalled()
   })
 
   it('throws if impossible path was reached', async () => {

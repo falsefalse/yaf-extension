@@ -1,8 +1,14 @@
 import type { Browser } from '@wxt-dev/browser'
 import type { Data } from './lib/types'
 import { setFlag } from './set_flag'
-import { getDomain, isLocal, resolvedAtHint, storage } from './helpers'
-import { toolbar, local, not_found, regular } from './templates'
+import {
+  getDomain,
+  isLocal,
+  isNotPinned,
+  resolvedAtHint,
+  storage
+} from './helpers'
+import * as templates from './templates'
 
 function animateRotator(frequency = 16) {
   if (Math.random() > 1 / frequency) return
@@ -14,37 +20,48 @@ function animateRotator(frequency = 16) {
   })
 }
 
-function renderPopup(domain: string, data: Data) {
-  const toolbarEl = document.querySelector('.toolbar')
-  const resultEl = document.querySelector('.result')
+function renderer(selector: string) {
+  return function (html: string) {
+    const el = document.querySelector(selector)
+    if (!el) return
+    el.innerHTML = html
+    return el
+  }
+}
 
-  if (!toolbarEl || !resultEl) return
+function renderPopup(domain: string, data: Data) {
+  const toolbar = renderer('#toolbar')
+  const result = renderer('#result')
 
   const { is_local, is_tailscale, fetched_at } = data
   const resolved_at_hint = resolvedAtHint(fetched_at)
 
   // 'localhost' and alike domains don't need toolbar
   if (!isLocal(domain)) {
-    toolbarEl.innerHTML = toolbar({
-      is_local,
-      has_mark_button: !('ip' in data)
-    })
+    toolbar(
+      templates.toolbar({
+        is_local,
+        has_mark_button: !('ip' in data)
+      })
+    )
   }
 
   // 'marked as local' overrides error
   if (isLocal(domain) || is_local) {
-    resultEl.innerHTML = local({
-      resolved_at_hint,
-      domain,
-      is_tailscale,
-      ip: 'ip' in data ? data.ip : ''
-    })
+    result(
+      templates.local({
+        resolved_at_hint,
+        domain,
+        is_tailscale,
+        ip: 'ip' in data ? data.ip : ''
+      })
+    )
     return
   }
 
   // error
   if ('error' in data) {
-    resultEl.innerHTML = not_found({ domain, error: data.error })
+    result(templates.not_found({ domain, error: data.error }))
     return
   }
 
@@ -52,33 +69,32 @@ function renderPopup(domain: string, data: Data) {
   if ('country_code' in data) {
     const { country_name, ip, city, region, postal_code } = data
 
-    resultEl.innerHTML = regular({
-      resolved_at_hint,
-      country_name,
-      domain,
-      city,
-      region,
-      postal_code,
-      ip
-    })
-  }
-}
-
-const Loading = {
-  set() {
-    document.body.classList.add('is-loading')
-  },
-  unset() {
-    document.body.classList.remove('is-loading')
+    result(
+      templates.regular({
+        resolved_at_hint,
+        country_name,
+        domain,
+        city,
+        region,
+        postal_code,
+        ip
+      })
+    )
   }
 }
 
 async function fetchAndRender(domain: string, tab: Browser.tabs.Tab) {
-  Loading.set()
+  document.body.classList.add('is-loading')
   const data = await setFlag(tab, { refetch: true })
-  Loading.unset()
+  document.body.classList.remove('is-loading')
 
-  if (data) renderPopup(domain, data)
+  // no data, nothing to show
+  if (!data) {
+    window.close()
+    return
+  }
+
+  renderPopup(domain, data)
 }
 
 function delegatedEvent<K extends keyof HTMLElementEventMap>(
@@ -115,8 +131,16 @@ async function handleDomReady() {
   const domain = getDomain(currentTab.url)
   const data = await setFlag(currentTab)
 
-  // happens on extensions page
-  if (!domain || !data) {
+  if (await isNotPinned()) renderer('#pin')(templates.pin_guide())
+
+  // internal browser pages
+  if (!domain) {
+    renderer('#result')(templates.internal_page())
+    return
+  }
+
+  // no data came in, meaning no tab id, nothing to work with
+  if (!data) {
     window.close()
     return
   }
@@ -124,8 +148,8 @@ async function handleDomReady() {
   renderPopup(domain, data)
   animateRotator()
 
-  const toolbarEl = document.querySelector<HTMLElement>('.toolbar')
-  const resultEl = document.querySelector<HTMLElement>('.result')
+  const toolbarEl = document.querySelector<HTMLElement>('#toolbar')
+  const resultEl = document.querySelector<HTMLElement>('#result')
   // popup.html always has both, specs may not
   if (!toolbarEl || !resultEl) return
 

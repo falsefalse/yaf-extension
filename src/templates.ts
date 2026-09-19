@@ -48,13 +48,13 @@ export const toolbar: Template<'is_local', { has_mark_button: boolean }> = ({
   is_local,
   has_mark_button
 }) => `
-  ${is_local ? '' : `<li class="button reload animate" title="${RELOAD_TITLE}" />`}
+  ${is_local ? '' : `<a class="button reload animate" title="${RELOAD_TITLE}" />`}
   ${
     !has_mark_button
       ? ''
       : is_local
-        ? '<li class="button marklocal marked" title="Unmark domain as local" />'
-        : '<li class="button marklocal" title="Mark domain as local" />'
+        ? '<a class="button marklocal marked" title="Unmark domain as local" />'
+        : '<a class="button marklocal" title="Mark domain as local" />'
   }
 `
 
@@ -117,3 +117,15 @@ export const regular: Template<
   }
 `
 }
+
+export const pin_guide = () => `
+  <li>
+    <div>Click <strong class="pin_guide">puzzle piece icon</strong></div>
+    to pin the extension.
+  </li>
+`
+
+export const internal_page = () => `
+  <li class="header">Internal browser page</li>
+  <li>No geo data to show.</li>
+`

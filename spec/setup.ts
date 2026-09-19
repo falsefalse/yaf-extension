@@ -11,9 +11,24 @@ vi.stubGlobal('browser', { dns: { resolve: vi.fn() } })
 // spies stay installed across tests, `mockReset` only forgets calls and implementations
 vi.spyOn(chrome.action, 'setTitle')
 const setIcon = vi.spyOn(chrome.action, 'setIcon')
-const enable = vi.spyOn(chrome.action, 'enable')
-const disable = vi.spyOn(chrome.action, 'disable')
 const getManifest = vi.spyOn(chrome.runtime, 'getManifest')
+
+// fake-browser knows nothing of pinning
+export const getUserSettings =
+  vi.fn<() => Promise<Browser.action.UserSettings>>()
+let onUserSettingsChanged: (
+  change: Browser.action.UserSettingsChange
+) => unknown
+Object.assign(fakeBrowser.action, {
+  getUserSettings,
+  onUserSettingsChanged: {
+    addListener(listener: typeof onUserSettingsChanged) {
+      onUserSettingsChanged = listener
+    }
+  }
+})
+export const firePinnedChange = (isOnToolbar: boolean) =>
+  onUserSettingsChanged({ isOnToolbar })
 
 afterEach(() => {
   fakeBrowser.storage.resetState()
@@ -59,10 +74,8 @@ export const requested = () =>
 beforeEach(() => {
   routes.length = 0
 
-  // fake-browser implements only setTitle/getTitle for action, and no getManifest
   setIcon.mockResolvedValue(undefined)
-  enable.mockResolvedValue(undefined)
-  disable.mockResolvedValue(undefined)
+  getUserSettings.mockResolvedValue({ isOnToolbar: true })
   getManifest.mockReturnValue({
     manifest_version: 3,
     name: 'YAF',

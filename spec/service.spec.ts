@@ -1,5 +1,5 @@
 import { fakeBrowser } from '@webext-core/fake-browser'
-import { currentTab, tab } from './setup'
+import { currentTab, firePinnedChange, tab } from './setup'
 
 import '../src/service'
 
@@ -124,6 +124,26 @@ describe('service.ts', () => {
       currentTab({ id: TAB_ID, url: 'http://tabber.tab' })
 
       await onInstalled.trigger({ reason: 'install' })
+
+      expect(setTitle).toHaveBeenCalledWith({
+        tabId: TAB_ID,
+        title: 'tabber.tab is a local resource'
+      })
+      expect(setIcon).toHaveBeenCalledWith({
+        tabId: TAB_ID,
+        path: '/img/local_resource.png'
+      })
+    })
+  })
+
+  describe('onUserSettingsChanged', () => {
+    it('sets flag on the current tab when pinned or unpinned', async () => {
+      await chrome.storage.local.set({
+        'tabber.tab': { fetched_at: Date.now(), is_local: true }
+      })
+      currentTab({ id: TAB_ID, url: 'http://tabber.tab' })
+
+      await firePinnedChange(true)
 
       expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
