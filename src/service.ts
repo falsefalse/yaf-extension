@@ -1,5 +1,6 @@
 import type { Browser } from '@wxt-dev/browser'
 import { setFlag } from './set_flag'
+import { getCurrentTab } from './helpers'
 
 async function onUpdated(
   _tabId: number,
@@ -19,19 +20,6 @@ async function onActivated({ tabId }: { tabId: number }) {
   }
 }
 
-async function onInstalled({ reason }: Browser.runtime.InstalledDetails) {
-  if (reason != 'install') return
-
-  const [currentTab] = await chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  })
-
-  if (!currentTab) return
-
-  await setFlag(currentTab)
-}
-
 // update flag when tab is updated — navigation, refresh, ← / →
 chrome.tabs.onUpdated.addListener(onUpdated)
 
@@ -39,4 +27,12 @@ chrome.tabs.onUpdated.addListener(onUpdated)
 chrome.tabs.onActivated.addListener(onActivated)
 
 // have we been just installed? update flag then
-chrome.runtime.onInstalled.addListener(onInstalled)
+chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  if (reason != 'install') return
+  await setFlag(await getCurrentTab())
+})
+
+// update the flag when user pins/unpins the page icon
+chrome.action.onUserSettingsChanged.addListener(
+  async () => await setFlag(await getCurrentTab())
+)

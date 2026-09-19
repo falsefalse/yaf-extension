@@ -52,10 +52,10 @@ export class SquareCanvas {
     upscaled.close()
   }
 
-  private addGlyph(glyph: string) {
+  private drawGlyph(glyph: string, glyphSizePx = 24) {
     const { size, ctx } = this
 
-    ctx.font = '24px serif'
+    ctx.font = `${glyphSizePx}px serif`
     ctx.fillStyle = `rgb(0, 0, 0, 1)`
 
     // eslint-disable-next-line prefer-const
@@ -71,9 +71,19 @@ export class SquareCanvas {
     ctx.fillText(glyph, size - textWidth, size - textDescent)
   }
 
-  async setIcon(tabId: number, path: string, glyph?: string) {
+  async setUpscaledIcon({
+    tabId,
+    path,
+    glyph,
+    glyphSizePx
+  }: {
+    tabId: number
+    path: string
+    glyph?: string
+    glyphSizePx?: number
+  }) {
     await this.drawUpscaled(path)
-    if (glyph) this.addGlyph(glyph)
+    if (glyph) this.drawGlyph(glyph, glyphSizePx)
 
     const { size, ctx } = this
 

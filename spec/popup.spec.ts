@@ -3,6 +3,7 @@ import {
   dohUrl,
   geoUrl,
   getGeoResponse,
+  getUserSettings,
   json,
   requested,
   respond,
@@ -46,7 +47,8 @@ describe('popup.ts', () => {
   })
 
   it('closes popup if there is no tab', async () => {
-    await domReady(() => expect(close).toHaveBeenCalledOnce())
+    // once from delegator, once from domready
+    await domReady(() => expect(close).toHaveBeenCalledTimes(2))
   })
 
   it('does not try to render into empty DOM', async () => {
@@ -69,14 +71,42 @@ describe('popup.ts', () => {
   it('closes popup if tab has no id', async () => {
     currentTab({ url: 'http://no.tabid' })
 
-    await domReady(() => expect(close).toHaveBeenCalledOnce())
+    // once from delegator, once from domready
+    await domReady(() => expect(close).toHaveBeenCalledTimes(2))
   })
 
-  it('closes popup and disables page action if URL is wronk', async () => {
+  it('renders internal page and sets its page action if URL is wronk', async () => {
     currentTab({ id: 99, url: 'wronk://url' })
 
-    await domReady(() => expect(close).toHaveBeenCalledOnce())
-    expect(chrome.action.disable).toHaveBeenCalledExactlyOnceWith(99)
+    await domReady(() =>
+      expect(get('.header')).toHaveTextContent('Internal browser page')
+    )
+    expect(get('#toolbar')).toBeEmptyDOMElement()
+    expect(chrome.action.setTitle).toHaveBeenCalledExactlyOnceWith({
+      tabId: 99,
+      title: 'Internal browser page'
+    })
+  })
+
+  describe('Pin guide', () => {
+    beforeEach(() => currentTab({ id: 88, url: 'http://0.0.0.0' }))
+
+    it('nudges to pin the extension when it is not on the toolbar', async () => {
+      getUserSettings.mockResolvedValue({ isOnToolbar: false })
+
+      await domReady(() =>
+        expect(get('#pin')).toHaveTextContent(
+          'Click puzzle piece icon to pin the extension.'
+        )
+      )
+    })
+
+    it('stays quiet when pinned', async () => {
+      await domReady(() =>
+        expect(get('.header')).toHaveTextContent('Local resource')
+      )
+      expect(get('#pin')).toBeEmptyDOMElement()
+    })
   })
 
   describe('Reload button', () => {
@@ -136,7 +166,7 @@ describe('popup.ts', () => {
       expect(get('.button.marklocal')).toBeNull()
       expect(get('.button.reload')).not.toBeNull()
 
-      expect(texts('.result li:not(.service, .separator)')).toEqual([
+      expect(texts('#result li:not(.service, .separator)')).toEqual([
         'Ukraine',
         'Kyiv, Kyiv City, 03453',
         'z.z.z.z'
@@ -177,8 +207,8 @@ describe('popup.ts', () => {
       expect(get('.header')).toHaveTextContent('Local resource')
     )
 
-    expect(get('.toolbar')?.childElementCount).toBe(0)
-    expect(texts('.result li')).toEqual(['Local resource', '0.0.0.0'])
+    expect(get('#toolbar')?.childElementCount).toBe(0)
+    expect(texts('#result li')).toEqual(['Local resource', '0.0.0.0'])
   })
 
   it('does not render toolbar for domains resolved to local IPs', async () => {
@@ -195,7 +225,7 @@ describe('popup.ts', () => {
       expect(get('.header')).toHaveTextContent('Local resource')
     )
 
-    expect(get('.toolbar')?.childElementCount).toBe(0)
+    expect(get('#toolbar')?.childElementCount).toBe(0)
     expect(get('.resolved')).toHaveTextContent('10.x.x.x')
   })
 
@@ -206,8 +236,8 @@ describe('popup.ts', () => {
       expect(get('.header')).toHaveTextContent('Tailscale node')
     )
 
-    expect(get('.toolbar')?.childElementCount).toBe(0)
-    expect(texts('.result li')).toEqual(['Tailscale node', '100.101.102.103'])
+    expect(get('#toolbar')?.childElementCount).toBe(0)
+    expect(texts('#result li')).toEqual(['Tailscale node', '100.101.102.103'])
     expect(requested()).toEqual([])
   })
 
@@ -226,7 +256,7 @@ describe('popup.ts', () => {
       expect(get('.header')).toHaveTextContent('Tailscale node')
     )
 
-    expect(get('.toolbar')?.childElementCount).toBe(0)
+    expect(get('#toolbar')?.childElementCount).toBe(0)
     expect(get('.resolved')).toHaveTextContent('100.x.x.x')
   })
 
@@ -321,7 +351,10 @@ describe('popup.ts', () => {
     click(get('.button.marklocal'))
 
     await vi.waitFor(() => expect(close).toHaveBeenCalledOnce())
-    expect(chrome.action.disable).toHaveBeenCalledExactlyOnceWith(88)
+    expect(chrome.action.setTitle).toHaveBeenLastCalledWith({
+      tabId: 88,
+      title: 'Internal browser page'
+    })
   })
 
   it('renders mark as local when domain is still not resolved after unmarking', async () => {
@@ -343,7 +376,7 @@ describe('popup.ts', () => {
       'title',
       'Unmark domain as local'
     )
-    expect(texts('.result li')).toEqual(['Local resource', 'marked.as.local'])
+    expect(texts('#result li')).toEqual(['Local resource', 'marked.as.local'])
 
     click(get('.button.marklocal'))
 
@@ -353,7 +386,7 @@ describe('popup.ts', () => {
     expect(requested()).toContain(dohUrl('marked.as.local'))
     expect(requested()).toContain(geoUrl('marked.as.local'))
 
-    expect(texts('.result li')).toEqual([
+    expect(texts('#result li')).toEqual([
       'marked.as.local',
       'nope, not resolved still'
     ])
@@ -379,7 +412,7 @@ describe('popup.ts', () => {
       expect(get('.header')).toHaveTextContent('Local resource')
     )
     expect(get('.button.marklocal')).toHaveClass('marked')
-    expect(texts('.result li')).toEqual([
+    expect(texts('#result li')).toEqual([
       'Local resource',
       'unresolved.at.first'
     ])
@@ -390,7 +423,7 @@ describe('popup.ts', () => {
     expect(requested()).toContain(dohUrl('unresolved.at.first'))
     expect(requested()).toContain(geoUrl('unresolved.at.first'))
 
-    expect(texts('.result li:not(.separator)')).toEqual([
+    expect(texts('#result li:not(.separator)')).toEqual([
       'Ukraine',
       'Boyarka, Kyiv Metro Area',
       'x.x.x.x',
@@ -407,10 +440,10 @@ describe('popup.ts', () => {
 
     await domReady(() => expect(get('.button.reload')).not.toBeNull())
 
-    expect(get('.header')).toHaveTextContent('Loading...')
+    expect(get('#result')).toBeEmptyDOMElement()
   })
 
-  it('keeps the popup as is when tab url has become wronk on reload', async () => {
+  it('closes popup when tab url has become wronk on reload', async () => {
     const current = tab({ id: 88, url: 'http://furman.im' })
     vi.spyOn(chrome.tabs, 'query').mockImplementation(async () => [current])
     await chrome.storage.local.set({
@@ -425,8 +458,11 @@ describe('popup.ts', () => {
     expect(document.body).toHaveClass('is-loading')
     await vi.waitFor(() => expect(document.body).not.toHaveClass('is-loading'))
 
-    expect(chrome.action.disable).toHaveBeenCalledExactlyOnceWith(88)
-    expect(get('.header')).toHaveTextContent('Ukraine')
+    expect(close).toHaveBeenCalledOnce()
+    expect(chrome.action.setTitle).toHaveBeenLastCalledWith({
+      tabId: 88,
+      title: 'Internal browser page'
+    })
   })
 
   describe('Donation animation', () => {

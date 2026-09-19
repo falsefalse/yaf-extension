@@ -33,7 +33,7 @@ async function updatePageAction(tabId: number, domain: string, data: Data) {
   }
 }
 
-/** 🔵 while looking up, awaited so that it can't land after the actual icon */
+// setting action is async so we have to await on it and on lookup
 async function lookupWithProgress(tabId: number, domain: string) {
   const [, response] = await Promise.all([
     setPageAction(tabId, { kind: 'loading', domain }),
@@ -87,20 +87,18 @@ async function getCachedResponse(
 }
 
 export async function setFlag(
-  { id: tabId, url }: Pick<Browser.tabs.Tab, 'id' | 'url'>,
+  tab?: Pick<Browser.tabs.Tab, 'id' | 'url'>,
   { refetch = false } = {}
-): Promise<Data | undefined> {
-  if (!tabId) return
+) {
+  if (!tab?.id) return
+  const { id: tabId, url } = tab
 
   const domain = getDomain(url)
 
   if (!domain) {
-    await chrome.action.disable(tabId)
-    await chrome.action.setTitle({ tabId, title: '😴' })
+    await setPageAction(tabId, { kind: 'settings_page' })
 
     return
-  } else {
-    await chrome.action.enable(tabId)
   }
 
   const data = await getCachedResponse(tabId, domain, refetch)

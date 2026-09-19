@@ -62,6 +62,19 @@ export const isFirefox = () => 'dns' in chrome
 
 export const DEFAULT_ICON = '/img/icon/32.png'
 
+export async function isNotPinned() {
+  return !(await chrome.action.getUserSettings()).isOnToolbar
+}
+
+export async function getCurrentTab() {
+  const [activeTab] = await chrome.tabs.query({
+    active: true,
+    currentWindow: true
+  })
+
+  return activeTab
+}
+
 /* Dates */
 
 const MINUTE = 60 * 1000
