@@ -38,7 +38,6 @@ export default defineConfig(({ mode }) => ({
     },
     coverage: {
       include: ['src/**/*.ts'],
-      // nothing to cover in d.ts files and the re-export barrel
       exclude: ['**/*.d.ts', 'src/helpers/index.ts'],
       reporter: ['text', 'text-summary', 'json-summary', 'html']
     }

@@ -1,5 +1,3 @@
-/* Page actions rendering: flags, loading, errors */
-
 import type { GeoData } from '../lib/types'
 import { DEFAULT_ICON, SquareCanvas, storage } from './index'
 

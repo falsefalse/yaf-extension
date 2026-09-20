@@ -1,4 +1,5 @@
-/* animation  */
+/* animations */
+
 @property --ang {
   syntax: '<angle>';
   initial-value: 0deg;
@@ -45,34 +46,8 @@
   }
 }
 
-.animate {
-  position: relative;
-}
-
-.rotator:after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: -1;
-
-  background: linear-gradient(
-    var(--ang, 0deg),
-    var(--yellow) 50%,
-    var(--blue) 0
-  );
-
-  --rotate-duration: 2s;
-  --fade-delay: calc(var(--rotate-duration) / 2);
-  --fade-duration: calc(var(--rotate-duration) - var(--fade-delay));
-  animation:
-    rotate var(--rotate-duration) cubic-bezier(0.68, -0.57, 0.26, 1.65) 0s 1,
-    fade_out var(--fade-duration) ease-out var(--fade-delay) 1;
-}
-
 /* variables */
+
 :root {
   --base-background-color: white;
   --base-color: #2d2d2d;
@@ -116,7 +91,37 @@ a:hover {
   text-decoration: none;
 }
 
-/* lessgo */
+/* rotating flag background */
+
+.rotator {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+
+    background: linear-gradient(
+      var(--ang, 0deg),
+      var(--yellow) 50%,
+      var(--blue) 0
+    );
+
+    --rotate-duration: 2s;
+    --fade-delay: calc(var(--rotate-duration) / 2);
+    --fade-duration: calc(var(--rotate-duration) - var(--fade-delay));
+    animation:
+      rotate var(--rotate-duration) cubic-bezier(0.68, -0.57, 0.26, 1.65) 0s 1,
+      fade_out var(--fade-duration) ease-out var(--fade-delay) 1;
+  }
+}
+
+/* icons */
+
 .located::after {
   margin-left: 1ch;
   content: '📍';
@@ -142,6 +147,8 @@ a:hover {
       ease-in-out infinite;
   }
 }
+
+/* layout and components */
 
 html {
   min-width: 150px;

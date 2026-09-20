@@ -26,8 +26,7 @@ const grey = s => `\x1b[90m${s}\x1b[0m`
 // lesssgoo!
 
 const BUILD_DIR = './build'
-// generated manifest
-const MANIFEST = 'manifest.json'
+const MANIFEST = 'manifest.json' // generated manifest
 
 const ENV = {}
 desc('Set build env, create package tasks')
@@ -93,7 +92,6 @@ desc('Bundle sources')
 task('bundle', async () => {
   const { release } = ENV
   const mode = release ? 'production' : 'development'
-  // same resolution vite uses when inlining, including shell overrides
   const { VITE_API_URL } = loadEnv(mode, process.cwd())
 
   log(

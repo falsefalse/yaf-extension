@@ -1,5 +1,3 @@
-/* Google DNS over HTTPS */
-
 import type {
   DoHResponse,
   ErrorResponse,

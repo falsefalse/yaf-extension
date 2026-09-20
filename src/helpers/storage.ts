@@ -1,5 +1,3 @@
-/* local storage */
-
 import type { Data } from '../lib/types'
 import { DEFAULT_ICON } from './index'
 
