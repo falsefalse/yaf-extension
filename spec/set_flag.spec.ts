@@ -40,7 +40,7 @@ describe('set_flag.ts', () => {
       })
       expect(setIcon).toHaveBeenCalledExactlyOnceWith({
         tabId: TAB_ID,
-        imageData: { 64: expect.any(ImageData) }
+        path: '/img/icon/32.png'
       })
     })
 
@@ -53,7 +53,7 @@ describe('set_flag.ts', () => {
       })
       expect(setIcon).toHaveBeenCalledExactlyOnceWith({
         tabId: TAB_ID,
-        imageData: { 64: expect.any(ImageData) }
+        path: '/img/icon/32.png'
       })
     })
   })
@@ -92,7 +92,8 @@ describe('set_flag.ts', () => {
       expect(fetchMock).toHaveBeenCalledWith(geoUrl('head.e.rs'), {
         headers: expect.any(Headers),
         credentials: 'omit',
-        mode: 'cors'
+        mode: 'cors',
+        cache: 'no-store'
       })
 
       const call = fetchMock.mock.calls.find(
@@ -259,8 +260,7 @@ describe('set_flag.ts', () => {
           tabId: TAB_ID,
           title: 'imma.local.dev is a local resource'
         })
-        // 🔵 is drawn while resolving, the local icon has to be the one that stays
-        expect(setIcon).toHaveBeenCalledTimes(2)
+        // after the sweep the local icon has to be the one that stays
         expect(setIcon).toHaveBeenLastCalledWith({
           tabId: TAB_ID,
           path: '/img/local_resource.png'
@@ -407,11 +407,13 @@ describe('set_flag.ts', () => {
 
     await setFlag({ id: TAB_ID, url: 'http://empty.response' })
 
+    // the title staying at 'Resolving' is what says nothing rendered over the
+    // sweep, the icon below only says a frame of it was the last thing drawn
     expect(setTitle).toHaveBeenCalledExactlyOnceWith({
       tabId: TAB_ID,
       title: 'Resolving empty.response …'
     })
-    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
+    expect(setIcon).toHaveBeenLastCalledWith({
       tabId: TAB_ID,
       imageData: { 64: expect.any(ImageData) }
     })
@@ -451,6 +453,40 @@ describe('set_flag.ts', () => {
         ...getGeoResponse('9.9.9.9'),
         icon: '/img/flags/ua.png'
       }
+    })
+  })
+
+  describe('Racing events', () => {
+    const geoRequests = () =>
+      requested().filter(url => url == geoUrl('9.9.9.9'))
+
+    // starting a sweep decodes the base icon, an unseen domain has the default
+    const sweeps = () => requested().filter(url => url == '/img/icon/32.png')
+
+    it('looks up once when two events race for the same domain', async () => {
+      respond('twice.at.once', json(getDohResponse('9.9.9.9')))
+      respond('9.9.9.9', json(getGeoResponse('9.9.9.9')))
+
+      // both tabs.onUpdated events of one navigation, neither has saved yet
+      const [first, second] = await Promise.all([
+        setFlag({ id: TAB_ID, url: 'http://twice.at.once' }),
+        setFlag({ id: TAB_ID, url: 'http://twice.at.once' })
+      ])
+
+      expect(geoRequests()).toHaveLength(1)
+      expect(sweeps()).toHaveLength(1)
+      expect(first).toEqual(second)
+    })
+
+    it('lets the next lookup through once the first has landed', async () => {
+      respond('again.and.again', json(getDohResponse('9.9.9.9')))
+      respond('9.9.9.9', json(getGeoResponse('9.9.9.9')))
+
+      const tab = { id: TAB_ID, url: 'http://again.and.again' }
+      await setFlag(tab)
+      await setFlag(tab, { refetch: true })
+
+      expect(geoRequests()).toHaveLength(2)
     })
   })
 })

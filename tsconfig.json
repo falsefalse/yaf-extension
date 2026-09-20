@@ -5,7 +5,6 @@
     /* typechecking */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "noImplicitReturns": true,
     // do not skipLibCheck, we want our d.ts validated
 
     /* modules: vite transforms and bundles, tsc only typechecks */

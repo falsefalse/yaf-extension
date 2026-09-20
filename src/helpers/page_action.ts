@@ -61,7 +61,7 @@ export async function setPageAction(tabId: number, action: PageAction) {
       ? '/img/tailscale.png'
       : '/img/local_resource.png'
 
-    // 64x64 already, no need to upscale
+    // 64x64 already, chrome halves it for the toolbar and never upscales
     await chrome.action.setIcon({ tabId, path })
     await storage.saveDomainIcon(domain, path)
     return
@@ -69,19 +69,12 @@ export async function setPageAction(tabId: number, action: PageAction) {
 
   const path = domain ? await storage.getDomainIcon(domain) : DEFAULT_ICON
 
-  if (kind == 'loading')
-    return await canvas.setUpscaledIcon({ tabId, path, glyph: '🔵' })
+  if (kind == 'loading') return canvas.animateProgess({ tabId, path })
 
   if (kind == 'error')
-    return await canvas.setUpscaledIcon({ tabId, path, glyph: '🔴' })
+    return canvas.setUpscaledIcon({ tabId, path, glyph: '❌' })
 
-  if (kind == 'settings_page')
-    return await canvas.setUpscaledIcon({
-      tabId,
-      path,
-      glyph: '⚙',
-      glyphSizePx: 64
-    })
+  if (kind == 'settings_page') return chrome.action.setIcon({ tabId, path })
 
   return unreachable(kind)
 }

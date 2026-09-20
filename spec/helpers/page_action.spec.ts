@@ -3,6 +3,10 @@ import { setPageAction, storage } from '../../src/helpers'
 describe('setPageAction', () => {
   const saveDomainIcon = vi.spyOn(storage, 'saveDomainIcon')
   const { setTitle, setIcon } = chrome.action
+  const fillText = vi.spyOn(
+    OffscreenCanvasRenderingContext2D.prototype,
+    'fillText'
+  )
 
   it('sets local domain action icon and title', async () => {
     await setPageAction(99, { kind: 'local', domain: 'do.main' })
@@ -39,20 +43,6 @@ describe('setPageAction', () => {
     expect(saveDomainIcon).toHaveBeenCalledWith('do.main', '/img/tailscale.png')
   })
 
-  it('sets loading action icon and title', async () => {
-    await setPageAction(99, { kind: 'loading', domain: 'do.main' })
-
-    expect(setTitle).toHaveBeenCalledExactlyOnceWith({
-      tabId: 99,
-      title: 'Resolving do.main …'
-    })
-    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-      tabId: 99,
-      imageData: { 64: expect.any(ImageData) }
-    })
-    expect(saveDomainIcon).not.toHaveBeenCalled()
-  })
-
   it('sets error action icon and title', async () => {
     await setPageAction(99, {
       kind: 'error',
@@ -68,6 +58,11 @@ describe('setPageAction', () => {
       tabId: 99,
       imageData: { 64: expect.any(ImageData) }
     })
+    expect(fillText).toHaveBeenCalledWith(
+      '❌',
+      expect.any(Number),
+      expect.any(Number)
+    )
     expect(saveDomainIcon).not.toHaveBeenCalled()
   })
 
@@ -101,9 +96,22 @@ describe('setPageAction', () => {
     })
     expect(setIcon).toHaveBeenCalledExactlyOnceWith({
       tabId: 99,
-      imageData: { 64: expect.any(ImageData) }
+      path: '/img/icon/32.png'
     })
     expect(saveDomainIcon).not.toHaveBeenCalled()
+  })
+
+  it('hands a handle back for loading and nothing for the rest', async () => {
+    const stop = await setPageAction(99, { kind: 'loading', domain: 'do.main' })
+    expect(stop).toBeTypeOf('function')
+
+    // dropping it leaks the interval into whatever spec runs next
+    await stop?.()
+
+    expect(await setPageAction(99, { kind: 'settings_page' })).toBeUndefined()
+    expect(
+      await setPageAction(99, { kind: 'local', domain: 'do.main' })
+    ).toBeUndefined()
   })
 
   it('throws if impossible path was reached', async () => {

@@ -1,6 +1,6 @@
 import { fetchMock } from '../setup'
 
-import { setPageAction, SquareCanvas } from '../../src/helpers'
+import { SquareCanvas } from '../../src/helpers'
 
 const TAB_ID = 14
 
@@ -10,124 +10,16 @@ const pixels = ({ ctx, size }: SquareCanvas) =>
 describe('Canvasing 🎨', () => {
   const context = OffscreenCanvasRenderingContext2D.prototype
   const drawImage = vi.spyOn(context, 'drawImage')
-  const fillText = vi.spyOn(context, 'fillText')
   const createBitmap = vi.spyOn(globalThis, 'createImageBitmap')
+  const setIcon = vi.mocked(chrome.action.setIcon)
 
-  describe('Progress icons', () => {
-    it('renders 🔵 when loading', async () => {
-      await setPageAction(TAB_ID, { kind: 'loading', domain: 'is.loadi.ng' })
+  it('throws if could not get 2d context', () => {
+    vi.spyOn(OffscreenCanvas.prototype, 'getContext').mockReturnValue(null)
 
-      expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
-      expect(fillText).toHaveBeenCalledWith(
-        '🔵',
-        expect.any(Number),
-        expect.any(Number)
-      )
-      expect(fillText).toHaveBeenCalledAfter(drawImage)
-    })
-
-    it('renders 🔴 when errored out', async () => {
-      await setPageAction(TAB_ID, {
-        kind: 'error',
-        domain: 'nope.error',
-        error: 'an error'
-      })
-
-      expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
-      expect(fillText).toHaveBeenCalledWith(
-        '🔴',
-        expect.any(Number),
-        expect.any(Number)
-      )
-      expect(fillText).toHaveBeenCalledAfter(drawImage)
-    })
-
-    it('renders 🔵 over local domain icon when loading', async () => {
-      await chrome.storage.local.set({
-        'local.domain': { fetched_at: 0, is_local: true }
-      })
-
-      await setPageAction(TAB_ID, { kind: 'local', domain: 'local.domain' })
-
-      // local resource icon is set by path, nothing is drawn
-      expect(fetchMock).not.toHaveBeenCalled()
-      expect(fillText).not.toHaveBeenCalled()
-
-      await setPageAction(TAB_ID, { kind: 'loading', domain: 'local.domain' })
-
-      expect(fetchMock).toHaveBeenCalledWith('/img/local_resource.png')
-      expect(fillText).toHaveBeenCalledWith(
-        '🔵',
-        expect.any(Number),
-        expect.any(Number)
-      )
-      expect(fillText).toHaveBeenCalledAfter(drawImage)
-    })
-
-    it('renders ⚙ glyph over default icon on internal pages', async () => {
-      await setPageAction(TAB_ID, { kind: 'settings_page' })
-
-      expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
-      expect(drawImage).toHaveBeenCalledExactlyOnceWith(
-        expect.any(ImageBitmap),
-        0,
-        0
-      )
-      expect(fillText).toHaveBeenCalledWith(
-        '⚙',
-        expect.any(Number),
-        expect.any(Number)
-      )
-    })
-
-    it('really paints the glyph', async () => {
-      const plain = new SquareCanvas()
-      await plain.setUpscaledIcon({ tabId: TAB_ID, path: '/img/icon/32.png' })
-
-      const glyphed = new SquareCanvas()
-      await glyphed.setUpscaledIcon({
-        tabId: TAB_ID,
-        path: '/img/icon/32.png',
-        glyph: '🔵'
-      })
-
-      expect(pixels(glyphed)).not.toEqual(pixels(plain))
-    })
-
-    describe('Firefox', () => {
-      beforeAll(() => {
-        // @ts-expect-error: let's pretend we are in firefox
-        chrome.dns = 'is there'
-      })
-
-      afterAll(() => {
-        // @ts-expect-error: stop pretending we are in firefox
-        delete chrome.dns
-      })
-
-      it('adds character with overhang (q) to a glyph', async () => {
-        await setPageAction(TAB_ID, { kind: 'loading', domain: 'is.loadi.ng' })
-
-        expect(fetchMock).toHaveBeenCalledWith('/img/icon/32.png')
-        expect(fillText).toHaveBeenCalledWith(
-          '🔵 q',
-          expect.any(Number),
-          expect.any(Number)
-        )
-      })
-    })
+    expect(() => new SquareCanvas()).toThrow('Failed to get 2d canvas context')
   })
 
   describe('Flags 🚩', () => {
-    it('throws if could not get 2d context', async () => {
-      vi.spyOn(OffscreenCanvas.prototype, 'getContext').mockReturnValue(null)
-
-      await expect(
-        setPageAction(TAB_ID, { kind: 'loading', domain: 'boo.p' })
-      ).rejects.toThrow('Failed to get 2d canvas context')
-    })
-
-    // real PNGs are decoded, their dimensions drive the upscale and the placement
     it('upscales 16 × 11 🇺🇦 four times and centers it vertically', async () => {
       await new SquareCanvas().setUpscaledIcon({
         tabId: TAB_ID,
@@ -182,18 +74,113 @@ describe('Canvasing 🎨', () => {
       )
     })
 
-    it('sends the flag to the browser', async () => {
-      await setPageAction(TAB_ID, {
-        kind: 'geo',
-        domain: 'boop.ua',
-        data: { country_name: 'Ukraine', country_code: 'UA' }
+    it('sends what it drew to the browser', async () => {
+      const canvas = new SquareCanvas()
+      await canvas.setUpscaledIcon({
+        tabId: TAB_ID,
+        path: '/img/flags/ua.png'
       })
 
       expect(fetchMock).toHaveBeenCalledWith('/img/flags/ua.png')
-      expect(chrome.action.setIcon).toHaveBeenCalledExactlyOnceWith({
+      // can't assert against real bitmap since we upscale it
+      expect(setIcon).toHaveBeenCalledExactlyOnceWith({
+        tabId: TAB_ID,
+        imageData: { 64: expect.objectContaining({ data: pixels(canvas) }) }
+      })
+    })
+
+    it('really paints the glyph', async () => {
+      const plain = new SquareCanvas()
+      await plain.setUpscaledIcon({ tabId: TAB_ID, path: '/img/icon/32.png' })
+
+      const glyphed = new SquareCanvas()
+      await glyphed.setUpscaledIcon({
+        tabId: TAB_ID,
+        path: '/img/icon/32.png',
+        glyph: '🔵'
+      })
+
+      expect(pixels(glyphed)).not.toEqual(pixels(plain))
+    })
+  })
+
+  describe('Progress sweep', () => {
+    beforeEach(() => vi.useFakeTimers())
+    afterEach(() => vi.useRealTimers())
+
+    const start = () =>
+      new SquareCanvas().animateProgess({
+        tabId: TAB_ID,
+        path: '/img/icon/32.png'
+      })
+
+    const frameCount = () => setIcon.mock.calls.length
+
+    const frame = (nth: number) => {
+      const imageData = setIcon.mock.calls.at(nth)?.[0].imageData
+      if (imageData && 64 in imageData) return imageData[64]?.data
+    }
+
+    it('closes the circle when the lookup beats the fill', async () => {
+      const stop = await start()
+
+      // the base icon is decoded before the first frame, nothing sent yet
+      expect(setIcon).not.toHaveBeenCalled()
+
+      await vi.advanceTimersByTimeAsync(50)
+      const filled = frameCount()
+      expect(filled).toBeGreaterThan(0)
+      expect(setIcon).toHaveBeenLastCalledWith({
         tabId: TAB_ID,
         imageData: { 64: expect.any(ImageData) }
       })
+
+      let closed = false
+      const closing = stop().then(() => (closed = true))
+
+      // the closing move paints frames of its own and holds before resolving,
+      // so a barely-started circle still reads as one that completed
+      await vi.advanceTimersByTimeAsync(100)
+      expect(frameCount()).toBeGreaterThan(filled)
+      expect(closed).toBe(false)
+
+      await vi.advanceTimersByTimeAsync(500)
+      await closing
+      expect(closed).toBe(true)
+
+      expect(frame(-1)).not.toEqual(frame(-2))
+
+      const final = frameCount()
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(frameCount()).toBe(final)
+    })
+
+    it('closes the circle when the lookup outlasts the fill', async () => {
+      const stop = await start()
+
+      await vi.advanceTimersByTimeAsync(200)
+      const early = frameCount()
+
+      // the easing only ever approaches full, so it never runs out of frames
+      // to paint and a slow lookup keeps being told something is happening
+      await vi.advanceTimersByTimeAsync(2000)
+      const filled = frameCount()
+      expect(filled).toBeGreaterThan(early)
+
+      let closed = false
+      const closing = stop().then(() => (closed = true))
+
+      await vi.advanceTimersByTimeAsync(100)
+      expect(frameCount()).toBeGreaterThan(filled)
+      expect(closed).toBe(false)
+
+      await vi.advanceTimersByTimeAsync(500)
+      await closing
+      expect(closed).toBe(true)
+
+      const final = frameCount()
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(frameCount()).toBe(final)
     })
   })
 })

@@ -33,14 +33,28 @@ async function updatePageAction(tabId: number, domain: string, data: Data) {
   }
 }
 
-// setting action is async so we have to await on it and on lookup
-async function lookupWithProgress(tabId: number, domain: string) {
-  const [, response] = await Promise.all([
-    setPageAction(tabId, { kind: 'loading', domain }),
-    lookup(domain)
-  ])
+const inFlight = new Map<string, ReturnType<typeof lookup>>()
 
-  return response
+/** Joins the lookup already running for this domain instead of starting one */
+async function lookupWithProgress(tabId: number, domain: string) {
+  const running = inFlight.get(domain)
+  if (running) return running
+
+  const started = (async () => {
+    const stop = await setPageAction(tabId, { kind: 'loading', domain })
+
+    // a leaked sweep never stops calling setIcon, and every call resets the
+    // worker's idle timer; the flag waits for it or the last frame lands on top
+    try {
+      return await lookup(domain)
+    } finally {
+      await stop?.() // stop is always there, ?. pleases the 🦜
+    }
+  })().finally(() => inFlight.delete(domain))
+
+  inFlight.set(domain, started)
+
+  return started
 }
 
 async function getCachedResponse(

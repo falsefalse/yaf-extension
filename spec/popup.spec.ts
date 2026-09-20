@@ -56,14 +56,15 @@ describe('popup.ts', () => {
     currentTab({ id: 99, url: 'http://something' })
     respond('something', json({ error: 'nope' }))
 
-    // icons come last in a page action, 🔵 while resolving and 🔴 for the error,
-    // nothing is awaited after them so the handler is through once both are set
-    await domReady(() => expect(chrome.action.setIcon).toHaveBeenCalledTimes(2))
+    // the sweep paints icons for as long as the lookup runs, so counting them
+    // says nothing. the error title lands once, and only after it is over
+    await domReady(() =>
+      expect(chrome.action.setTitle).toHaveBeenCalledWith({
+        tabId: 99,
+        title: 'Error: nope'
+      })
+    )
 
-    expect(chrome.action.setTitle).toHaveBeenCalledWith({
-      tabId: 99,
-      title: 'Error: nope'
-    })
     expect(document.body.innerHTML).toBe('<nope>nothing</nope>')
     expect(close).not.toHaveBeenCalled()
   })
