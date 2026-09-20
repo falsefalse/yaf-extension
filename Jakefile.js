@@ -23,6 +23,13 @@ const blue = s => `\x1b[34m${s}\x1b[0m`
 const grey = s => `\x1b[90m${s}\x1b[0m`
 /* eslint-enable no-unused-vars */
 
+// skip noise, retain error details
+jake.program.opts.quiet = true
+jake.on('error', err => {
+  console.error(red(err?.stack || err?.message || err))
+  process.exitCode = 1
+})
+
 // lesssgoo!
 
 const BUILD_DIR = './build'

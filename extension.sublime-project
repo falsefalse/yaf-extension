@@ -35,7 +35,7 @@
 
     {
       "name": "build 👷",
-      "cmd": ["jake", "-q"],
+      "cmd": ["jake"],
       "auto_close": true,
 
       "working_dir": "$project_path",
@@ -44,7 +44,7 @@
 
     {
       "name": "build:ff 🦊",
-      "cmd": ["jake", "-q", "firefox"],
+      "cmd": ["jake", "firefox"],
       "auto_close": true,
 
       "working_dir": "$project_path",
@@ -53,7 +53,7 @@
 
     {
       "name": "clean 🧹",
-      "cmd": ["jake", "-q", "clean"],
+      "cmd": ["jake", "clean"],
       "auto_close": true,
 
       "working_dir": "$project_path",

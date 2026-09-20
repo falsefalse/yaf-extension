@@ -36,10 +36,10 @@ No problem, `yarn jake` runs the local one 🐈
 
 ```bash
 # development build: un-minified, points to http://localhost:8080
-jake -q [firefox]
+jake [firefox]
 
 # production build: minified, points to https://geoip.furman.im
-jake -q release[:firefox]
+jake release[:firefox]
 
 yarn tsc # typecheck
 yarn lint # oxlint and prettier
