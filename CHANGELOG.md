@@ -1,7 +1,12 @@
 ### 1.2.4
 
-- Render tailnet IPs and MagicDNS hostnames as local, with the Tailscale icon
-- Fix: 🔵 loading icon could land after the flag or local icon on a fast lookup
+- Animated circular sweep over current icon inst. of static blue glyph for loading
+- Ditch puprle color from icons and popup colors, it had bad contrast in dark mode
+- Popup color scheme matches chrome color scheme
+- Redo icons as off black with white outlines
+- Add a little guide to popup about pinning extension to the toolbar
+- Recognize tailnet IPs and MagicDNS hostnames, add an icon
+- Fix: loading icon could land after the flag or local icon on a fast lookup
 - Tech
   - Node 26, TypeScript 7 for typechecking only, ESM everywhere
   - vite builds the extension, no more generated config and templates
