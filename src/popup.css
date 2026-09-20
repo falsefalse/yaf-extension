@@ -53,13 +53,10 @@
 
   --base-background-color: light-dark(white, #151515);
   --base-color: light-dark(#2e2e2e, #e8e8e8);
-  /* sampled off chrome's own toolbar buttons, so a disc in the popup reads as
-     the same material as the one behind the page action. chrome's dark toolbar
-     is #3c3c3c against our #151515, so these separate twice as hard as there */
+  /* sampled off chrome's own toolbar buttons */
   --highlight-color: light-dark(#f2f2f2, #505050);
   --selected-color: light-dark(#e1e1e1, #6b6b6b);
-  /* the highlight walked toward the ink, and the ink flips with the mode, so
-     the one number darkens on light and brightens on dark: #9d9d9d / #898989 */
+  /* #9d9d9d / #898989 */
   --highlight-border-color: color-mix(
     in oklab,
     var(--highlight-color),
@@ -96,30 +93,14 @@ a:hover {
 /* rotating flag background */
 
 .rotator {
-  position: relative;
+  --flag: linear-gradient(var(--ang, 0deg), var(--yellow) 50%, var(--blue) 0);
 
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: -1;
-
-    background: linear-gradient(
-      var(--ang, 0deg),
-      var(--yellow) 50%,
-      var(--blue) 0
-    );
-
-    --rotate-duration: 2s;
-    --fade-delay: calc(var(--rotate-duration) / 2);
-    --fade-duration: calc(var(--rotate-duration) - var(--fade-delay));
-    animation:
-      rotate var(--rotate-duration) cubic-bezier(0.68, -0.57, 0.26, 1.65) 0s 1,
-      fade_out var(--fade-duration) ease-out var(--fade-delay) 1;
-  }
+  --rotate-duration: 2s;
+  --fade-delay: calc(var(--rotate-duration) / 2);
+  --fade-duration: calc(var(--rotate-duration) - var(--fade-delay));
+  animation:
+    rotate var(--rotate-duration) cubic-bezier(0.68, -0.57, 0.26, 1.65) 0s 1,
+    fade_out var(--fade-duration) ease-out var(--fade-delay) 1;
 }
 
 /* icons */
@@ -169,14 +150,14 @@ body {
   cursor: pointer;
   width: var(--button-size);
   height: var(--button-size);
-  border: 1px solid transparent;
   border-radius: 50%;
-  overflow: hidden;
   transition: background-color 0.2s;
+
+  background-image: var(--glyph, none), var(--flag, none);
+  background-size: var(--button-bg-size), auto;
   background-color: transparent;
   background-position: center;
   background-repeat: no-repeat;
-  background-size: var(--button-bg-size);
 
   &:hover {
     background-color: var(--highlight-color);
@@ -195,10 +176,10 @@ body {
 
   .button {
     &.reload {
-      background-image: url(/img/refresh.png);
+      --glyph: url(/img/refresh.png);
     }
     &.marklocal {
-      background-image: url(/img/local_resource.png);
+      --glyph: url(/img/local_resource.png);
     }
     &.marked {
       background-color: var(--selected-color);
