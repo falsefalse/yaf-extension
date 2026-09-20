@@ -1,0 +1,20 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 192 192"
+  fill="none"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path
+    d="M168 96a72 72 0 1 1 -72 -72c20.16 0 39.44 8 53.92 21.92L168 66"
+    stroke="#ffffff"
+    stroke-width="30"
+  />
+  <path d="M168 24v42h-42" stroke="#ffffff" stroke-width="30" />
+  <path
+    d="M168 96a72 72 0 1 1 -72 -72c20.16 0 39.44 8 53.92 21.92L168 66"
+    stroke="#1a1a1a"
+    stroke-width="18"
+  />
+  <path d="M168 24v42h-42" stroke="#1a1a1a" stroke-width="18" />
+</svg>

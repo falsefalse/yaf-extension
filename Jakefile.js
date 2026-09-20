@@ -48,6 +48,7 @@ task('set_env', (release, firefox) => {
         'src/*.html',
         'src/*.css'
       ])
+      this.packageFiles.exclude('img/svg')
       if (!firefox) this.packageFiles.exclude('src/module.html')
 
       this.needZip = true

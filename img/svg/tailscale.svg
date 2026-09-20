@@ -1,0 +1,17 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 192 192"
+  stroke="#ffffff"
+  stroke-width="12"
+  paint-order="stroke"
+>
+  <circle cx="33" cy="33" r="21" fill="#999999" />
+  <circle cx="93" cy="33" r="21" fill="#999999" />
+  <circle cx="153" cy="33" r="21" fill="#999999" />
+  <circle cx="33" cy="93" r="21" fill="#1a1a1a" />
+  <circle cx="93" cy="93" r="21" fill="#1a1a1a" />
+  <circle cx="153" cy="93" r="21" fill="#1a1a1a" />
+  <circle cx="33" cy="153" r="21" fill="#999999" />
+  <circle cx="93" cy="153" r="21" fill="#1a1a1a" />
+  <circle cx="153" cy="153" r="21" fill="#999999" />
+</svg>

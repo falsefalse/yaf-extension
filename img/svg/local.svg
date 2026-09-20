@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <defs>
+    <g id="solid">
+      <rect x="30" y="6" width="132" height="66" rx="24" />
+      <rect x="30" y="54" width="132" height="66" rx="24" />
+      <rect x="87" y="120" width="18" height="30" />
+      <rect x="24" y="150" width="144" height="18" rx="8" />
+      <circle cx="96" cy="159" r="24" />
+    </g>
+    <g id="cut">
+      <rect x="48" y="24" width="96" height="30" rx="8" />
+      <rect x="48" y="72" width="96" height="30" rx="8" />
+      <circle cx="96" cy="159" r="8" />
+    </g>
+    <mask id="carve">
+      <rect width="192" height="192" fill="#ffffff" />
+      <use href="#cut" fill="#000000" />
+    </mask>
+  </defs>
+
+  <use
+    href="#solid"
+    fill="#ffffff"
+    stroke="#ffffff"
+    stroke-width="12"
+    stroke-linejoin="round"
+  />
+  <use href="#solid" fill="#1a1a1a" mask="url(#carve)" />
+
+  <circle cx="64" cy="39" r="8" fill="#1a1a1a" />
+  <circle cx="64" cy="87" r="8" fill="#1a1a1a" />
+</svg>

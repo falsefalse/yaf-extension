@@ -67,7 +67,10 @@ export async function lookup(
     response = await fetch(url.toString(), {
       headers,
       credentials: 'omit',
-      mode: 'cors'
+      mode: 'cors',
+      // no cache headers from the server, don't let heuristic freshness
+      // second-guess the staleness rules in getCachedResponse
+      cache: 'no-store'
     })
   } catch (fetchError) {
     return {

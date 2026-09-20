@@ -49,27 +49,29 @@
 /* variables */
 
 :root {
-  --base-background-color: white;
-  --base-color: #2d2d2d;
-  --hover-background-color: #d5e4ff;
-  --hover-border-color: #8492ac;
-  --separator-color: #f6f6f6;
+  color-scheme: light dark;
+
+  --base-background-color: light-dark(white, #151515);
+  --base-color: light-dark(#2e2e2e, #e8e8e8);
+  /* sampled off chrome's own toolbar buttons, so a disc in the popup reads as
+     the same material as the one behind the page action. chrome's dark toolbar
+     is #3c3c3c against our #151515, so these separate twice as hard as there */
+  --highlight-color: light-dark(#f2f2f2, #505050);
+  --selected-color: light-dark(#e1e1e1, #6b6b6b);
+  /* the highlight walked toward the ink, and the ink flips with the mode, so
+     the one number darkens on light and brightens on dark: #9d9d9d / #898989 */
+  --highlight-border-color: color-mix(
+    in oklab,
+    var(--highlight-color),
+    var(--base-color) 40%
+  );
+  --separator-color: light-dark(#ededed, #202020);
 
   --button-size: 26px;
-  --button-bg-size: 14px 14px;
+  --button-bg-size: 16px 16px;
 
   --base-font-size: 14px;
   --header-font-size: 17px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --base-background-color: #0d1117;
-    --base-color: #e6edf3;
-    --hover-background-color: #261d39;
-    --hover-border-color: #473366;
-    --separator-color: #1d162c;
-  }
 }
 
 /* reset */
@@ -132,22 +134,6 @@ a:hover {
   content: '✔';
 }
 
-.pin_guide {
-  --nudge-distance: 1px;
-  --nudge-anticipation: 3px;
-  --nudge-duration: 0.5s;
-  --nudge-pause: 2.5s;
-
-  &::after {
-    margin-left: 1ch;
-    content: '↗️';
-
-    display: inline-block;
-    animation: nudge calc(2 * var(--nudge-duration) + var(--nudge-pause))
-      ease-in-out infinite;
-  }
-}
-
 /* layout and components */
 
 html {
@@ -161,12 +147,9 @@ body {
   background-color: var(--base-background-color);
   color: var(--base-color);
 
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-
+  --body-margin: 4px;
   position: relative;
-  margin: 8px;
+  margin: var(--body-margin);
   transition: filter 0.1s ease-out;
   /* uncollapse */
   border: 1px solid transparent;
@@ -189,19 +172,17 @@ body {
   border: 1px solid transparent;
   border-radius: 50%;
   overflow: hidden;
-  transition:
-    background-color 0.2s,
-    filter 0.2s;
+  transition: background-color 0.2s;
   background-color: transparent;
   background-position: center;
   background-repeat: no-repeat;
   background-size: var(--button-bg-size);
 
   &:hover {
-    background-color: var(--hover-background-color);
+    background-color: var(--highlight-color);
   }
   &:active {
-    border-color: var(--hover-border-color);
+    border-color: var(--highlight-border-color);
   }
 }
 
@@ -220,8 +201,7 @@ body {
       background-image: url(/img/local_resource.png);
     }
     &.marked {
-      background-color: var(--hover-background-color);
-      filter: brightness(90%);
+      background-color: var(--selected-color);
     }
   }
 }
@@ -234,7 +214,7 @@ ul {
 
     &.header {
       font-size: var(--header-font-size);
-      line-height: 1.8;
+      line-height: 1.6;
       padding-right: 78px;
     }
     &.separator {
@@ -264,8 +244,8 @@ ul {
         background: 6px center no-repeat;
 
         &:hover {
-          border-color: var(--hover-border-color);
-          background-color: var(--hover-background-color);
+          border-color: var(--highlight-border-color);
+          background-color: var(--highlight-color);
         }
 
         &.whois {
@@ -277,27 +257,44 @@ ul {
   }
 }
 
-#pin {
-  --base-font-size: calc(--base-font-size - 1px);
+/* pin guide */
 
+#pin {
   position: absolute;
-  top: -9px; /* body margin plus body border */
-  right: -9px;
+  top: calc(-1 * var(--body-margin) - 1px); /* body margin plus body border */
+  right: calc(-1 * var(--body-margin) - 1px);
 
   z-index: 1;
   padding: 3px 6px;
   line-height: 1.33;
 
   box-shadow: 0 0 4px
-    color-mix(in oklab, var(--hover-background-color), black 25%);
-  background-color: color-mix(
-    in oklab,
-    var(--hover-background-color),
-    white 50%
-  );
+    light-dark(
+      /* #5a5a5a */
+      color-mix(in oklab, var(--base-background-color), var(--base-color) 76%),
+      /* #7c7c7c */
+      color-mix(in oklab, var(--base-background-color), var(--base-color) 53%)
+    );
+  background-color: var(--highlight-color);
   border-bottom-left-radius: 4px;
 
   > div {
     white-space: nowrap;
+  }
+}
+
+.pin_guide {
+  --nudge-distance: 1px;
+  --nudge-anticipation: 2px;
+  --nudge-duration: 0.4s;
+  --nudge-pause: 3s;
+
+  &::after {
+    margin-left: 1ch;
+    content: '↗️';
+
+    display: inline-block;
+    animation: nudge calc(2 * var(--nudge-duration) + var(--nudge-pause))
+      ease-in-out infinite;
   }
 }
