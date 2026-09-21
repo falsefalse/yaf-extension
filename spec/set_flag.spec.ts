@@ -38,10 +38,10 @@ describe('set_flag.ts', () => {
         tabId: TAB_ID,
         title: 'Internal browser page'
       })
-      expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-        tabId: TAB_ID,
-        path: '/img/icon/32.png'
-      })
+      expect(setIcon).toHaveBeenCalledExactlyOnceWith(
+        { tabId: TAB_ID, path: '/img/icon/32.png' },
+        expect.any(Function)
+      )
     })
 
     it('if URL schema does not match', async () => {
@@ -51,10 +51,10 @@ describe('set_flag.ts', () => {
         tabId: TAB_ID,
         title: 'Internal browser page'
       })
-      expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-        tabId: TAB_ID,
-        path: '/img/icon/32.png'
-      })
+      expect(setIcon).toHaveBeenCalledExactlyOnceWith(
+        { tabId: TAB_ID, path: '/img/icon/32.png' },
+        expect.any(Function)
+      )
     })
   })
 
@@ -73,10 +73,10 @@ describe('set_flag.ts', () => {
         tabId: TAB_ID,
         title: 'Error: Errority error boop doop!'
       })
-      expect(setIcon).toHaveBeenCalledWith({
-        tabId: TAB_ID,
-        imageData: { 64: expect.any(ImageData) }
-      })
+      expect(setIcon).toHaveBeenCalledWith(
+        { tabId: TAB_ID, imageData: { 64: expect.any(ImageData) } },
+        expect.any(Function)
+      )
     })
 
     it('falls back to domain resolution when IP was not resolved', async () => {
@@ -204,10 +204,10 @@ describe('set_flag.ts', () => {
         tabId: TAB_ID,
         title: '127.0.0.1 is a local resource'
       })
-      expect(setIcon).toHaveBeenCalledWith({
-        tabId: TAB_ID,
-        path: '/img/local_resource.png'
-      })
+      expect(setIcon).toHaveBeenCalledWith(
+        { tabId: TAB_ID, path: '/img/local_resource.png' },
+        expect.any(Function)
+      )
     })
 
     it('renders Tailscale node title and icon for tailnet IPs', async () => {
@@ -217,10 +217,10 @@ describe('set_flag.ts', () => {
         tabId: TAB_ID,
         title: '100.101.102.103 is a Tailscale node'
       })
-      expect(setIcon).toHaveBeenCalledWith({
-        tabId: TAB_ID,
-        path: '/img/tailscale.png'
-      })
+      expect(setIcon).toHaveBeenCalledWith(
+        { tabId: TAB_ID, path: '/img/tailscale.png' },
+        expect.any(Function)
+      )
       expect(await local.get('100.101.102.103')).toEqual({
         '100.101.102.103': {
           fetched_at: NOW.getTime(),
@@ -261,10 +261,10 @@ describe('set_flag.ts', () => {
           title: 'imma.local.dev is a local resource'
         })
         // after the sweep the local icon has to be the one that stays
-        expect(setIcon).toHaveBeenLastCalledWith({
-          tabId: TAB_ID,
-          path: '/img/local_resource.png'
-        })
+        expect(setIcon).toHaveBeenLastCalledWith(
+          { tabId: TAB_ID, path: '/img/local_resource.png' },
+          expect.any(Function)
+        )
       })
     })
 
@@ -413,10 +413,10 @@ describe('set_flag.ts', () => {
       tabId: TAB_ID,
       title: 'Resolving empty.response …'
     })
-    expect(setIcon).toHaveBeenLastCalledWith({
-      tabId: TAB_ID,
-      imageData: { 64: expect.any(ImageData) }
-    })
+    expect(setIcon).toHaveBeenLastCalledWith(
+      { tabId: TAB_ID, imageData: { 64: expect.any(ImageData) } },
+      expect.any(Function)
+    )
     expect(await local.get('empty.response')).toEqual({
       'empty.response': { fetched_at: NOW.getTime(), is_local: false }
     })
@@ -441,10 +441,10 @@ describe('set_flag.ts', () => {
       tabId: TAB_ID,
       title: 'Ukraine → Kyiv Metro Area → Boyarka'
     })
-    expect(setIcon).toHaveBeenCalledWith({
-      tabId: TAB_ID,
-      imageData: { 64: expect.any(ImageData) }
-    })
+    expect(setIcon).toHaveBeenCalledWith(
+      { tabId: TAB_ID, imageData: { 64: expect.any(ImageData) } },
+      expect.any(Function)
+    )
 
     expect(await local.get('proper.site.ua')).toEqual({
       'proper.site.ua': {

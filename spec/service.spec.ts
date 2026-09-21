@@ -31,10 +31,10 @@ describe('service.ts', () => {
 
       await activate()
 
-      expect(setIcon).toHaveBeenCalledWith({
-        tabId: TAB_ID,
-        path: '/img/local_resource.png'
-      })
+      expect(setIcon).toHaveBeenCalledWith(
+        { tabId: TAB_ID, path: '/img/local_resource.png' },
+        expect.any(Function)
+      )
       expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
         title: 'tab.bo is a local resource'
@@ -89,13 +89,40 @@ describe('service.ts', () => {
         tab({ id: TAB_ID, url: 'http://tabber.tab' })
       )
 
-      expect(setIcon).toHaveBeenCalledWith({
-        tabId: TAB_ID,
-        path: '/img/local_resource.png'
-      })
+      expect(setIcon).toHaveBeenCalledWith(
+        { tabId: TAB_ID, path: '/img/local_resource.png' },
+        expect.any(Function)
+      )
       expect(setTitle).toHaveBeenCalledWith({
         tabId: TAB_ID,
         title: 'tabber.tab is a local resource'
+      })
+    })
+
+    describe('when the tab closes mid-lookup', () => {
+      const updateClosedTab = async (error: Error) => {
+        await chrome.storage.local.set({
+          'tabber.tab': { fetched_at: Date.now(), is_local: true }
+        })
+        vi.mocked(setTitle).mockImplementation(async () => {
+          throw error
+        })
+
+        return onUpdated.trigger(
+          TAB_ID,
+          { status: 'complete' },
+          tab({ id: TAB_ID, url: 'http://tabber.tab' })
+        )
+      }
+
+      it('shrugs the failure off', async () => {
+        await expect(
+          updateClosedTab(new Error(`No tab with id: ${TAB_ID}.`))
+        ).resolves.toBeDefined()
+      })
+
+      it('lets any other failure through', async () => {
+        await expect(updateClosedTab(new Error('boop'))).rejects.toThrow('boop')
       })
     })
   })
@@ -129,10 +156,10 @@ describe('service.ts', () => {
         tabId: TAB_ID,
         title: 'tabber.tab is a local resource'
       })
-      expect(setIcon).toHaveBeenCalledWith({
-        tabId: TAB_ID,
-        path: '/img/local_resource.png'
-      })
+      expect(setIcon).toHaveBeenCalledWith(
+        { tabId: TAB_ID, path: '/img/local_resource.png' },
+        expect.any(Function)
+      )
     })
   })
 
@@ -149,10 +176,10 @@ describe('service.ts', () => {
         tabId: TAB_ID,
         title: 'tabber.tab is a local resource'
       })
-      expect(setIcon).toHaveBeenCalledWith({
-        tabId: TAB_ID,
-        path: '/img/local_resource.png'
-      })
+      expect(setIcon).toHaveBeenCalledWith(
+        { tabId: TAB_ID, path: '/img/local_resource.png' },
+        expect.any(Function)
+      )
     })
   })
 })

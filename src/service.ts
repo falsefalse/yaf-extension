@@ -1,6 +1,16 @@
 import type { Browser } from '@wxt-dev/browser'
-import { setFlag } from './set_flag'
+import { setFlag as _setFlag } from './set_flag'
 import { getCurrentTab } from './helpers'
+
+async function setFlag(tab?: Pick<Browser.tabs.Tab, 'id' | 'url'>) {
+  try {
+    await _setFlag(tab)
+  } catch (error) {
+    // we care about everything but the tabs closing mid lookup
+    if (!(error instanceof Error && error.message.startsWith('No tab with id')))
+      throw error
+  }
+}
 
 async function onUpdated(
   _tabId: number,

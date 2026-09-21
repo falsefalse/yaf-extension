@@ -1,5 +1,17 @@
+import type { Browser } from '@wxt-dev/browser'
 import type { GeoData } from '../lib/types'
 import { DEFAULT_ICON, SquareCanvas, storage } from './index'
+
+/** the promise form resolves even for a closed tab, only the callback sees lastError */
+export const setIcon = (details: Browser.action.TabIconDetails) =>
+  new Promise<void>((resolve, reject) => {
+    chrome.action.setIcon(details, () => {
+      const { lastError } = chrome.runtime
+
+      if (lastError) reject(new Error(lastError.message))
+      else resolve()
+    })
+  })
 
 const unreachable = (k: never) => {
   throw new Error(`Unreachable path reached with '${String(k)}'`)
@@ -62,19 +74,19 @@ export async function setPageAction(tabId: number, action: PageAction) {
       : '/img/local_resource.png'
 
     // 64x64 already, chrome halves it for the toolbar and never upscales
-    await chrome.action.setIcon({ tabId, path })
+    await setIcon({ tabId, path })
     await storage.saveDomainIcon(domain, path)
     return
   }
 
   const path = domain ? await storage.getDomainIcon(domain) : DEFAULT_ICON
 
-  if (kind == 'loading') return canvas.animateProgess({ tabId, path })
+  if (kind == 'loading') return canvas.animateProgress({ tabId, path })
 
   if (kind == 'error')
     return canvas.setUpscaledIcon({ tabId, path, glyph: '❌' })
 
-  if (kind == 'settings_page') return chrome.action.setIcon({ tabId, path })
+  if (kind == 'settings_page') return setIcon({ tabId, path })
 
   return unreachable(kind)
 }

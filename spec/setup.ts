@@ -74,7 +74,8 @@ export const requested = () =>
 beforeEach(() => {
   routes.length = 0
 
-  setIcon.mockResolvedValue(undefined)
+  // the helper waits on the callback, chrome's promise never reports anything
+  setIcon.mockImplementation((_details, done) => done())
   getUserSettings.mockResolvedValue({ isOnToolbar: true })
   getManifest.mockReturnValue({
     manifest_version: 3,

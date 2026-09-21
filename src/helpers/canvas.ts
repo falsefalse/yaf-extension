@@ -1,3 +1,5 @@
+import { setIcon } from './page_action'
+
 const center = (whole: number, part: number) =>
   Math.round(Math.max(whole - part, 0) / 2)
 
@@ -92,7 +94,7 @@ export class SquareCanvas {
 
     const { size, ctx } = this
 
-    await chrome.action.setIcon({
+    await setIcon({
       tabId,
       imageData: {
         [size.toString()]: ctx.getImageData(0, 0, size, size)
@@ -101,24 +103,32 @@ export class SquareCanvas {
   }
 
   /** Fills while the work runs, the returned handle closes the circle. */
-  async animateProgess({ tabId, path }: { tabId: number; path: string }) {
+  async animateProgress({ tabId, path }: { tabId: number; path: string }) {
     const { size, ctx } = this
 
     await this.drawUpscaled(path)
     const base = ctx.getImageData(0, 0, size, size)
 
+    let live = true
+
     const paint = (progress: number) => {
+      if (!live) return
+
       ctx.putImageData(base, 0, 0)
       this.drawSweep(progress)
 
-      void chrome.action.setIcon({
+      setIcon({
         tabId,
         imageData: { [size.toString()]: ctx.getImageData(0, 0, size, size) }
       })
+        // the tab is closed, nothing left to paint on
+        .catch(() => {
+          live = Boolean(clearInterval(fill))
+        })
     }
 
     // approaches full without ever reaching it
-    const tauMs = 200
+    const tauMs = 180
     const eased = (elapsedMs: number) => 1 - Math.exp(-elapsedMs / tauMs)
 
     const interval = 1000 / 60
@@ -135,11 +145,10 @@ export class SquareCanvas {
       new Promise<void>(resolve => {
         clearInterval(fill)
 
-        // the closing move, then the pause on a whole circle before the flag lands
-        const closingMs = 80
-
         const from = progress
         const settling = performance.now()
+        // the closing move, then the pause on a whole circle before the flag lands
+        const closingMs = 100
 
         const settle = setInterval(() => {
           const ratio = (performance.now() - settling) / closingMs

@@ -83,10 +83,13 @@ describe('Canvasing 🎨', () => {
 
       expect(fetchMock).toHaveBeenCalledWith('/img/flags/ua.png')
       // can't assert against real bitmap since we upscale it
-      expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-        tabId: TAB_ID,
-        imageData: { 64: expect.objectContaining({ data: pixels(canvas) }) }
-      })
+      expect(setIcon).toHaveBeenCalledExactlyOnceWith(
+        {
+          tabId: TAB_ID,
+          imageData: { 64: expect.objectContaining({ data: pixels(canvas) }) }
+        },
+        expect.any(Function)
+      )
     })
 
     it('really paints the glyph', async () => {
@@ -109,7 +112,7 @@ describe('Canvasing 🎨', () => {
     afterEach(() => vi.useRealTimers())
 
     const start = () =>
-      new SquareCanvas().animateProgess({
+      new SquareCanvas().animateProgress({
         tabId: TAB_ID,
         path: '/img/icon/32.png'
       })
@@ -130,10 +133,10 @@ describe('Canvasing 🎨', () => {
       await vi.advanceTimersByTimeAsync(50)
       const filled = frameCount()
       expect(filled).toBeGreaterThan(0)
-      expect(setIcon).toHaveBeenLastCalledWith({
-        tabId: TAB_ID,
-        imageData: { 64: expect.any(ImageData) }
-      })
+      expect(setIcon).toHaveBeenLastCalledWith(
+        { tabId: TAB_ID, imageData: { 64: expect.any(ImageData) } },
+        expect.any(Function)
+      )
 
       let closed = false
       const closing = stop().then(() => (closed = true))
@@ -181,6 +184,34 @@ describe('Canvasing 🎨', () => {
       const final = frameCount()
       await vi.advanceTimersByTimeAsync(1000)
       expect(frameCount()).toBe(final)
+    })
+
+    it('stops painting when the tab goes away mid-sweep', async () => {
+      const stop = await start()
+
+      await vi.advanceTimersByTimeAsync(50)
+      const painted = frameCount()
+      expect(painted).toBeGreaterThan(0)
+
+      // chrome reports a closed tab through lastError, never a rejection
+      vi.spyOn(chrome.runtime, 'lastError', 'get').mockReturnValue({
+        message: `No tab with id: ${TAB_ID}.`
+      })
+      setIcon.mockImplementation((_details, done) => done())
+
+      // one frame discovers the tab is gone, the fill stops asking after it
+      await vi.advanceTimersByTimeAsync(50)
+      const attempted = frameCount()
+      expect(attempted).toBe(painted + 1)
+
+      await vi.advanceTimersByTimeAsync(1000)
+      expect(frameCount()).toBe(attempted)
+
+      // the closing move asks for nothing, the handle still resolves on time
+      const closing = stop()
+      await vi.advanceTimersByTimeAsync(500)
+      await expect(closing).resolves.toBeUndefined()
+      expect(frameCount()).toBe(attempted)
     })
   })
 })

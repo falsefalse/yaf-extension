@@ -15,10 +15,10 @@ describe('setPageAction', () => {
       tabId: 99,
       title: 'do.main is a local resource'
     })
-    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-      tabId: 99,
-      path: '/img/local_resource.png'
-    })
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith(
+      { tabId: 99, path: '/img/local_resource.png' },
+      expect.any(Function)
+    )
     expect(saveDomainIcon).toHaveBeenCalledWith(
       'do.main',
       '/img/local_resource.png'
@@ -36,10 +36,10 @@ describe('setPageAction', () => {
       tabId: 99,
       title: 'do.main is a Tailscale node'
     })
-    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-      tabId: 99,
-      path: '/img/tailscale.png'
-    })
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith(
+      { tabId: 99, path: '/img/tailscale.png' },
+      expect.any(Function)
+    )
     expect(saveDomainIcon).toHaveBeenCalledWith('do.main', '/img/tailscale.png')
   })
 
@@ -54,10 +54,10 @@ describe('setPageAction', () => {
       tabId: 99,
       title: 'Error: bonk!'
     })
-    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-      tabId: 99,
-      imageData: { 64: expect.any(ImageData) }
-    })
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith(
+      { tabId: 99, imageData: { 64: expect.any(ImageData) } },
+      expect.any(Function)
+    )
     expect(fillText).toHaveBeenCalledWith(
       '❌',
       expect.any(Number),
@@ -80,10 +80,10 @@ describe('setPageAction', () => {
       tabId: 99,
       title: 'nepal ftw'
     })
-    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-      tabId: 99,
-      imageData: { 64: expect.any(ImageData) }
-    })
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith(
+      { tabId: 99, imageData: { 64: expect.any(ImageData) } },
+      expect.any(Function)
+    )
     expect(saveDomainIcon).toHaveBeenCalledWith('do.main', '/img/flags/np.png')
   })
 
@@ -94,10 +94,10 @@ describe('setPageAction', () => {
       tabId: 99,
       title: 'Internal browser page'
     })
-    expect(setIcon).toHaveBeenCalledExactlyOnceWith({
-      tabId: 99,
-      path: '/img/icon/32.png'
-    })
+    expect(setIcon).toHaveBeenCalledExactlyOnceWith(
+      { tabId: 99, path: '/img/icon/32.png' },
+      expect.any(Function)
+    )
     expect(saveDomainIcon).not.toHaveBeenCalled()
   })
 
