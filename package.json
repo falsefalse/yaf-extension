@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@types/firefox-webext-browser": "^143.0.0",
+    "@types/jake": "^0.0.39",
     "@types/node": "^26.5.1",
     "@vitest/browser-playwright": "^5.0.1",
     "@vitest/coverage-v8": "^5.0.1",
